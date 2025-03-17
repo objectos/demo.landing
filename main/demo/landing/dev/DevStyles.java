@@ -78,6 +78,7 @@ public final class DevStyles implements Http.Handler {
       --color-high-literal: var(--color-red-400);
       --color-high-meta: var(--color-pink-400);
       --color-high-string: var(--color-green-300);
+      --color-icon: var(--color-gray-200);
       --color-layer: var(--color-stone-900);
       --color-link: var(--color-blue-400);
       --color-link-hover: color-mix(in oklab, var(--color-link) 85%, white 15%);

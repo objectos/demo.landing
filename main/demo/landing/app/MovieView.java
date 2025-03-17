@@ -261,6 +261,8 @@ final class MovieView extends Kino.View {
 
               href(ctx.href(query)),
 
+              rel("nofollow"),
+
               span(testableCell(time, 5))
           ),
 

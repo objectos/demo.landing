@@ -78,6 +78,8 @@ final class NowShowingView extends Kino.View {
 
               href(ctx.href(Kino.Page.MOVIE, item.id())),
 
+              rel("nofollow"),
+
               img(
                   css("""
                   aspect-ratio:2/3

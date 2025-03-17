@@ -825,6 +825,8 @@ final class MovieView extends Kino.View {
 
               href(ctx.href(query)),
 
+              rel("nofollow"),
+
               span(testableCell(time, 5))
           ),
 
@@ -3434,6 +3436,8 @@ final class NowShowingView extends Kino.View {
 
               href(ctx.href(Kino.Page.MOVIE, item.id())),
 
+              rel("nofollow"),
+
               img(
                   css(\"""
                   aspect-ratio:2/3
@@ -3694,6 +3698,8 @@ public final class Kino implements LandingDemo {
           dataOnClick(this::navigate),
 
           href(href),
+
+          rel("nofollow"),
 
           icon(
               Kino.Icon.ARROW_LEFT,

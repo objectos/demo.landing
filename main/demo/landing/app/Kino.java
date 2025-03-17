@@ -224,6 +224,8 @@ public final class Kino implements LandingDemo {
 
           href(href),
 
+          rel("nofollow"),
+
           icon(
               Kino.Icon.ARROW_LEFT,
 
