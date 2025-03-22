@@ -17,16 +17,20 @@ package demo.landing.dev;
 
 import demo.landing.LandingDemoConfig;
 import demo.landing.app.Kino;
+import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Html;
 import objectos.way.Http;
+import objectos.way.Http.Routing;
 import objectos.way.Web;
 
-public final class DevModule extends Http.Module {
+public final class DevModule implements Consumer<Http.Routing> {
 
   private final App.Injector injector;
 
   private final Kino demo;
+
+  private final Web.Resources webResources;
 
   public DevModule(App.Injector injector) {
     this.injector = injector;
@@ -35,58 +39,48 @@ public final class DevModule extends Http.Module {
     config = injector.getInstance(LandingDemoConfig.class);
 
     demo = Kino.create(config);
+
+    webResources = injector.getInstance(Web.Resources.class);
   }
 
   @Override
-  protected final void configure() {
-    route("/",
-        movedPermanently("/index.html"));
+  public final void accept(Routing routing) {
+    routing.path("/", path -> {
+      path.allow(Http.Method.GET, Http.Handler.movedPermanently("/index.html"));
+    });
 
-    route("/index.html",
-        handler(this::index));
+    routing.path("/index.html", path -> {
+      path.allow(Http.Method.GET, this::index);
+    });
 
-    route("/demo/landing",
-        handler(this::endpoint));
+    routing.path("/demo/landing", path -> {
+      path.allow(Http.Method.POST, this::endpoint);
+    });
 
-    route("/ui/styles.css",
-        handlerFactory(DevStyles::new, injector));
+    routing.path("/demo/landing/poster1.jpg", webResources::handlePath);
+    routing.path("/demo/landing/poster2.jpg", webResources::handlePath);
+    routing.path("/demo/landing/poster3.jpg", webResources::handlePath);
+    routing.path("/demo/landing/poster4.jpg", webResources::handlePath);
 
-    final Web.Resources webResources;
-    webResources = injector.getInstance(Web.Resources.class);
+    routing.path("/ui/styles.css", path -> {
+      path.allow(Http.Method.GET, Http.Handler.factory(DevStyles::new, injector));
+    });
 
-    route("/ui/*",
-        handler(webResources));
-
-    route("/demo/landing/poster1.jpg", handler(webResources));
-    route("/demo/landing/poster2.jpg", handler(webResources));
-    route("/demo/landing/poster3.jpg", handler(webResources));
-    route("/demo/landing/poster4.jpg", handler(webResources));
+    routing.path("/ui/*", webResources::handlePath);
   }
 
   private void index(Http.Exchange http) {
-    switch (http.method()) {
-      case GET, HEAD -> respond(http, Http.Status.OK, demo.get(http));
-
-      default -> http.methodNotAllowed();
-    }
+    respond(http, Http.Status.OK, demo.get(http));
   }
 
   private void endpoint(Http.Exchange http) {
-    switch (http.method()) {
-      case POST -> {
+    final Kino.PostResult result;
+    result = demo.post(http);
 
-        final Kino.PostResult result;
-        result = demo.post(http);
+    switch (result) {
+      case Kino.Embed embed -> respond(http, embed.status(), embed.get());
 
-        switch (result) {
-          case Kino.Embed embed -> respond(http, embed.status(), embed.get());
-
-          case Kino.Redirect redirect -> http.found(redirect.get());
-        }
-
-      }
-
-      default -> http.methodNotAllowed();
+      case Kino.Redirect redirect -> http.found(redirect.get());
     }
   }
 

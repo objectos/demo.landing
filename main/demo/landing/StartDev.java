@@ -16,13 +16,19 @@
 package demo.landing;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.WatchService;
 import java.util.HexFormat;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import objectos.way.App;
+import objectos.way.App.Reloader;
 import objectos.way.Http;
+import objectos.way.Http.Routing;
 import objectos.way.Note;
 import objectos.way.Sql;
 
@@ -76,7 +82,7 @@ public final class StartDev extends Start {
   }
 
   @Override
-  final Http.HandlerFactory handlerFactory(App.Injector injector) {
+  final Http.Handler serverHandler(App.Injector injector) {
     // WatchService
     final FileSystem fileSystem;
     fileSystem = FileSystems.getDefault();
@@ -116,12 +122,71 @@ public final class StartDev extends Start {
       throw App.serviceFailed("App.Reloader", e);
     }
 
-    return App.createHandlerFactory(reloader, App.Injector.class, injector);
+    return new ReloadingHandlerFactory1(reloader, App.Injector.class, injector);
   }
 
   @Override
   final int serverPort() {
     return DEVELOPMENT_HTTP_PORT;
+  }
+
+  private static class ReloadingHandlerFactory1 implements Http.Handler {
+
+    private final Lock lock = new ReentrantLock();
+
+    private final App.Reloader reloader;
+
+    private final Class<?> type1;
+
+    private final Object value1;
+
+    private Class<?> previousClass;
+
+    private Http.Handler handler;
+
+    public ReloadingHandlerFactory1(Reloader reloader, Class<?> type1, Object value1) {
+      this.reloader = reloader;
+      this.type1 = type1;
+      this.value1 = value1;
+    }
+
+    @Override
+    public final void handle(Http.Exchange http) {
+      lock.lock();
+      try {
+        Class<?> handlerClass;
+        handlerClass = reloader.get();
+
+        if (!handlerClass.equals(previousClass)) {
+          previousClass = handlerClass;
+
+          recreate();
+        }
+
+        handler.handle(http);
+      } catch (Error | RuntimeException e) {
+        throw e;
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      } finally {
+        lock.unlock();
+      }
+    }
+
+    @SuppressWarnings("unchecked")
+    private void recreate() throws Exception {
+      Constructor<?> constructor;
+      constructor = previousClass.getConstructor(type1);
+
+      Object instance;
+      instance = constructor.newInstance(value1);
+
+      Consumer<Http.Routing> module;
+      module = (Consumer<Routing>) instance;
+
+      handler = Http.Handler.create(module);
+    }
+
   }
 
 }

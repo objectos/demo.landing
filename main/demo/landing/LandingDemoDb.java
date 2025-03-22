@@ -494,6 +494,10 @@ public final class LandingDemoDb {
     trx = db.beginTransaction(Sql.READ_COMMITED);
 
     try {
+      trx.sql("set schema CINEMA");
+
+      trx.update();
+
       trx.sql("""
       select
         MOVIE_ID,

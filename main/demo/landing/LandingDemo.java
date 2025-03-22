@@ -16,7 +16,6 @@
 package demo.landing;
 
 import demo.landing.app.Kino;
-import demo.landing.local.LocalModule;
 import java.util.Objects;
 import objectos.way.App;
 import objectos.way.Html;
@@ -102,12 +101,6 @@ public interface LandingDemo {
 
   static LandingDemo create(LandingDemoConfig config) {
     return Kino.create(config);
-  }
-
-  static Http.Module localModule(LandingDemoConfig config) {
-    Objects.requireNonNull(config, "config == null");
-
-    return new LocalModule(config);
   }
 
   Html.Component get(Http.Exchange http);

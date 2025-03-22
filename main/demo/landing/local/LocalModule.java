@@ -20,12 +20,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Http;
+import objectos.way.Http.Routing;
 import objectos.way.Note;
 import objectos.way.Sql;
 
-public final class LocalModule extends Http.Module {
+public final class LocalModule implements Consumer<Http.Routing> {
 
   private static final Note.Int1 CLEAR_RESERVATION = Note.Int1.create(LocalModule.class, "Clear Reservation", Note.INFO);
 
@@ -52,25 +54,14 @@ public final class LocalModule extends Http.Module {
   }
 
   @Override
-  protected final void configure() {
-    route("/demo/landing/clear-reservation",
-        handler(this::postOnly),
-        interceptor(this::transactional),
-        handler(this::clearReservation));
+  public final void accept(Routing routing) {
+    routing.path("/demo/landing/clear-reservation", path -> {
+      path.allow(Http.Method.POST, transactional(this::clearReservation));
+    });
 
-    route("/demo/landing/create-show",
-        handler(this::postOnly),
-        interceptor(this::transactional),
-        handler(this::createShow));
-  }
-
-  private void postOnly(Http.Exchange http) {
-    final Http.Method method;
-    method = http.method();
-
-    if (method != Http.Method.POST) {
-      http.methodNotAllowed();
-    }
+    routing.path("/demo/landing/create-show", path -> {
+      path.allow(Http.Method.POST, transactional(this::createShow));
+    });
   }
 
   private Http.Handler transactional(Http.Handler handler) {

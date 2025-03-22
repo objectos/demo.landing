@@ -100,12 +100,12 @@ abstract class Start extends App.Bootstrap {
     injector = injector(ctx);
 
     // Http.HandlerFactory
-    final Http.HandlerFactory handlerFactory;
-    handlerFactory = handlerFactory(injector);
+    final Http.Handler serverHandler;
+    serverHandler = serverHandler(injector);
 
     // Http.Server
     final AutoCloseable httpServer;
-    httpServer = server(noteSink, handlerFactory);
+    httpServer = server(noteSink, serverHandler);
 
     shutdownHook.register(httpServer);
 
@@ -208,15 +208,15 @@ abstract class Start extends App.Bootstrap {
 
   abstract App.Injector injector(App.Injector.Builder ctx);
 
-  abstract Http.HandlerFactory handlerFactory(App.Injector injector);
+  abstract Http.Handler serverHandler(App.Injector injector);
 
   abstract int serverPort();
 
-  AutoCloseable server(Note.Sink noteSink, Http.HandlerFactory handlerFactory) {
+  AutoCloseable server(Note.Sink noteSink, Http.Handler handler) {
     try {
       final Http.Server server;
       server = Http.Server.create(config -> {
-        config.handlerFactory(handlerFactory);
+        config.handler(handler);
 
         config.bufferSize(1024, 4096);
 

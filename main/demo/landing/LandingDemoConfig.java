@@ -15,6 +15,7 @@
  */
 package demo.landing;
 
+import demo.landing.local.LocalModule;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.Instant;
@@ -24,6 +25,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.random.RandomGenerator;
 import objectos.way.App;
+import objectos.way.Http;
 import objectos.way.Note;
 import objectos.way.Sql;
 
@@ -142,6 +144,12 @@ public final class LandingDemoConfig {
 
   public final byte[] codecKey() {
     return codecKey.clone();
+  }
+
+  public final void local(Http.Routing routing) {
+    routing.install(
+        new LocalModule(this)
+    );
   }
 
 }

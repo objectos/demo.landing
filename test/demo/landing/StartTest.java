@@ -28,7 +28,6 @@ import objectos.way.App;
 import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
-import objectos.way.Http.HandlerFactory;
 import objectos.way.Note;
 import objectos.way.Note.Sink;
 import objectos.way.Script;
@@ -155,18 +154,18 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final Http.HandlerFactory handlerFactory(App.Injector injector) {
+  final Http.Handler serverHandler(App.Injector injector) {
     Testing.INJECTOR = injector;
 
     final BootModule module;
     module = new BootModule(injector);
 
     final Http.Handler handler;
-    handler = module.compile();
+    handler = Http.Handler.create(module);
 
     Testing.HANDLER = handler;
 
-    return () -> handler;
+    return handler;
   }
 
   @Override
@@ -175,7 +174,7 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final AutoCloseable server(Sink noteSink, HandlerFactory handlerFactory) {
+  final AutoCloseable server(Sink noteSink, Http.Handler handler) {
     // noop autocloseable
     return () -> {};
   }
