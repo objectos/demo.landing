@@ -29,6 +29,18 @@ public final class BootModule implements Consumer<Http.Routing> {
     this.injector = injector;
   }
 
+  public BootModule(App.Injector injector, Module original) {
+    this(injector);
+
+    Class<? extends BootModule> self;
+    self = getClass();
+
+    Module module;
+    module = self.getModule();
+
+    module.addReads(original);
+  }
+
   @Override
   public final void accept(Http.Routing routing) {
     routing.install(

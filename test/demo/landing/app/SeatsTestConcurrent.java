@@ -60,7 +60,7 @@ public class SeatsTestConcurrent {
     """);
   }
 
-  @Test
+  @Test(priority = 1000)
   public void testCase01() {
     // two concurrent reservations
 

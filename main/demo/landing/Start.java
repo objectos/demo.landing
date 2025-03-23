@@ -99,9 +99,11 @@ abstract class Start extends App.Bootstrap {
     final App.Injector injector;
     injector = injector(ctx);
 
-    // Http.HandlerFactory
+    // Http.Handler
     final Http.Handler serverHandler;
     serverHandler = serverHandler(injector);
+
+    shutdownHook.registerIfPossible(serverHandler);
 
     // Http.Server
     final AutoCloseable httpServer;

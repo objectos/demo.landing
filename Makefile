@@ -201,10 +201,6 @@ ifeq ($(ENABLE_DEBUG),1)
 DEV_JVM_OPTS += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:7000
 endif
 
-## dev --add-exports
-DEV_ADD_EXPORTS := demo.landing/demo.landing.app=ALL-UNNAMED
-DEV_ADD_EXPORTS += demo.landing/demo.landing.dev=ALL-UNNAMED
-
 ## dev app args
 DEV_APP_ARGS := --class-output $(CLASS_OUTPUT)
 
