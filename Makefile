@@ -25,7 +25,7 @@ VERSION := 002-SNAPSHOT
 MODULE := $(ARTIFACT_ID)
 
 ## javac --release option
-JAVA_RELEASE := 23
+JAVA_RELEASE := 24
 
 ## Maven interop
 REMOTE_REPOS := https://repo.maven.apache.org/maven2
