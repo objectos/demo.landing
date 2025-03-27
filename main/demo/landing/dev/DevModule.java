@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Html;
 import objectos.way.Http;
+import objectos.way.Http.ResponseMessage;
 import objectos.way.Http.Routing;
 import objectos.way.Web;
 
@@ -80,7 +81,15 @@ public final class DevModule implements Consumer<Http.Routing> {
     switch (result) {
       case Kino.Embed embed -> respond(http, embed.status(), embed.get());
 
-      case Kino.Redirect redirect -> http.found(redirect.get());
+      case Kino.Redirect redirect -> {
+        final String location;
+        location = redirect.get();
+
+        final ResponseMessage found;
+        found = Http.ResponseMessage.found(location);
+
+        http.respond(found);
+      }
     }
   }
 

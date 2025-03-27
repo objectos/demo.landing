@@ -107,14 +107,12 @@ public final class StartDev extends Start {
       return App.Reloader.create(config -> {
         config.handlerFactory(new Reloader(injector));
 
-        config.moduleName("demo.landing");
+        config.moduleOf(StartDev.class);
 
         final Note.Sink noteSink;
         noteSink = injector.getInstance(Note.Sink.class);
 
         config.noteSink(noteSink);
-
-        config.directory(classOutput);
       });
     } catch (IOException e) {
       throw App.serviceFailed("App.Reloader", e);

@@ -54,7 +54,7 @@ abstract class Start extends App.Bootstrap {
 
     // bootstrap start event
     final Note.Ref0 startNote;
-    startNote = Note.Ref0.create(getClass(), "Start", Note.INFO);
+    startNote = Note.Ref0.create(getClass(), "S", Note.INFO);
 
     noteSink.send(startNote);
 
@@ -113,7 +113,7 @@ abstract class Start extends App.Bootstrap {
 
     // bootstrap end event
     final Note.Long1 totalTimeNote;
-    totalTimeNote = Note.Long1.create(getClass(), "Total time [ms]", Note.INFO);
+    totalTimeNote = Note.Long1.create(getClass(), "T", Note.INFO);
 
     final long totalTime;
     totalTime = System.currentTimeMillis() - startTime;

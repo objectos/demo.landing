@@ -91,14 +91,6 @@ public final class DevStyles implements Http.Handler {
 
   @Override
   public final void handle(Http.Exchange http) {
-    switch (http.method()) {
-      case GET, HEAD -> get(http);
-
-      default -> http.methodNotAllowed();
-    }
-  }
-
-  private void get(Http.Exchange http) {
     final Note.Sink noteSink;
     noteSink = injector.getInstance(Note.Sink.class);
 
@@ -108,7 +100,7 @@ public final class DevStyles implements Http.Handler {
     final Css.StyleSheet styleSheet;
     styleSheet = generate(noteSink, stylesScanDirectory);
 
-    http.ok(styleSheet);
+    http.respond(styleSheet);
   }
 
 }

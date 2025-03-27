@@ -24,6 +24,8 @@ import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Http;
 import objectos.way.Http.Routing;
+import objectos.way.Lang;
+import objectos.way.Lang.MediaObject;
 import objectos.way.Note;
 import objectos.way.Sql;
 
@@ -114,7 +116,10 @@ public final class LocalModule implements Consumer<Http.Routing> {
 
     log(trx, localId);
 
-    http.okText("OK\n", StandardCharsets.UTF_8);
+    final MediaObject ok;
+    ok = Lang.MediaObject.textPlain("OK\n", StandardCharsets.UTF_8);
+
+    http.respond(ok);
   }
 
   // LOCAL_ID = 2
@@ -149,7 +154,10 @@ public final class LocalModule implements Consumer<Http.Routing> {
     executions = _executions.intValue();
 
     if (executions > 0) {
-      http.okText("Skipped: already executed\n", StandardCharsets.UTF_8);
+      final MediaObject skipped;
+      skipped = Lang.MediaObject.textPlain("Skipped: already executed\\n", StandardCharsets.UTF_8);
+
+      http.respond(skipped);
 
       return;
     }
@@ -179,7 +187,10 @@ public final class LocalModule implements Consumer<Http.Routing> {
 
     log(trx, localId);
 
-    http.okText("OK\n", StandardCharsets.UTF_8);
+    final MediaObject ok;
+    ok = Lang.MediaObject.textPlain("OK\n", StandardCharsets.UTF_8);
+
+    http.respond(ok);
   }
 
   private void log(Sql.Transaction trx, int id) {
