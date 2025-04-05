@@ -120,7 +120,7 @@ public class Testing implements ISuiteListener {
 
     try {
       byte[] bytes;
-      bytes = html.mediaBytes();
+      bytes = html.toByteArray();
 
       Files.write(target, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     } catch (IOException e) {

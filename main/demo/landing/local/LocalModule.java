@@ -16,7 +16,6 @@
 package demo.landing.local;
 
 import demo.landing.LandingDemoConfig;
-import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -25,7 +24,6 @@ import objectos.way.App;
 import objectos.way.Http;
 import objectos.way.Http.Routing;
 import objectos.way.Lang;
-import objectos.way.Lang.MediaObject;
 import objectos.way.Note;
 import objectos.way.Sql;
 
@@ -116,8 +114,8 @@ public final class LocalModule implements Consumer<Http.Routing> {
 
     log(trx, localId);
 
-    final MediaObject ok;
-    ok = Lang.MediaObject.textPlain("OK\n", StandardCharsets.UTF_8);
+    final Lang.Media ok;
+    ok = Lang.Media.textPlain("OK\n");
 
     http.respond(ok);
   }
@@ -154,8 +152,8 @@ public final class LocalModule implements Consumer<Http.Routing> {
     executions = _executions.intValue();
 
     if (executions > 0) {
-      final MediaObject skipped;
-      skipped = Lang.MediaObject.textPlain("Skipped: already executed\\n", StandardCharsets.UTF_8);
+      final Lang.Media skipped;
+      skipped = Lang.Media.textPlain("Skipped: already executed\\n");
 
       http.respond(skipped);
 
@@ -187,8 +185,8 @@ public final class LocalModule implements Consumer<Http.Routing> {
 
     log(trx, localId);
 
-    final MediaObject ok;
-    ok = Lang.MediaObject.textPlain("OK\n", StandardCharsets.UTF_8);
+    final Lang.Media ok;
+    ok = Lang.Media.textPlain("OK\n");
 
     http.respond(ok);
   }
