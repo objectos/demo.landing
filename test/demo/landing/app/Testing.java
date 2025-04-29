@@ -93,7 +93,7 @@ public class Testing implements ISuiteListener {
 
   public static Http.Exchange http(Consumer<? super Http.Exchange.Options> more) {
     final TestingResponseListener listener;
-    listener = new TestingResponseListener(2);
+    listener = new TestingResponseListener(4);
 
     return Http.Exchange.create(options -> {
       options.clock(FIXED);
