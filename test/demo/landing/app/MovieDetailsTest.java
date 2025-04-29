@@ -17,56 +17,62 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import demo.landing.AbstractTest;
 import java.util.Optional;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-public class MovieDetailsTest extends AbstractTest {
+@Listeners(Testing.class)
+public class MovieDetailsTest {
+
+  private final String data = """
+  insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
+  values (11, 'Title 1', 'Synopsys 1', 131, '2025-01-10')
+  ,      (12, 'Title 2', 'Synopsys 2', 150, '2025-01-20');
+
+  insert into GENRE (GENRE_ID, NAME)
+  values (21, 'Action')
+  ,      (22, 'Adventure')
+  ,      (23, 'Comedy')
+  ,      (24, 'Drama');
+
+  insert into MOVIE_GENRE (MOVIE_ID, GENRE_ID)
+  values (11, 24) /* Drama */
+  ,      (11, 22) /* Adventure */
+  ,      (12, 23) /* Comedy */;
+  """;
 
   @Test
   public void testCase01() {
-    final Optional<MovieDetails> maybe;
-    maybe = MovieDetails.queryOptional(trx, 11);
+    Testing.rollback(trx -> {
+      Testing.load(trx, data);
 
-    assertEquals(maybe.isPresent(), true);
+      final Optional<MovieDetails> maybe;
+      maybe = MovieDetails.queryOptional(trx, 11);
 
-    final MovieDetails result;
-    result = maybe.get();
+      assertEquals(maybe.isPresent(), true);
 
-    assertEquals(result.movieId(), 11);
-    assertEquals(result.title(), "Title 1");
-    assertEquals(result.runtime(), "2h 11m");
-    assertEquals(result.releaseDate(), "Jan 10, 2025");
-    assertEquals(result.genres(), "Adventure, Drama");
-    assertEquals(result.synopsys(), "Synopsys 1");
+      final MovieDetails result;
+      result = maybe.get();
+
+      assertEquals(result.movieId(), 11);
+      assertEquals(result.title(), "Title 1");
+      assertEquals(result.runtime(), "2h 11m");
+      assertEquals(result.releaseDate(), "Jan 10, 2025");
+      assertEquals(result.genres(), "Adventure, Drama");
+      assertEquals(result.synopsys(), "Synopsys 1");
+    });
   }
 
   @Test
   public void testCase02() {
-    final Optional<MovieDetails> maybe;
-    maybe = MovieDetails.queryOptional(trx, 33);
+    Testing.rollback(trx -> {
+      Testing.load(trx, data);
 
-    assertEquals(maybe.isPresent(), false);
-  }
+      final Optional<MovieDetails> maybe;
+      maybe = MovieDetails.queryOptional(trx, 33);
 
-  @Override
-  protected final String testData() {
-    return """
-    insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
-    values (11, 'Title 1', 'Synopsys 1', 131, '2025-01-10')
-    ,      (12, 'Title 2', 'Synopsys 2', 150, '2025-01-20');
-
-    insert into GENRE (GENRE_ID, NAME)
-    values (21, 'Action')
-    ,      (22, 'Adventure')
-    ,      (23, 'Comedy')
-    ,      (24, 'Drama');
-
-    insert into MOVIE_GENRE (MOVIE_ID, GENRE_ID)
-    values (11, 24) /* Drama */
-    ,      (11, 22) /* Adventure */
-    ,      (12, 23) /* Comedy */;
-    """;
+      assertEquals(maybe.isPresent(), false);
+    });
   }
 
 }

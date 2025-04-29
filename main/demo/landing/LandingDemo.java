@@ -67,7 +67,15 @@ public interface LandingDemo {
 
   }
 
-  static Embed embed(Http.Status status, Html.Component component) {
+  static Embed embedOk(Html.Component component) {
+    return embed(Http.Status.OK, component);
+  }
+
+  static Embed embedBadRequest(Html.Component component) {
+    return embed(Http.Status.BAD_REQUEST, component);
+  }
+
+  private static Embed embed(Http.Status status, Html.Component component) {
     Objects.requireNonNull(status, "status == null");
     Objects.requireNonNull(component, "component == null");
 

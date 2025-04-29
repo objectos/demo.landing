@@ -72,9 +72,7 @@ final class Confirm implements Kino.GET, Kino.POST {
 
       }
 
-      case Sql.UpdateSuccess _ -> LandingDemo.embed(
-          Http.Status.OK,
-
+      case Sql.UpdateSuccess _ -> LandingDemo.embedOk(
           Ticket.create(trx, data)
       );
     };

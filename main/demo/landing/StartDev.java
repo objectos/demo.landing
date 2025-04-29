@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.HexFormat;
 import java.util.function.Consumer;
 import objectos.way.App;
+import objectos.way.Css;
 import objectos.way.Http;
 import objectos.way.Http.Routing;
 import objectos.way.Note;
@@ -69,8 +70,13 @@ public final class StartDev extends Start {
 
   @Override
   final App.Injector injector(App.Injector.Builder ctx) {
-    // styles scan directory
-    ctx.putInstance(Path.class, classOutput);
+    final Note.Sink noteSink;
+    noteSink = ctx.getInstance(Note.Sink.class);
+
+    final Css.StyleSheet css;
+    css = css(noteSink, classOutput);
+
+    ctx.putInstance(Css.StyleSheet.class, css);
 
     return ctx.build();
   }

@@ -19,10 +19,11 @@ import demo.landing.LandingDemoConfig;
 import demo.landing.app.Kino;
 import java.util.function.Consumer;
 import objectos.way.App;
+import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
-import objectos.way.Http.ResponseMessage;
 import objectos.way.Http.Routing;
+import objectos.way.Media;
 import objectos.way.Web;
 
 public final class DevModule implements Consumer<Http.Routing> {
@@ -64,7 +65,7 @@ public final class DevModule implements Consumer<Http.Routing> {
     routing.path("/demo/landing/poster4.jpg", webResources::handlePath);
 
     routing.path("/ui/styles.css", path -> {
-      path.allow(Http.Method.GET, Http.Handler.factory(DevStyles::new, injector));
+      path.allow(Http.Method.GET, this::styles);
     });
 
     routing.path("/ui/*", webResources::handlePath);
@@ -85,12 +86,16 @@ public final class DevModule implements Consumer<Http.Routing> {
         final String location;
         location = redirect.get();
 
-        final ResponseMessage found;
-        found = Http.ResponseMessage.found(location);
-
-        http.respond(found);
+        http.found(location);
       }
     }
+  }
+
+  private void styles(Http.Exchange http) {
+    final Media.Text css;
+    css = injector.getInstance(Css.StyleSheet.class);
+
+    http.ok(css);
   }
 
   private void respond(Http.Exchange http, Http.Status status, Html.Component view) {
@@ -100,7 +105,11 @@ public final class DevModule implements Consumer<Http.Routing> {
     final DevView object;
     object = new DevView(head, view);
 
-    http.respond(status, object);
+    switch (status.code()) {
+      case 200 -> http.ok(object);
+      case 400 -> http.badRequest(object);
+      default -> throw new AssertionError("Unexpected status=" + status);
+    }
   }
 
 }

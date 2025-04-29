@@ -1066,14 +1066,14 @@ final class Seats implements Kino.GET, Kino.POST {
     final Html.Component view;
     view = view(state, reservationId, show, grid);
 
-    return LandingDemo.embed(Http.Status.OK, view);
+    return LandingDemo.embedOk(view);
   }
 
   private Kino.PostResult tmpSelectionError(Sql.Transaction trx, SeatsData data) {
     // clear TMP_SELECTION just in case some of the records were inserted
     data.clearTmpSelection(trx);
 
-    return LandingDemo.embed(Http.Status.BAD_REQUEST, NotFound.create());
+    return LandingDemo.embedBadRequest(NotFound.create());
   }
 
   private Kino.PostResult tmpSelectionOk(Sql.Transaction trx, SeatsData data) {
@@ -1124,7 +1124,7 @@ final class Seats implements Kino.GET, Kino.POST {
       // clear SELECTION just in case some of the records were inserted
       data.clearUserSelection(trx);
 
-      return LandingDemo.embed(Http.Status.BAD_REQUEST, NotFound.create());
+      return LandingDemo.embedBadRequest(NotFound.create());
 
     }
 
@@ -1135,9 +1135,7 @@ final class Seats implements Kino.GET, Kino.POST {
     reservationId = data.reservationId();
 
     return data.wayRequest()
-        ? LandingDemo.embed(
-            Http.Status.OK,
-
+        ? LandingDemo.embedOk(
             Confirm.create(ctx, trx, reservationId)
         )
         : LandingDemo.redirect(
@@ -2116,9 +2114,7 @@ final class Confirm implements Kino.GET, Kino.POST {
 
       }
 
-      case Sql.UpdateSuccess _ -> LandingDemo.embed(
-          Http.Status.OK,
-
+      case Sql.UpdateSuccess _ -> LandingDemo.embedOk(
           Ticket.create(trx, data)
       );
     };

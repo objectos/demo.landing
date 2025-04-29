@@ -15,6 +15,8 @@
  */
 package demo.landing.local;
 
+import static objectos.way.Media.Bytes.textPlain;
+
 import demo.landing.LandingDemoConfig;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -22,8 +24,6 @@ import java.time.LocalDateTime;
 import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Http;
-import objectos.way.Http.Routing;
-import objectos.way.Lang;
 import objectos.way.Note;
 import objectos.way.Sql;
 
@@ -54,7 +54,7 @@ public final class LocalModule implements Consumer<Http.Routing> {
   }
 
   @Override
-  public final void accept(Routing routing) {
+  public final void accept(Http.Routing routing) {
     routing.path("/demo/landing/clear-reservation", path -> {
       path.allow(Http.Method.POST, transactional(this::clearReservation));
     });
@@ -67,21 +67,36 @@ public final class LocalModule implements Consumer<Http.Routing> {
   private Http.Handler transactional(Http.Handler handler) {
     return http -> {
 
-      final Sql.Transaction trx;
-      trx = db.beginTransaction(Sql.READ_COMMITED);
+      final Sql.Transaction maybeTesting;
+      maybeTesting = http.get(Sql.Transaction.class);
 
-      try {
-        http.set(Sql.Transaction.class, trx);
+      if (maybeTesting != null) {
 
         handler.handle(http);
 
-        trx.commit();
-      } catch (Throwable t) {
-        noteSink.send(TRANSACTIONAL, t);
+      } else {
 
-        throw trx.rollbackAndWrap(t);
-      } finally {
-        trx.close();
+        final Sql.Transaction trx;
+        trx = db.beginTransaction(Sql.READ_COMMITED);
+
+        try {
+          trx.sql("set schema CINEMA");
+
+          trx.update();
+
+          http.set(Sql.Transaction.class, trx);
+
+          handler.handle(http);
+
+          trx.commit();
+        } catch (Throwable t) {
+          noteSink.send(TRANSACTIONAL, t);
+
+          throw trx.rollbackAndWrap(t);
+        } finally {
+          trx.close();
+        }
+
       }
 
     };
@@ -90,7 +105,8 @@ public final class LocalModule implements Consumer<Http.Routing> {
   // LOCAL_ID = 1
   // VisibleForTesting
   final void clearReservation(Http.Exchange http) {
-    final int localId = 1;
+    final int localId;
+    localId = 1;
 
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
@@ -114,16 +130,16 @@ public final class LocalModule implements Consumer<Http.Routing> {
 
     log(trx, localId);
 
-    final Lang.Media ok;
-    ok = Lang.Media.textPlain("OK\n");
-
-    http.respond(ok);
+    http.ok(
+        textPlain("OK\n")
+    );
   }
 
   // LOCAL_ID = 2
   // VisibleForTesting
   final void createShow(Http.Exchange http) {
-    final int localId = 2;
+    final int localId;
+    localId = 2;
 
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
@@ -152,10 +168,9 @@ public final class LocalModule implements Consumer<Http.Routing> {
     executions = _executions.intValue();
 
     if (executions > 0) {
-      final Lang.Media skipped;
-      skipped = Lang.Media.textPlain("Skipped: already executed\\n");
-
-      http.respond(skipped);
+      http.ok(
+          textPlain("Skipped: already executed\\n")
+      );
 
       return;
     }
@@ -185,10 +200,9 @@ public final class LocalModule implements Consumer<Http.Routing> {
 
     log(trx, localId);
 
-    final Lang.Media ok;
-    ok = Lang.Media.textPlain("OK\n");
-
-    http.respond(ok);
+    http.ok(
+        textPlain("OK\n")
+    );
   }
 
   private void log(Sql.Transaction trx, int id) {

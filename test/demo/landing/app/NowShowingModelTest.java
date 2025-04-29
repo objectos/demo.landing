@@ -17,39 +17,41 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import demo.landing.AbstractTest;
 import java.util.List;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-public class NowShowingModelTest extends AbstractTest {
+@Listeners(Testing.class)
+public class NowShowingModelTest {
+
+  private final String data = """
+  insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
+  values (11, 'Title 1', 'Synopsys 1', 120, '2025-01-10')
+  ,      (12, 'Title 2', 'Synopsys 2', 150, '2025-01-20');
+  """;
 
   @Test
   public void testCase01() {
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
+    Testing.rollback(trx -> {
+      Testing.load(trx, data);
 
-    assertEquals(items.size(), 2);
+      final List<NowShowingModel> items;
+      items = NowShowingModel.query(trx);
 
-    final NowShowingModel item0;
-    item0 = items.get(0);
+      assertEquals(items.size(), 2);
 
-    assertEquals(item0.id(), 11);
-    assertEquals(item0.title(), "Title 1");
+      final NowShowingModel item0;
+      item0 = items.get(0);
 
-    final NowShowingModel item1;
-    item1 = items.get(1);
+      assertEquals(item0.id(), 11);
+      assertEquals(item0.title(), "Title 1");
 
-    assertEquals(item1.id(), 12);
-    assertEquals(item1.title(), "Title 2");
-  }
+      final NowShowingModel item1;
+      item1 = items.get(1);
 
-  @Override
-  protected final String testData() {
-    return """
-    insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
-    values (11, 'Title 1', 'Synopsys 1', 120, '2025-01-10')
-    ,      (12, 'Title 2', 'Synopsys 2', 150, '2025-01-20');
-    """;
+      assertEquals(item1.id(), 12);
+      assertEquals(item1.title(), "Title 2");
+    });
   }
 
 }

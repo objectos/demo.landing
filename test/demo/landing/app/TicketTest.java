@@ -17,88 +17,91 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import demo.landing.AbstractTest;
 import objectos.way.Http;
 import objectos.way.Sql;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-public class TicketTest extends AbstractTest {
+@Listeners(Testing.class)
+public class TicketTest {
+
+  private final String data = """
+  insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
+  values (11, 'Title 1', 'Synopsys 1', 131, '2025-01-10')
+  ,      (12, 'Title 2', 'Synopsys 2', 150, '2025-01-20');
+
+  insert into SCREEN (SCREEN_ID, NAME, SEATING_CAPACITY)
+  values (31, 'Screen 1', 40)
+  ,      (32, 'Screen 2', 30);
+
+  insert into SCREENING (SCREENING_ID, MOVIE_ID, SCREEN_ID)
+  values (41, 11, 31)
+  ,      (42, 11, 32)
+  ,      (43, 12, 32);
+
+  insert into SHOW (SHOW_ID, SCREENING_ID, SHOWDATE, SHOWTIME, SEAT_PRICE)
+  values (61, 41, '2025-01-25', '13:00:00', 9.99)
+  ,      (62, 41, '2025-01-25', '17:00:00', 14.99)
+  ,      (63, 41, '2025-01-25', '21:00:00', 19.99)
+  ,      (64, 42, '2025-01-25', '14:00:00', 9.99)
+  ,      (65, 42, '2025-01-25', '18:00:00', 14.99)
+  ,      (66, 41, '2025-01-26', '13:00:00', 9.99);
+
+  insert into SEAT (SEAT_ID, SCREEN_ID, SEAT_ROW, SEAT_COL, GRID_Y, GRID_X)
+  values (101, 31, 'A', 1, 4, 4)
+  ,      (102, 31, 'A', 2, 4, 5)
+  ,      (103, 31, 'B', 1, 6, 2)
+  ,      (104, 31, 'B', 2, 6, 3)
+  ,      (105, 31, 'B', 3, 6, 6)
+  ,      (106, 31, 'B', 4, 6, 7);
+
+  insert into RESERVATION (RESERVATION_ID, SHOW_ID, TICKET_TIME)
+  values (901, 61, '2025-01-25 11:00')
+  ,      (902, 61, '2025-01-25 11:15');
+
+  insert into SELECTION (RESERVATION_ID, SEAT_ID, SHOW_ID)
+  values (901, 103, 61)
+  ,      (901, 104, 61)
+  ,      (902, 105, 61);
+  """;
 
   @Test
   public void testCase01() {
-    final Http.TestingExchange http;
-    http = Http.TestingExchange.create(config -> {
-      config.set(Sql.Transaction.class, trx);
+    Testing.rollback(trx -> {
+      Testing.load(trx, data);
 
-      config.method(Http.Method.GET);
+      final Http.Exchange http;
+      http = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
 
-      config.path("/index.html");
+        config.method(Http.Method.GET);
 
-      config.queryParam("demo", Testing.encode(Kino.Page.TICKET, 901));
+        config.path("/index.html");
+
+        config.queryParam("demo", Testing.encode(Kino.Page.TICKET, 901));
+      });
+
+      assertEquals(
+          Testing.handle0(http),
+
+          """
+          HTTP/1.1 200 OK
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Type: text/html; charset=utf-8
+          Transfer-Encoding: chunked
+
+          # Ticket #901
+
+          Ammount Paid: $19.98
+          Purchase Time: Sat 25/Jan 11:00
+
+          ## Tickets
+
+          Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B1    | $9.99
+          Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B2    | $9.99
+          """
+      );
     });
-
-    handle(http);
-
-    assertEquals(http.responseStatus(), Http.Status.OK);
-
-    assertEquals(
-        writeResponseBody(http),
-
-        """
-        # Ticket #901
-
-        Ammount Paid: $19.98
-        Purchase Time: Sat 25/Jan 11:00
-
-        ## Tickets
-
-        Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B1    | $9.99
-        Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B2    | $9.99
-        """
-    );
-  }
-
-  @Override
-  protected final String testData() {
-    return """
-    insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
-    values (11, 'Title 1', 'Synopsys 1', 131, '2025-01-10')
-    ,      (12, 'Title 2', 'Synopsys 2', 150, '2025-01-20');
-
-    insert into SCREEN (SCREEN_ID, NAME, SEATING_CAPACITY)
-    values (31, 'Screen 1', 40)
-    ,      (32, 'Screen 2', 30);
-
-    insert into SCREENING (SCREENING_ID, MOVIE_ID, SCREEN_ID)
-    values (41, 11, 31)
-    ,      (42, 11, 32)
-    ,      (43, 12, 32);
-
-    insert into SHOW (SHOW_ID, SCREENING_ID, SHOWDATE, SHOWTIME, SEAT_PRICE)
-    values (61, 41, '2025-01-25', '13:00:00', 9.99)
-    ,      (62, 41, '2025-01-25', '17:00:00', 14.99)
-    ,      (63, 41, '2025-01-25', '21:00:00', 19.99)
-    ,      (64, 42, '2025-01-25', '14:00:00', 9.99)
-    ,      (65, 42, '2025-01-25', '18:00:00', 14.99)
-    ,      (66, 41, '2025-01-26', '13:00:00', 9.99);
-
-    insert into SEAT (SEAT_ID, SCREEN_ID, SEAT_ROW, SEAT_COL, GRID_Y, GRID_X)
-    values (101, 31, 'A', 1, 4, 4)
-    ,      (102, 31, 'A', 2, 4, 5)
-    ,      (103, 31, 'B', 1, 6, 2)
-    ,      (104, 31, 'B', 2, 6, 3)
-    ,      (105, 31, 'B', 3, 6, 6)
-    ,      (106, 31, 'B', 4, 6, 7);
-
-    insert into RESERVATION (RESERVATION_ID, SHOW_ID, TICKET_TIME)
-    values (901, 61, '2025-01-25 11:00')
-    ,      (902, 61, '2025-01-25 11:15');
-
-    insert into SELECTION (RESERVATION_ID, SEAT_ID, SHOW_ID)
-    values (901, 103, 61)
-    ,      (901, 104, 61)
-    ,      (902, 105, 61);
-    """;
   }
 
 }

@@ -75,8 +75,8 @@ public class SeatsTestConcurrent {
     """);
 
     // 902 tries to select the same seats
-    final Http.TestingExchange http;
-    http = Http.TestingExchange.create(config -> {
+    final Http.Exchange http;
+    http = Testing.http(config -> {
       final Sql.Transaction trx;
       trx = Testing.beginTrx();
 
@@ -109,14 +109,15 @@ public class SeatsTestConcurrent {
       config.formParam("seat", 10103);
     });
 
-    Testing.handle(http);
-
-    assertEquals(http.responseStatus(), Http.Status.OK);
-
     assertEquals(
-        Testing.writeResponseBody(http),
+        Testing.handle0(http),
 
         """
+        HTTP/1.1 200 OK
+        Date: Mon, 28 Apr 2025 13:01:00 GMT
+        Content-Type: text/html; charset=utf-8
+        Transfer-Encoding: chunked
+
         back-link: MOVIE:1011
 
         # Show details

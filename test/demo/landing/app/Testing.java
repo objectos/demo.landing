@@ -2,13 +2,12 @@ package demo.landing.app;
 
 import demo.landing.LandingDemoConfig;
 import demo.landing.StartTest;
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import demo.landing.testing.TestingResponseListener;
+import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.function.Consumer;
 import objectos.way.App;
-import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Sql;
 import org.testng.ISuite;
@@ -78,56 +77,60 @@ public class Testing implements ISuiteListener {
     return CodecHolder.INSTANCE.encode(q);
   }
 
-  public static void handle(Http.Exchange http) {
+  public static String handle0(Http.Exchange http) {
     HANDLER.handle(http);
+
+    final TestingResponseListener listener;
+    listener = http.get(TestingResponseListener.class);
+
+    return listener.toString();
   }
 
-  public static String writeResponseBody(Http.TestingExchange http) {
-    Object body;
-    body = http.responseBody();
+  private static final Clock FIXED = Clock.fixed(
+      LocalDateTime.of(2025, 4, 28, 13, 1).atZone(ZoneOffset.UTC).toInstant(),
+      ZoneOffset.UTC
+  );
 
-    return switch (body) {
-      case Html.Template html -> writeTemplate(html);
+  public static Http.Exchange http(Consumer<? super Http.Exchange.Options> more) {
+    final TestingResponseListener listener;
+    listener = new TestingResponseListener(2);
 
-      default -> throw new UnsupportedOperationException("Unsupported type: " + body.getClass());
-    };
+    return Http.Exchange.create(options -> {
+      options.clock(FIXED);
+
+      options.responseListener(listener);
+
+      options.set(TestingResponseListener.class, listener);
+
+      more.accept(options);
+    });
   }
 
-  private static String writeTemplate(Html.Template html) {
-    Throwable t;
-    t = new Throwable();
+  public static void load(Sql.Transaction trx, String data) {
+    trx.sql(Sql.SCRIPT, data);
 
-    StackTraceElement[] stackTrace;
-    stackTrace = t.getStackTrace();
+    trx.batchUpdate();
+  }
 
-    StackTraceElement element;
-    element = stackTrace[2];
+  public static void rollback(Consumer<? super Sql.Transaction> test) {
+    final App.Injector injector;
+    injector = Testing.INJECTOR;
 
-    String simpleName;
-    simpleName = element.getClassName();
+    final Sql.Database db;
+    db = injector.getInstance(Sql.Database.class);
 
-    String methodName;
-    methodName = element.getMethodName();
+    final Sql.Transaction trx;
+    trx = db.beginTransaction(Sql.READ_COMMITED);
 
-    String fileName;
-    fileName = simpleName + "." + methodName + ".html";
+    trx.sql("set schema CINEMA");
 
-    String tmpdir;
-    tmpdir = System.getProperty("java.io.tmpdir");
-
-    Path target;
-    target = Path.of(tmpdir, fileName);
+    trx.update();
 
     try {
-      byte[] bytes;
-      bytes = html.toByteArray();
-
-      Files.write(target, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
+      test.accept(trx);
+    } finally {
+      Sql.rollbackAndClose(trx);
     }
-
-    return html.toTestableText();
   }
 
   private static final class CodecHolder {

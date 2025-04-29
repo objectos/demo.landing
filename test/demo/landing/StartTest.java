@@ -18,7 +18,6 @@ package demo.landing;
 import demo.landing.app.FixedClock;
 import demo.landing.app.FixedGenerator;
 import demo.landing.app.Testing;
-import demo.landing.dev.DevStyles;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -29,7 +28,6 @@ import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Note;
-import objectos.way.Note.Sink;
 import objectos.way.Script;
 import objectos.way.Sql;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -63,7 +61,9 @@ public final class StartTest extends Start {
 
   @Override
   final App.NoteSink noteSink() {
-    return App.NoteSink.OfConsole.create();
+    return App.NoteSink.OfConsole.create(config -> {
+      config.filter(note -> note.hasAny(Note.DEBUG, Note.INFO, Note.WARN, Note.ERROR));
+    });
   }
 
   @Override
@@ -131,10 +131,10 @@ public final class StartTest extends Start {
     noteSink = injector.getInstance(Note.Sink.class);
 
     final Css.StyleSheet styleSheet;
-    styleSheet = DevStyles.generate(noteSink, classOutput);
+    styleSheet = css(noteSink, classOutput);
 
     final String css;
-    css = styleSheet.css();
+    css = styleSheet.generate();
 
     final String script;
     script = Script.getSource();
@@ -174,7 +174,7 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final AutoCloseable server(Sink noteSink, Http.Handler handler) {
+  final AutoCloseable server(Note.Sink noteSink, Http.Handler handler) {
     // noop autocloseable
     return () -> {};
   }

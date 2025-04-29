@@ -17,16 +17,17 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import demo.landing.AbstractTest;
 import objectos.way.Http;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-public class KinoTest extends AbstractTest {
+@Listeners(Testing.class)
+public class KinoTest {
 
   @Test
   public void testCase01() {
-    final Http.TestingExchange http;
-    http = Http.TestingExchange.create(config -> {
+    final Http.Exchange http;
+    http = Testing.http(config -> {
       config.method(Http.Method.GET);
 
       config.path("/index.html");
@@ -34,23 +35,19 @@ public class KinoTest extends AbstractTest {
       config.queryParam("demo", "i-do-not-exist");
     });
 
-    handle(http);
-
-    assertEquals(http.responseStatus(), Http.Status.OK);
-
     assertEquals(
-        writeResponseBody(http),
+        Testing.handle0(http),
 
         """
+        HTTP/1.1 200 OK
+        Date: Mon, 28 Apr 2025 13:01:00 GMT
+        Content-Type: text/html; charset=utf-8
+        Transfer-Encoding: chunked
+
         # Something Went Wrong
 
         """
     );
-  }
-
-  @Override
-  protected final String testData() {
-    return "";
   }
 
 }

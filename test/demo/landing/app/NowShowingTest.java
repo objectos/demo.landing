@@ -17,47 +17,50 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import demo.landing.AbstractTest;
 import objectos.way.Http;
 import objectos.way.Sql;
+import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
-public class NowShowingTest extends AbstractTest {
+@Listeners(Testing.class)
+public class NowShowingTest {
+
+  private final String data = """
+  insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
+  values (11, 'Title 1', 'Synopsys 1', 120, '2025-01-10')
+  ,      (12, 'Title 2', 'Synopsys 2', 150, '2025-01-20');
+  """;
 
   @Test
   public void testCase01() {
-    final Http.TestingExchange http;
-    http = Http.TestingExchange.create(config -> {
-      config.set(Sql.Transaction.class, trx);
+    Testing.rollback(trx -> {
+      Testing.load(trx, data);
 
-      config.method(Http.Method.GET);
+      final Http.Exchange http;
+      http = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
 
-      config.path("/index.html");
+        config.method(Http.Method.GET);
 
-      config.queryParam("demo", Testing.encode(Kino.Page.NOW_SHOWING));
+        config.path("/index.html");
+
+        config.queryParam("demo", Testing.encode(Kino.Page.NOW_SHOWING));
+      });
+
+      assertEquals(
+          Testing.handle0(http),
+
+          """
+          HTTP/1.1 200 OK
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Type: text/html; charset=utf-8
+          Transfer-Encoding: chunked
+
+          movie.title: Title 1
+          movie.title: Title 2
+          """
+      );
     });
-
-    handle(http);
-
-    assertEquals(http.responseStatus(), Http.Status.OK);
-
-    assertEquals(
-        writeResponseBody(http),
-
-        """
-        movie.title: Title 1
-        movie.title: Title 2
-        """
-    );
-  }
-
-  @Override
-  protected final String testData() {
-    return """
-    insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
-    values (11, 'Title 1', 'Synopsys 1', 120, '2025-01-10')
-    ,      (12, 'Title 2', 'Synopsys 2', 150, '2025-01-20');
-    """;
   }
 
 }
