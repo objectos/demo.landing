@@ -18,7 +18,6 @@ package demo.landing.app;
 import java.util.Arrays;
 import objectos.way.Http;
 import objectos.way.Sql;
-import objectos.way.Web;
 
 /**
  * Represents the user submitted data.
@@ -29,9 +28,6 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     final Kino.Query query;
     query = http.get(Kino.Query.class);
 
-    final Web.FormData form;
-    form = Web.FormData.parse(http);
-
     return new SeatsData(
         wayRequest(http),
 
@@ -39,7 +35,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
 
         query.aux(),
 
-        form.getAllAsInt("seat", Integer.MIN_VALUE).distinct().toArray()
+        http.formParamAllAsInt("seat", Integer.MIN_VALUE).distinct().toArray()
     );
   }
 
