@@ -76,9 +76,9 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final void dbMigrations(Sql.Migrator migrator) {
+  final void dbMigrations(Sql.Migrations migrations) {
     // schema
-    LandingDemoDb.migration01(migrator);
+    LandingDemoDb.migration01(migrations);
 
     // no data
   }

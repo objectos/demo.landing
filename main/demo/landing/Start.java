@@ -122,12 +122,12 @@ abstract class Start extends App.Bootstrap {
     noteSink.send(totalTimeNote, totalTime);
   }
 
-  void dbMigrations(Sql.Migrator migrator) {
+  void dbMigrations(Sql.Migrations migrations) {
     // schema
-    LandingDemoDb.migration01(migrator);
+    LandingDemoDb.migration01(migrations);
 
     // data
-    LandingDemoDb.migration02(migrator);
+    LandingDemoDb.migration02(migrations);
   }
 
   abstract App.NoteSink noteSink();

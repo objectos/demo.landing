@@ -37,8 +37,8 @@ public final class LandingDemoDb {
 
   private LandingDemoDb() {}
 
-  public static void migration01(Sql.Migrator migrator) {
-    migrator.add("CINEMA schema v1", """
+  public static void migration01(Sql.Migrations migrations) {
+    migrations.apply("CINEMA schema v1", """
     drop schema if exists CINEMA;
     create schema CINEMA;
     set schema CINEMA;
@@ -194,8 +194,8 @@ public final class LandingDemoDb {
     """);
   }
 
-  public static void migration02(Sql.Migrator migrator) {
-    migrator.add("CINEMA data v1", """
+  public static void migration02(Sql.Migrations migrations) {
+    migrations.apply("CINEMA data v1", """
     set schema CINEMA;
 
     insert into GENRE (GENRE_ID, NAME)
