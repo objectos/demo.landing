@@ -981,9 +981,9 @@ final class Seats implements Kino.GET, Kino.POST {
       (?, ?)
     \""");
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
-    trx.add(showId);
+    trx.param(showId);
 
     trx.update();
 
@@ -1576,7 +1576,7 @@ record MovieDetails(
       MOVIE.MOVIE_ID
     \""");
 
-    trx.add(id);
+    trx.param(id);
 
     return trx.queryOptional(MovieDetails::new);
   }
@@ -1706,19 +1706,19 @@ record MovieScreening(
       SCREEN.SCREEN_ID
     \""");
 
-    trx.add(id);
+    trx.param(id);
 
     final LocalDate date;
     date = dateTime.toLocalDate();
 
-    trx.add(date);
+    trx.param(date);
 
     final LocalTime time;
     time = dateTime.toLocalTime();
 
-    trx.add(time);
+    trx.param(time);
 
-    trx.add(date);
+    trx.param(date);
 
     return trx.query(MovieScreening::new);
   }
@@ -1799,7 +1799,7 @@ record SeatsShow(
       SHOW.SHOW_ID = ?
     \""");
 
-    trx.add(id);
+    trx.param(id);
 
     return trx.queryOptional(SeatsShow::new);
   }
@@ -1839,7 +1839,7 @@ record SeatsShow(
       RESERVATION.RESERVATION_ID = ?
     \""");
 
-    trx.add(reservationId);
+    trx.param(reservationId);
   }
 
 }
@@ -1980,7 +1980,7 @@ final class SeatsGrid implements Iterable<SeatsGrid.Cell> {
       GRID.GRID_X
     \""");
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     final List<Cell> cells;
     cells = trx.query(Cell::new);
@@ -2464,7 +2464,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
       RESERVATION_ID = ?
     \""");
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     trx.update();
   }
@@ -2487,11 +2487,11 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     \""");
 
     for (int seatId : selection) {
-      trx.add(reservationId);
+      trx.param(reservationId);
 
-      trx.add(seatId);
+      trx.param(seatId);
 
-      trx.add(screenId);
+      trx.param(screenId);
 
       trx.addBatch();
     }
@@ -2516,7 +2516,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     )
     \""");
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     trx.update();
   }
@@ -2551,7 +2551,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
       and SCREENING.SCREEN_ID = SEAT.SCREEN_ID
     \""");
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     return trx.updateWithResult();
   }
@@ -2672,7 +2672,7 @@ final record ConfirmDetails(
       RESERVATION.RESERVATION_ID
     \""");
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     return trx.queryOptional(ConfirmDetails::new);
   }
@@ -2785,9 +2785,9 @@ record ConfirmData(long reservationId, boolean wayRequest) {
       and TICKET_TIME is null
     \""");
 
-    trx.add(today);
+    trx.param(today);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     return trx.updateWithResult();
   }
@@ -2908,7 +2908,7 @@ record TicketModel(
       RESERVATION.RESERVATION_ID
     \""");
 
-    trx.add(id);
+    trx.param(id);
 
     return trx.queryOptional(TicketModel::new);
   }

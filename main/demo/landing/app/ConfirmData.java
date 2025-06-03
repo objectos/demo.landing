@@ -53,9 +53,9 @@ record ConfirmData(long reservationId, boolean wayRequest) {
       and TICKET_TIME is null
     """);
 
-    trx.add(today);
+    trx.param(today);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     return trx.updateWithResult();
   }

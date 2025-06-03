@@ -106,7 +106,7 @@ final record ConfirmDetails(
       RESERVATION.RESERVATION_ID
     """);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     return trx.queryOptional(ConfirmDetails::new);
   }

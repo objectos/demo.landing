@@ -304,7 +304,7 @@ public class LocalModuleTest {
   private List<Show> queryShow(Sql.Transaction trx, LocalDate dt) {
     trx.sql("select SCREENING_ID, SHOWTIME from SHOW where SHOWDATE = ? order by 1, 2");
 
-    trx.add(dt);
+    trx.param(dt);
 
     return trx.query(Show::new);
   }

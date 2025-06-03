@@ -132,7 +132,7 @@ final class SeatsGrid implements Iterable<SeatsGrid.Cell> {
       GRID.GRID_X
     """);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     final List<Cell> cells;
     cells = trx.query(Cell::new);

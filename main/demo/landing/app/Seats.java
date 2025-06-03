@@ -68,9 +68,9 @@ final class Seats implements Kino.GET, Kino.POST {
       (?, ?)
     """);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
-    trx.add(showId);
+    trx.param(showId);
 
     trx.update();
 

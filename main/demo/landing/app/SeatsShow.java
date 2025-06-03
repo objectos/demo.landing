@@ -70,7 +70,7 @@ record SeatsShow(
       SHOW.SHOW_ID = ?
     """);
 
-    trx.add(id);
+    trx.param(id);
 
     return trx.queryOptional(SeatsShow::new);
   }
@@ -110,7 +110,7 @@ record SeatsShow(
       RESERVATION.RESERVATION_ID = ?
     """);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
   }
 
 }

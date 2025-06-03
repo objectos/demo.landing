@@ -62,7 +62,7 @@ record MovieDetails(
       MOVIE.MOVIE_ID
     """);
 
-    trx.add(id);
+    trx.param(id);
 
     return trx.queryOptional(MovieDetails::new);
   }

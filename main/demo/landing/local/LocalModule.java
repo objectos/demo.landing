@@ -121,7 +121,7 @@ public final class LocalModule implements Consumer<Http.Routing> {
       and TICKET_TIME is null
     """);
 
-    trx.add(now);
+    trx.param(now);
 
     int count;
     count = trx.update();
@@ -157,9 +157,9 @@ public final class LocalModule implements Consumer<Http.Routing> {
       and cast(LOCAL_TIME as date) = ?
     """);
 
-    trx.add(localId);
+    trx.param(localId);
 
-    trx.add(now);
+    trx.param(now);
 
     Integer _executions;
     _executions = trx.querySingle((rs, idx) -> rs.getInt(idx++));
@@ -213,9 +213,9 @@ public final class LocalModule implements Consumer<Http.Routing> {
     insert into LOCAL_LOG (LOCAL_ID, LOCAL_TIME) values (?, ?)
     """);
 
-    trx.add(id);
+    trx.param(id);
 
-    trx.add(now);
+    trx.param(now);
 
     trx.update();
   }

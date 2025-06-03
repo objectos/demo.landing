@@ -110,7 +110,7 @@ record TicketModel(
       RESERVATION.RESERVATION_ID
     """);
 
-    trx.add(id);
+    trx.param(id);
 
     return trx.queryOptional(TicketModel::new);
   }

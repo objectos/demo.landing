@@ -119,19 +119,19 @@ record MovieScreening(
       SCREEN.SCREEN_ID
     """);
 
-    trx.add(id);
+    trx.param(id);
 
     final LocalDate date;
     date = dateTime.toLocalDate();
 
-    trx.add(date);
+    trx.param(date);
 
     final LocalTime time;
     time = dateTime.toLocalTime();
 
-    trx.add(time);
+    trx.param(time);
 
-    trx.add(date);
+    trx.param(date);
 
     return trx.query(MovieScreening::new);
   }

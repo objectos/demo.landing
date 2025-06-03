@@ -64,7 +64,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
       RESERVATION_ID = ?
     """);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     trx.update();
   }
@@ -87,11 +87,11 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     """);
 
     for (int seatId : selection) {
-      trx.add(reservationId);
+      trx.param(reservationId);
 
-      trx.add(seatId);
+      trx.param(seatId);
 
-      trx.add(screenId);
+      trx.param(screenId);
 
       trx.addBatch();
     }
@@ -116,7 +116,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     )
     """);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     trx.update();
   }
@@ -151,7 +151,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
       and SCREENING.SCREEN_ID = SEAT.SCREEN_ID
     """);
 
-    trx.add(reservationId);
+    trx.param(reservationId);
 
     return trx.updateWithResult();
   }
