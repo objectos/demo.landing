@@ -181,11 +181,11 @@ final class Shell extends Kino.View {
         xl:grid-template:'b_c_a'_512rx_/_200rx_1fr_1fr
         \"""),
 
-        renderFragment(this::renderApp),
+        f(this::renderApp),
 
-        renderFragment(this::renderSourceMenu),
+        f(this::renderSourceMenu),
 
-        renderFragment(this::renderSourceCode)
+        f(this::renderSourceCode)
     );
   }
 
@@ -351,7 +351,7 @@ final class Shell extends Kino.View {
         // stores the current selected panel in the data-panel attribute
         attr(dataPanel, first.panel().value()),
 
-        renderFragment(this::renderSourceMenuItems)
+        f(this::renderSourceMenuItems)
     );
   }
 
@@ -428,7 +428,7 @@ final class Shell extends Kino.View {
 
         dataFrame("demo-source-code", builder.sourceFrame),
 
-        renderFragment(this::renderSourceCodeItems)
+        f(this::renderSourceCodeItems)
     );
   }
 
@@ -613,7 +613,7 @@ final class MovieView extends Kino.View {
         grid-template-columns:1fr_160rx
         \"""),
 
-        renderFragment(this::renderMovieDetails)
+        f(this::renderMovieDetails)
     );
 
     div(
@@ -624,7 +624,7 @@ final class MovieView extends Kino.View {
         padding:64rx_0_0
         \"""),
 
-        renderFragment(this::renderMovieScreenings)
+        f(this::renderMovieScreenings)
     );
   }
 
@@ -788,7 +788,7 @@ final class MovieView extends Kino.View {
 
                   testableNewLine(),
 
-                  renderFragment(this::renderShowtimes, screening.showtimes())
+                  f(this::renderShowtimes, screening.showtimes())
               )
 
           )
@@ -1248,7 +1248,7 @@ final class SeatsView extends Kino.View {
     div(
         dataFrame("seats-alert", Integer.toString(state)),
 
-        renderFragment(this::renderAlert)
+        f(this::renderAlert)
     );
 
     div(
@@ -1261,9 +1261,9 @@ final class SeatsView extends Kino.View {
         padding:32rx_24rx
         \"""),
 
-        renderFragment(this::renderDetails),
+        f(this::renderDetails),
 
-        renderFragment(this::renderSeats)
+        f(this::renderSeats)
     );
   }
 
@@ -1381,11 +1381,11 @@ final class SeatsView extends Kino.View {
         justify-content:start
         \"""),
 
-        renderFragment(this::renderSeatsScreen),
+        f(this::renderSeatsScreen),
 
-        renderFragment(this::renderSeatsForm),
+        f(this::renderSeatsForm),
 
-        renderFragment(this::renderSeatsAction)
+        f(this::renderSeatsAction)
     );
   }
 
@@ -1445,7 +1445,7 @@ final class SeatsView extends Kino.View {
 
         method("post"),
 
-        renderFragment(this::renderSeatsFormGrid)
+        f(this::renderSeatsFormGrid)
     );
   }
 
@@ -2220,7 +2220,7 @@ final class ConfirmView extends Kino.View {
             gap:12rx
             \"""),
 
-            renderFragment(this::renderLeft)
+            f(this::renderLeft)
         ),
 
         div(
@@ -2231,7 +2231,7 @@ final class ConfirmView extends Kino.View {
             gap:12rx
             \"""),
 
-            renderFragment(this::renderRight)
+            f(this::renderRight)
         )
     );
   }
@@ -3100,7 +3100,7 @@ final class TicketView extends Kino.View {
         padding:32rx_0_0
         \"""),
 
-        renderFragment(this::renderTickets)
+        f(this::renderTickets)
     );
   }
 
@@ -3408,7 +3408,7 @@ final class NowShowingView extends Kino.View {
         justify-content:space-evenly
         \"""),
 
-        renderFragment(this::renderItems)
+        f(this::renderItems)
     );
   }
 

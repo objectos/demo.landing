@@ -97,7 +97,7 @@ final class TicketView extends Kino.View {
         padding:32rx_0_0
         """),
 
-        renderFragment(this::renderTickets)
+        f(this::renderTickets)
     );
   }
 

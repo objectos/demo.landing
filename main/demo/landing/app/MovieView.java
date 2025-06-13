@@ -49,7 +49,7 @@ final class MovieView extends Kino.View {
         grid-template-columns:1fr_160rx
         """),
 
-        renderFragment(this::renderMovieDetails)
+        f(this::renderMovieDetails)
     );
 
     div(
@@ -60,7 +60,7 @@ final class MovieView extends Kino.View {
         padding:64rx_0_0
         """),
 
-        renderFragment(this::renderMovieScreenings)
+        f(this::renderMovieScreenings)
     );
   }
 
@@ -224,7 +224,7 @@ final class MovieView extends Kino.View {
 
                   testableNewLine(),
 
-                  renderFragment(this::renderShowtimes, screening.showtimes())
+                  f(this::renderShowtimes, screening.showtimes())
               )
 
           )

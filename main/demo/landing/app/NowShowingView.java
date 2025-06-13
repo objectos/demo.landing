@@ -58,7 +58,7 @@ final class NowShowingView extends Kino.View {
         justify-content:space-evenly
         """),
 
-        renderFragment(this::renderItems)
+        f(this::renderItems)
     );
   }
 

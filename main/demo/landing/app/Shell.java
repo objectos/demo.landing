@@ -100,11 +100,11 @@ final class Shell extends Kino.View {
         xl:grid-template:'b_c_a'_512rx_/_200rx_1fr_1fr
         """),
 
-        renderFragment(this::renderApp),
+        f(this::renderApp),
 
-        renderFragment(this::renderSourceMenu),
+        f(this::renderSourceMenu),
 
-        renderFragment(this::renderSourceCode)
+        f(this::renderSourceCode)
     );
   }
 
@@ -270,7 +270,7 @@ final class Shell extends Kino.View {
         // stores the current selected panel in the data-panel attribute
         attr(dataPanel, first.panel().value()),
 
-        renderFragment(this::renderSourceMenuItems)
+        f(this::renderSourceMenuItems)
     );
   }
 
@@ -347,7 +347,7 @@ final class Shell extends Kino.View {
 
         dataFrame("demo-source-code", builder.sourceFrame),
 
-        renderFragment(this::renderSourceCodeItems)
+        f(this::renderSourceCodeItems)
     );
   }
 

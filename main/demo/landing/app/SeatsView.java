@@ -82,7 +82,7 @@ final class SeatsView extends Kino.View {
     div(
         dataFrame("seats-alert", Integer.toString(state)),
 
-        renderFragment(this::renderAlert)
+        f(this::renderAlert)
     );
 
     div(
@@ -95,9 +95,9 @@ final class SeatsView extends Kino.View {
         padding:32rx_24rx
         """),
 
-        renderFragment(this::renderDetails),
+        f(this::renderDetails),
 
-        renderFragment(this::renderSeats)
+        f(this::renderSeats)
     );
   }
 
@@ -215,11 +215,11 @@ final class SeatsView extends Kino.View {
         justify-content:start
         """),
 
-        renderFragment(this::renderSeatsScreen),
+        f(this::renderSeatsScreen),
 
-        renderFragment(this::renderSeatsForm),
+        f(this::renderSeatsForm),
 
-        renderFragment(this::renderSeatsAction)
+        f(this::renderSeatsAction)
     );
   }
 
@@ -279,7 +279,7 @@ final class SeatsView extends Kino.View {
 
         method("post"),
 
-        renderFragment(this::renderSeatsFormGrid)
+        f(this::renderSeatsFormGrid)
     );
   }
 

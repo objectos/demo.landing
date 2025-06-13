@@ -69,7 +69,7 @@ final class ConfirmView extends Kino.View {
             gap:12rx
             """),
 
-            renderFragment(this::renderLeft)
+            f(this::renderLeft)
         ),
 
         div(
@@ -80,7 +80,7 @@ final class ConfirmView extends Kino.View {
             gap:12rx
             """),
 
-            renderFragment(this::renderRight)
+            f(this::renderRight)
         )
     );
   }
