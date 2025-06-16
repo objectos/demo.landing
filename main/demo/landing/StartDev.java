@@ -23,7 +23,6 @@ import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Css;
 import objectos.way.Http;
-import objectos.way.Http.Routing;
 import objectos.way.Note;
 import objectos.way.Sql;
 
@@ -101,7 +100,7 @@ public final class StartDev extends Start {
       instance = constructor.newInstance(injector, original);
 
       final Consumer<Http.Routing> module;
-      module = (Consumer<Routing>) instance;
+      module = (Consumer<Http.Routing>) instance;
 
       return Http.Handler.create(module);
     }
