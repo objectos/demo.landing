@@ -136,8 +136,11 @@ public final class StartTest extends Start {
     final String css;
     css = styleSheet.generate();
 
+    final Script.Library library;
+    library = Script.Library.of();
+
     final String script;
-    script = Script.getSource();
+    script = library.toString();
 
     return html -> {
       html.style(css);

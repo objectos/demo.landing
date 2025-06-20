@@ -26,6 +26,7 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.util.List;
 import java.util.function.IntFunction;
+import objectos.way.Media;
 import objectos.way.Sql;
 import objectos.way.Web;
 import org.h2.tools.SimpleResultSet;
@@ -476,8 +477,8 @@ public final class LandingDemoDb {
     return rs;
   }
 
-  public static void createPosters(Sql.Database db, Web.Resources.Config config) {
-    record Poster(int id, byte[] contents) {
+  public static void createPosters(Sql.Database db, Web.Resources.Options options) {
+    record Poster(int id, byte[] contents) implements Media.Bytes {
       Poster(ResultSet rs, int idx) throws SQLException {
         this(
             rs.getInt(idx++),
@@ -485,8 +486,18 @@ public final class LandingDemoDb {
         );
       }
 
-      public void writeTo(Web.Resources.Config config) {
-        config.addBinaryFile("/demo/landing/poster" + id + ".jpg", contents);
+      public final String path() {
+        return "/demo/landing/poster" + id + ".jpg";
+      }
+
+      @Override
+      public final String contentType() {
+        return "image/jpeg";
+      }
+
+      @Override
+      public final byte[] toByteArray() {
+        return contents;
       }
     }
 
@@ -512,7 +523,7 @@ public final class LandingDemoDb {
       trx.commit();
 
       for (Poster poster : posters) {
-        poster.writeTo(config);
+        options.addMedia(poster.path(), poster);
       }
     } finally {
       trx.close();

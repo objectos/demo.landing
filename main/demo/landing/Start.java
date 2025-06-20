@@ -16,7 +16,6 @@
 package demo.landing;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.sql.SQLException;
 import objectos.way.App;
@@ -249,7 +248,7 @@ abstract class Start extends App.Bootstrap {
 
         config.addDirectory(Path.of("web-resources"));
 
-        config.addTextFile("/ui/script.js", Script.getSource(), StandardCharsets.UTF_8);
+        config.addMedia("/ui/script.js", Script.Library.of());
 
         final Sql.Database db;
         db = injector.getInstance(Sql.Database.class);
