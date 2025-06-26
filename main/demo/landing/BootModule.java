@@ -17,11 +17,10 @@ package demo.landing;
 
 import demo.landing.dev.DevModule;
 import demo.landing.local.LocalModule;
-import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Http;
 
-public final class BootModule implements Consumer<Http.Routing> {
+public final class BootModule implements Http.Routing.Module {
 
   private final App.Injector injector;
 
@@ -42,7 +41,7 @@ public final class BootModule implements Consumer<Http.Routing> {
   }
 
   @Override
-  public final void accept(Http.Routing routing) {
+  public final void configure(Http.Routing routing) {
     routing.install(
         new DevModule(injector)
     );

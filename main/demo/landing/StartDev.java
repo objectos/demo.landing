@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.nio.file.Path;
 import java.util.HexFormat;
-import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Css;
 import objectos.way.Http;
@@ -81,7 +80,6 @@ public final class StartDev extends Start {
   }
 
   private record Reloader(App.Injector injector) implements App.Reloader.HandlerFactory {
-    @SuppressWarnings("unchecked")
     @Override
     public final Http.Handler reload(ClassLoader loader) throws Exception {
       final Class<?> bootClass;
@@ -99,10 +97,10 @@ public final class StartDev extends Start {
       final Object instance;
       instance = constructor.newInstance(injector, original);
 
-      final Consumer<Http.Routing> module;
-      module = (Consumer<Http.Routing>) instance;
+      final Http.Routing.Module module;
+      module = (Http.Routing.Module) instance;
 
-      return Http.Handler.create(module);
+      return Http.Handler.of(module);
     }
   }
 

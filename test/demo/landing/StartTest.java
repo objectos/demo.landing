@@ -164,7 +164,7 @@ public final class StartTest extends Start {
     module = new BootModule(injector);
 
     final Http.Handler handler;
-    handler = Http.Handler.create(module);
+    handler = Http.Handler.of(module);
 
     Testing.HANDLER = handler;
 

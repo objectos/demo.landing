@@ -66,7 +66,7 @@ public final class DevModule implements Http.Routing.Module {
       path.allow(Http.Method.GET, this::styles);
     });
 
-    routing.path("/ui/*", webResources::handlePath);
+    routing.path("/ui/{}", webResources::handlePath);
   }
 
   private void index(Http.Exchange http) {
