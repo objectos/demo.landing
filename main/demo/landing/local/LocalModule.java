@@ -21,13 +21,12 @@ import demo.landing.LandingDemoConfig;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Http;
 import objectos.way.Note;
 import objectos.way.Sql;
 
-public final class LocalModule implements Consumer<Http.Routing> {
+public final class LocalModule implements Http.Routing.Module {
 
   private static final Note.Int1 CLEAR_RESERVATION = Note.Int1.create(LocalModule.class, "Clear Reservation", Note.INFO);
 
@@ -54,7 +53,7 @@ public final class LocalModule implements Consumer<Http.Routing> {
   }
 
   @Override
-  public final void accept(Http.Routing routing) {
+  public final void configure(Http.Routing routing) {
     routing.path("/demo/landing/clear-reservation", path -> {
       path.allow(Http.Method.POST, transactional(this::clearReservation));
     });

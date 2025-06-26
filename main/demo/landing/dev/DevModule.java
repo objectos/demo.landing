@@ -17,16 +17,14 @@ package demo.landing.dev;
 
 import demo.landing.LandingDemoConfig;
 import demo.landing.app.Kino;
-import java.util.function.Consumer;
 import objectos.way.App;
 import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
-import objectos.way.Http.Routing;
 import objectos.way.Media;
 import objectos.way.Web;
 
-public final class DevModule implements Consumer<Http.Routing> {
+public final class DevModule implements Http.Routing.Module {
 
   private final App.Injector injector;
 
@@ -46,7 +44,7 @@ public final class DevModule implements Consumer<Http.Routing> {
   }
 
   @Override
-  public final void accept(Routing routing) {
+  public final void configure(Http.Routing routing) {
     routing.path("/", path -> {
       path.allow(Http.Method.GET, Http.Handler.movedPermanently("/index.html"));
     });
