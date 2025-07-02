@@ -46,7 +46,7 @@ public final class DevModule implements Http.Routing.Module {
   @Override
   public final void configure(Http.Routing routing) {
     routing.path("/", path -> {
-      path.allow(Http.Method.GET, Http.Handler.movedPermanently("/index.html"));
+      path.allow(Http.Method.GET, http -> http.movedPermanently("/index.html"));
     });
 
     routing.path("/index.html", path -> {
