@@ -42,62 +42,14 @@ abstract class Start extends App.Bootstrap {
     final long startTime;
     startTime = System.currentTimeMillis();
 
-    // Context
-    final App.Injector.Builder ctx;
-    ctx = App.Injector.Builder.create();
-
-    // NoteSink
-    final App.NoteSink noteSink;
-    noteSink = noteSink();
-
-    ctx.putInstance(Note.Sink.class, noteSink);
-
-    // bootstrap start event
-    final Note.Ref0 startNote;
-    startNote = Note.Ref0.create(getClass(), "S", Note.INFO);
-
-    noteSink.send(startNote);
-
-    // App.ShutdownHook
-    final App.ShutdownHook shutdownHook;
-    shutdownHook = App.ShutdownHook.create(config -> config.noteSink(noteSink));
-
-    shutdownHook.registerIfPossible(noteSink);
-
-    ctx.putInstance(App.ShutdownHook.class, shutdownHook);
-
-    // Sql.Database
-    final Sql.Database db;
-    db = db(ctx);
-
-    ctx.putInstance(Sql.Database.class, db);
-
-    // apply migrations
-    db.migrate(this::dbMigrations);
-
-    // Web.Resources
-    final Web.Resources webResources;
-    webResources = webResources(ctx);
-
-    shutdownHook.register(webResources);
-
-    ctx.putInstance(Web.Resources.class, webResources);
-
-    // Application Config
-    final LandingDemoConfig config;
-    config = config(ctx);
-
-    ctx.putInstance(LandingDemoConfig.class, config);
-
-    // Head component
-    final Html.Component headComponent;
-    headComponent = headComponent(ctx);
-
-    ctx.putInstance(Html.Component.class, headComponent);
-
-    // Injector
     final App.Injector injector;
-    injector = injector(ctx);
+    injector = App.Injector.create(this::injector);
+
+    final Note.Sink noteSink;
+    noteSink = injector.getInstance(Note.Sink.class);
+
+    final App.ShutdownHook shutdownHook;
+    shutdownHook = injector.getInstance(App.ShutdownHook.class);
 
     // Http.Handler
     final Http.Handler serverHandler;
@@ -121,15 +73,56 @@ abstract class Start extends App.Bootstrap {
     noteSink.send(totalTimeNote, totalTime);
   }
 
-  void dbMigrations(Sql.Migrations migrations) {
-    // schema
-    LandingDemoDb.migration01(migrations);
+  void injector(App.Injector.Options opts) {
+    // Note.Sink
+    final Note.Sink noteSink;
+    noteSink = noteSink();
 
-    // data
-    LandingDemoDb.migration02(migrations);
+    opts.putInstance(Note.Sink.class, noteSink());
+
+    // bootstrap start event
+    final Note.Ref0 startNote;
+    startNote = Note.Ref0.create(getClass(), "S", Note.INFO);
+
+    noteSink.send(startNote);
+
+    // App.ShutdownHook
+    final App.ShutdownHook shutdownHook;
+    shutdownHook = App.ShutdownHook.create(config -> config.noteSink(noteSink));
+
+    shutdownHook.registerIfPossible(noteSink);
+
+    opts.putInstance(App.ShutdownHook.class, shutdownHook);
+
+    // Sql.Database
+    final Sql.Database db;
+    db = db(opts);
+
+    opts.putInstance(Sql.Database.class, db);
+
+    // apply migrations
+    db.migrate(this::dbMigrations);
+
+    // Web.Resources
+    final Web.Resources webResources;
+    webResources = webResources(opts);
+
+    shutdownHook.register(webResources);
+
+    opts.putInstance(Web.Resources.class, webResources);
+
+    // Application Config
+    final LandingDemoConfig config;
+    config = config(opts);
+
+    opts.putInstance(LandingDemoConfig.class, config);
+
+    // Head component
+    final Html.Component headComponent;
+    headComponent = headComponent(opts);
+
+    opts.putInstance(Html.Component.class, headComponent);
   }
-
-  abstract App.NoteSink noteSink();
 
   private Sql.Database db(App.Injector injector) {
     try {
@@ -155,6 +148,16 @@ abstract class Start extends App.Bootstrap {
       throw App.serviceFailed("Sql.Database", e);
     }
   }
+
+  void dbMigrations(Sql.Migrations migrations) {
+    // schema
+    LandingDemoDb.migration01(migrations);
+
+    // data
+    LandingDemoDb.migration02(migrations);
+  }
+
+  abstract App.NoteSink noteSink();
 
   JdbcConnectionPool connectionPool() throws SQLException {
     Path relative;
@@ -267,8 +270,6 @@ abstract class Start extends App.Bootstrap {
       html.script(html.src("/ui/script.js"));
     };
   }
-
-  abstract App.Injector injector(App.Injector.Builder ctx);
 
   abstract Http.Handler serverHandler(App.Injector injector);
 

@@ -67,16 +67,16 @@ public final class StartDev extends Start {
   }
 
   @Override
-  final App.Injector injector(App.Injector.Builder ctx) {
+  final void injector(App.Injector.Options opts) {
+    super.injector(opts);
+
     final Note.Sink noteSink;
-    noteSink = ctx.getInstance(Note.Sink.class);
+    noteSink = opts.getInstance(Note.Sink.class);
 
     final Css.StyleSheet css;
     css = css(noteSink, classOutput);
 
-    ctx.putInstance(Css.StyleSheet.class, css);
-
-    return ctx.build();
+    opts.putInstance(Css.StyleSheet.class, css);
   }
 
   private record Reloader(App.Injector injector) implements App.Reloader.HandlerFactory {

@@ -150,10 +150,10 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final App.Injector injector(App.Injector.Builder ctx) {
-    ctx.putInstance(FixedGenerator.class, fixedGenerator);
+  final void injector(App.Injector.Options opts) {
+    super.injector(opts);
 
-    return ctx.build();
+    opts.putInstance(FixedGenerator.class, fixedGenerator);
   }
 
   @Override
