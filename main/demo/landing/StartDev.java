@@ -40,7 +40,7 @@ public final class StartDev extends Start {
 
   @Override
   final App.NoteSink noteSink() {
-    return App.NoteSink.OfConsole.create();
+    return App.NoteSink.sysout();
   }
 
   @Override
@@ -107,15 +107,15 @@ public final class StartDev extends Start {
   @Override
   final Http.Handler serverHandler(App.Injector injector) {
     try {
-      return App.Reloader.create(config -> {
-        config.handlerFactory(new Reloader(injector));
+      return App.Reloader.create(opts -> {
+        opts.handlerFactory(new Reloader(injector));
 
-        config.moduleOf(StartDev.class);
+        opts.moduleOf(StartDev.class);
 
         final Note.Sink noteSink;
         noteSink = injector.getInstance(Note.Sink.class);
 
-        config.noteSink(noteSink);
+        opts.noteSink(noteSink);
       });
     } catch (IOException e) {
       throw App.serviceFailed("App.Reloader", e);

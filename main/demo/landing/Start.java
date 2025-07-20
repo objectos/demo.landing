@@ -73,12 +73,12 @@ abstract class Start extends App.Bootstrap {
     noteSink.send(totalTimeNote, totalTime);
   }
 
-  void injector(App.Injector.Options opts) {
+  void injector(App.Injector.Options ctx) {
     // Note.Sink
     final Note.Sink noteSink;
     noteSink = noteSink();
 
-    opts.putInstance(Note.Sink.class, noteSink());
+    ctx.putInstance(Note.Sink.class, noteSink);
 
     // bootstrap start event
     final Note.Ref0 startNote;
@@ -88,40 +88,40 @@ abstract class Start extends App.Bootstrap {
 
     // App.ShutdownHook
     final App.ShutdownHook shutdownHook;
-    shutdownHook = App.ShutdownHook.create(config -> config.noteSink(noteSink));
+    shutdownHook = App.ShutdownHook.create(opts -> opts.noteSink(noteSink));
 
     shutdownHook.registerIfPossible(noteSink);
 
-    opts.putInstance(App.ShutdownHook.class, shutdownHook);
+    ctx.putInstance(App.ShutdownHook.class, shutdownHook);
 
     // Sql.Database
     final Sql.Database db;
-    db = db(opts);
+    db = db(ctx);
 
-    opts.putInstance(Sql.Database.class, db);
+    ctx.putInstance(Sql.Database.class, db);
 
     // apply migrations
     db.migrate(this::dbMigrations);
 
     // Web.Resources
     final Web.Resources webResources;
-    webResources = webResources(opts);
+    webResources = webResources(ctx);
 
     shutdownHook.register(webResources);
 
-    opts.putInstance(Web.Resources.class, webResources);
+    ctx.putInstance(Web.Resources.class, webResources);
 
     // Application Config
     final LandingDemoConfig config;
-    config = config(opts);
+    config = config(ctx);
 
-    opts.putInstance(LandingDemoConfig.class, config);
+    ctx.putInstance(LandingDemoConfig.class, config);
 
     // Head component
     final Html.Component headComponent;
-    headComponent = headComponent(opts);
+    headComponent = headComponent(ctx);
 
-    opts.putInstance(Html.Component.class, headComponent);
+    ctx.putInstance(Html.Component.class, headComponent);
   }
 
   private Sql.Database db(App.Injector injector) {
@@ -236,27 +236,27 @@ abstract class Start extends App.Bootstrap {
 
   private Web.Resources webResources(App.Injector injector) {
     try {
-      return Web.Resources.create(config -> {
+      return Web.Resources.create(opts -> {
         final Note.Sink noteSink;
         noteSink = injector.getInstance(Note.Sink.class);
 
-        config.noteSink(noteSink);
+        opts.noteSink(noteSink);
 
-        config.contentTypes("""
+        opts.contentTypes("""
         .css: text/css; charset=utf-8
         .jpg: image/jpeg
         .js: text/javascript; charset=utf-8
         .woff2: font/woff2
         """);
 
-        config.addDirectory(Path.of("web-resources"));
+        opts.addDirectory(Path.of("web-resources"));
 
-        config.addMedia("/ui/script.js", Script.Library.of());
+        opts.addMedia("/ui/script.js", Script.Library.of());
 
         final Sql.Database db;
         db = injector.getInstance(Sql.Database.class);
 
-        LandingDemoDb.createPosters(db, config);
+        LandingDemoDb.createPosters(db, opts);
       });
     } catch (IOException e) {
       throw App.serviceFailed("Web.Resources", e);
@@ -278,14 +278,14 @@ abstract class Start extends App.Bootstrap {
   AutoCloseable server(Note.Sink noteSink, Http.Handler handler) {
     try {
       final Http.Server server;
-      server = Http.Server.create(config -> {
-        config.handler(handler);
+      server = Http.Server.create(opts -> {
+        opts.handler(handler);
 
-        config.bufferSize(1024, 4096);
+        opts.bufferSize(1024, 4096);
 
-        config.noteSink(noteSink);
+        opts.noteSink(noteSink);
 
-        config.port(serverPort());
+        opts.port(serverPort());
       });
 
       server.start();

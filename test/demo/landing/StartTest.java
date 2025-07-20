@@ -61,8 +61,8 @@ public final class StartTest extends Start {
 
   @Override
   final App.NoteSink noteSink() {
-    return App.NoteSink.OfConsole.create(config -> {
-      config.filter(note -> note.hasAny(Note.DEBUG, Note.INFO, Note.WARN, Note.ERROR));
+    return App.NoteSink.ofAppendable(System.out, opts -> {
+      opts.filter(note -> note.hasAny(Note.DEBUG, Note.INFO, Note.WARN, Note.ERROR));
     });
   }
 

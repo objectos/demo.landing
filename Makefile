@@ -182,8 +182,7 @@ TEST_ADD_EXPORTS += demo.landing/demo.landing.local=org.testng
 TEST_ADD_READS := demo.landing=org.testng
 
 ## test args
-TEST_ARGS := -d $(WORK)/test-output
-TEST_ARGS += $(TEST)/testng.xml
+TEST_ARGS := $(empty) $(empty)
 
 include make/java-test.mk
 
