@@ -201,7 +201,7 @@ DEV_JVM_OPTS += -agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=lo
 endif
 
 ## dev app args
-DEV_APP_ARGS := --class-output $(CLASS_OUTPUT)
+DEV_APP_ARGS := $(empty) $(empty)
 
 include make/java-dev.mk
 
