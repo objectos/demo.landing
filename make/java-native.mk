@@ -82,13 +82,10 @@ NATIVE_IMAGEX += --module $(MODULE)/$(NATIVE_MAIN)
 .PHONY: native
 native: $(NATIVE_MODULE_PATH) $(NATIVE_OUTPUT_FILE)
 
-.PHONY: native@clean
-native@clean:
+.PHONY: native-clean
+native-clean:
 	rm -f $(NATIVE_MODULE_PATH) $(NATIVE_OUTPUT_FILE)
 
-.PHONY: re-native
-re-native: native@clean native
-	
 $(NATIVE_MODULE_PATH): $(COMPILE_MARKER) $(NATIVE_RESOLUTION_FILES)
 	echo $(CLASS_OUTPUT) > $@.tmp
 ifdef COMPILE_RESOLUTION_FILES
