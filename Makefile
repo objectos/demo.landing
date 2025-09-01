@@ -21,7 +21,7 @@
 ## Coordinates
 GROUP_ID := br.com.objectos
 ARTIFACT_ID := demo.landing
-VERSION := 002-SNAPSHOT
+VERSION := 002
 MODULE := $(ARTIFACT_ID)
 
 ## javac --release option
@@ -33,7 +33,7 @@ REMOTE_REPOS := https://repo.maven.apache.org/maven2
 ## Dependencies
 H2_SRC := com.h2database/h2/2.3.232
 H2_LOCAL := br.com.objectos/h2/2.2.232
-WAY := br.com.objectos/objectos.way/0.2.6-SNAPSHOT
+WAY := br.com.objectos/objectos.way/0.2.7
 
 SLF4J_API := org.slf4j/slf4j-api/1.7.36
 SLF4J_NOP := org.slf4j/slf4j-nop/1.7.36

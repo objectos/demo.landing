@@ -180,7 +180,7 @@ abstract class Start extends App.Bootstrap {
 
       config.scanDirectory(directory);
 
-      config.theme("""
+      config.theme(":root", """
       --font-sans: 'InterVariable', var(--default-font-sans);
       --font-mono: 'Hack', var(--default-font-mono);
       --color-body: var(--color-white);
@@ -212,7 +212,7 @@ abstract class Start extends App.Bootstrap {
       --color-text-secondary: var(--color-gray-600);
       """);
 
-      config.theme("@media (prefers-color-scheme: dark)", """
+      config.theme("@media (prefers-color-scheme: dark)", ":root", """
       --color-body: var(--color-neutral-800);
       --color-border: var(--color-neutral-600);
       --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, white 15%);
