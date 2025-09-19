@@ -55,7 +55,7 @@ final class DevView extends Html.Template {
             link(rel("shortcut icon"), type("image/vnd.microsoft.icon"), href("/images/favicon.ico")),
             link(rel("preload"), href("/ui/fonts.css"), as("style")),
             link(rel("stylesheet"), type("text/css"), href("/ui/fonts.css")),
-            renderComponent(head)
+            c(head)
         ),
 
         renderBody()
@@ -171,7 +171,7 @@ final class DevView extends Html.Template {
                 """)
             ),
 
-            renderComponent(demo)
+            c(demo)
         )
     );
   }

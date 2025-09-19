@@ -192,7 +192,7 @@ final class Shell extends Kino.View {
 
             dataFrame("demo-app", builder.appFrame),
 
-            renderComponent(builder.app)
+            c(builder.app)
         )
     );
   }
@@ -265,10 +265,10 @@ final class Shell extends Kino.View {
         dataFrame("demo-source-menu", builder.sourceFrame),
 
         // stores the current selected button in the data-button attribute
-        attr(dataButton, first.button().value()),
+        attr(dataButton, first.button().attrValue()),
 
         // stores the current selected panel in the data-panel attribute
-        attr(dataPanel, first.panel().value()),
+        attr(dataPanel, first.panel().attrValue()),
 
         f(this::renderSourceMenuItems)
     );
@@ -319,9 +319,9 @@ final class Shell extends Kino.View {
             selfPanel.attr(dataSelected, "true");
 
             // stores selected
-            frame.attr(dataButton, item.button().value());
+            frame.attr(dataButton, item.button().attrValue());
 
-            frame.attr(dataPanel, item.panel().value());
+            frame.attr(dataPanel, item.panel().attrValue());
           }),
 
           text(item.name())
@@ -392,7 +392,7 @@ final class Shell extends Kino.View {
               flex-grow:1
               """),
 
-              renderComponent(
+              c(
                   Syntax.highlight(Syntax.JAVA, source)
               )
           )

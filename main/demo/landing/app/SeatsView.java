@@ -305,9 +305,9 @@ final class SeatsView extends Kino.View {
 
             type("checkbox"),
 
-            cell.checked() ? checked() : noop(),
+            cell.checked() ? checked : noop(),
 
-            cell.reserved() ? disabled() : noop(),
+            cell.reserved() ? disabled : noop(),
 
             value(seatIdValue)
         );
