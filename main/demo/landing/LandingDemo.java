@@ -18,6 +18,7 @@ package demo.landing;
 import demo.landing.app.Kino;
 import java.util.Objects;
 import objectos.way.App;
+import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
 
@@ -109,6 +110,10 @@ public interface LandingDemo {
 
   static LandingDemo create(LandingDemoConfig config) {
     return Kino.create(config);
+  }
+
+  static Css.Library styles() {
+    return Kino.styles();
   }
 
   Html.Component get(Http.Exchange http);

@@ -39,7 +39,7 @@ public final class Kino implements LandingDemo {
   }
 
   /**
-   * Creates a new {@code Demo} instance with the specified configuration.
+   * Creates a new {@code Kino} instance with the specified configuration.
    */
   public static Kino create(LandingDemoConfig config) {
     Objects.requireNonNull(config, "config == null");
@@ -48,6 +48,12 @@ public final class Kino implements LandingDemo {
     ctx = Ctx.of(config);
 
     return new Kino(ctx);
+  }
+
+  /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
+  /// @return a new instance of the demo's `Css.StyleSheet` configuration
+  public static Css.Library styles() {
+    return new KinoStyles();
   }
 
   /**
@@ -155,21 +161,20 @@ public final class Kino implements LandingDemo {
    * Base HTML template of the application. Provides a utility methods for
    * rendering UI fragments common to the application.
    */
-  @Css.Source // Indicates to the CSS Generator that it should scan this class for CSS utilities.
   static abstract class View extends Html.Template {
 
     static final Html.ClassName PRIMARY = Html.ClassName.ofText("""
     appearance:none
-    background-color:btn-primary
-    color:btn-primary-text
+    background-color:var(--color-btn-primary)
+    color:var(--color-btn-primary-text)
     cursor:pointer
     display:flex
     font-size:14rx
     min-height:48rx
     padding:14rx_63rx_14rx_15rx
 
-    active:background-color:btn-primary-active
-    hover:background-color:btn-primary-hover
+    active/background-color:var(--color-btn-primary-active)
+    hover/background-color:var(--color-btn-primary-hover)
     """);
 
     //
@@ -216,8 +221,8 @@ public final class Kino implements LandingDemo {
           margin:6rx_0_0_-6rx
           position:absolute
 
-          active:background-color:btn-ghost-active
-          hover:background-color:btn-ghost-hover
+          active/background-color:var(--color-btn-ghost-active)
+          hover/background-color:var(--color-btn-ghost-hover)
           """),
 
           dataOnClick(this::navigate),

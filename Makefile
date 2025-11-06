@@ -25,7 +25,7 @@ VERSION := 003-SNAPSHOT
 MODULE := $(ARTIFACT_ID)
 
 ## javac --release option
-JAVA_RELEASE := 24
+JAVA_RELEASE := 25
 
 ## Maven interop
 REMOTE_REPOS := https://repo.maven.apache.org/maven2
@@ -33,7 +33,7 @@ REMOTE_REPOS := https://repo.maven.apache.org/maven2
 ## Dependencies
 H2_SRC := com.h2database/h2/2.3.232
 H2_LOCAL := br.com.objectos/h2/2.2.232
-WAY := br.com.objectos/objectos.way/0.2.9-SNAPSHOT
+WAY := br.com.objectos/objectos.way/0.3.0-SNAPSHOT
 
 SLF4J_API := org.slf4j/slf4j-api/1.7.36
 SLF4J_NOP := org.slf4j/slf4j-nop/1.7.36

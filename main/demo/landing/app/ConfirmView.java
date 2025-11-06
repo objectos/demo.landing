@@ -18,10 +18,8 @@ package demo.landing.app;
 import demo.landing.app.Kino.Page;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import objectos.way.Css;
 import objectos.way.Html;
 
-@Css.Source
 final class ConfirmView extends Kino.View {
 
   private final Kino.Ctx ctx;
@@ -49,16 +47,16 @@ final class ConfirmView extends Kino.View {
 
     div(
         css("""
-        border:1px_solid_border
+        border:1px_solid_var(--color-border)
         display:flex
         gap:24rx
         margin:32rx_0
         overflow-x:auto
         padding:32rx_24rx
 
-        h3:font-size:24rx
-        h3:font-weight:300
-        h3:padding-bottom:16rx
+        &_h3/font-size:24rx
+        &_h3/font-weight:300
+        &_h3/padding-bottom:16rx
         """),
 
         div(
@@ -157,7 +155,7 @@ final class ConfirmView extends Kino.View {
 
     div(
         css("""
-        border-top:1px_solid_border
+        border-top:1px_solid_var(--color-border)
         display:flex
         font-size:14rx
         justify-content:space-between

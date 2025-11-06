@@ -16,12 +16,10 @@
 package demo.landing.app;
 
 import java.util.List;
-import objectos.way.Css;
 
 /**
  * Movie details and screening selection view.
  */
-@Css.Source
 final class MovieView extends Kino.View {
 
   private final Kino.Ctx ctx;
@@ -80,8 +78,8 @@ final class MovieView extends Kino.View {
             font-size:14rx
             grid-template-columns:repeat(2,1fr)
 
-            dt:font-weight:600
-            dt:padding-top:12rx
+            &_dt/font-weight:600
+            &_dt/padding-top:12rx
             """),
 
             div(
@@ -159,7 +157,7 @@ final class MovieView extends Kino.View {
     for (MovieScreening screening : screenings) {
       div(
           css("""
-          border:1px_solid_border
+          border:1px_solid_var(--color-border)
           display:flex
           gap:32rx
           padding:16rx
@@ -248,13 +246,13 @@ final class MovieView extends Kino.View {
       li(
           a(
               css("""
-              border:1px_solid_border
-              border-radius:9999rx
+              border:1px_solid_var(--color-border)
+              border-radius:9999px
               display:flex
               padding:8rx_16rx
 
-              active:background-color:btn-ghost-active
-              hover:background-color:btn-ghost-hover
+              active/background-color:var(--color-btn-ghost-active)
+              hover/background-color:var(--color-btn-ghost-hover)
               """),
 
               dataOnClick(this::navigate),

@@ -15,9 +15,6 @@
  */
 package demo.landing.app;
 
-import objectos.way.Css;
-
-@Css.Source
 final class NotFoundView extends Kino.View {
 
   @Override

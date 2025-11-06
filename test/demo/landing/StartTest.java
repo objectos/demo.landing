@@ -18,7 +18,6 @@ package demo.landing;
 import demo.landing.app.FixedClock;
 import demo.landing.app.FixedGenerator;
 import demo.landing.app.Testing;
-import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
@@ -34,8 +33,6 @@ import org.h2.jdbcx.JdbcConnectionPool;
 import org.testng.TestNG;
 
 public final class StartTest extends Start {
-
-  private final Path classOutput = Path.of("work", "main");
 
   private FixedGenerator fixedGenerator;
 
@@ -127,11 +124,15 @@ public final class StartTest extends Start {
 
   @Override
   final Html.Component headComponent(App.Injector injector) {
-    final Note.Sink noteSink;
-    noteSink = injector.getInstance(Note.Sink.class);
-
     final Css.StyleSheet styleSheet;
-    styleSheet = css(noteSink, classOutput);
+    styleSheet = Css.StyleSheet.create(opts -> {
+      final Note.Sink noteSink;
+      noteSink = injector.getInstance(Note.Sink.class);
+
+      opts.noteSink(noteSink);
+
+      opts.include(LandingDemo.styles());
+    });
 
     final String css;
     css = styleSheet.generate();

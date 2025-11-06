@@ -17,9 +17,7 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import objectos.way.Css;
 
-@Css.Source
 final class TicketView extends Kino.View {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
@@ -47,7 +45,7 @@ final class TicketView extends Kino.View {
             Kino.Icon.RECEIPT,
 
             css("""
-            border:1px_solid_border
+            border:1px_solid_var(--color-border)
             border-radius:9999px
             height:auto
             inset:-80rx_0_auto_auto
@@ -61,7 +59,7 @@ final class TicketView extends Kino.View {
 
     dl(
         css("""
-        border:1px_solid_border
+        border:1px_solid_var(--color-border)
         display:flex
         flex-direction:column
         gap:4rx
@@ -105,7 +103,7 @@ final class TicketView extends Kino.View {
     for (var item : model.items()) {
       div(
           css("""
-          border:1px_solid_border
+          border:1px_solid_var(--color-border)
           display:flex
           justify-content:space-between
           padding:16rx

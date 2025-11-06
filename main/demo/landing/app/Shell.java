@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
-import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Syntax;
 
@@ -27,7 +26,6 @@ import objectos.way.Syntax;
  * The demo UI shell responsible for displaying the application on the
  * top/right and the source code on the bottom/left.
  */
-@Css.Source // Indicates to the CSS Generator that it should scan this class for CSS utilities.
 final class Shell extends Kino.View {
 
   static final class Builder {
@@ -95,9 +93,9 @@ final class Shell extends Kino.View {
         display:grid
         grid-template:'a'_448rx_'b'_auto_'c'_448rx_/_1fr
 
-        lg:grid-template:'c_a'_512rx_'b_b'_auto_/_1fr_1fr
+        lg/grid-template:'c_a'_512rx_'b_b'_auto_/_1fr_1fr
 
-        xl:grid-template:'b_c_a'_512rx_/_200rx_1fr_1fr
+        xl/grid-template:'b_c_a'_512rx_/_200rx_1fr_1fr
         """),
 
         f(this::renderApp),
@@ -114,20 +112,20 @@ final class Shell extends Kino.View {
         APP,
 
         css("""
-        border:1px_solid_border
-        overflow:auto
+        border:1px_solid_var(--color-border)
         grid-area:a
+        overflow:auto
         position:relative
 
-        lg:border-bottom-width:1px
-        lg:border-left-width:0px
+        lg/border-bottom-width:1px
+        lg/border-left-width:0px
         """),
 
         div(
             css("""
             align-items:center
-            background-color:layer
-            color:gray-500
+            background-color:var(--color-layer)
+            color:var(--color-gray-500)
             display:flex
             height:64rx
             justify-content:space-between
@@ -170,8 +168,8 @@ final class Shell extends Kino.View {
                 display:flex
                 padding:8rx
 
-                active:background-color:btn-ghost-active
-                hover:background-color:btn-ghost-hover
+                active/background-color:var(--color-btn-ghost-active)
+                hover/background-color:var(--color-btn-ghost-hover)
                 """),
 
                 href("https://github.com/objectos/demo.landing"),
@@ -184,10 +182,10 @@ final class Shell extends Kino.View {
             css("""
             padding:0_16rx_16rx
 
-            h2:font-size:36rx
-            h2:font-weight:200
-            h2:line-height:1
-            h2:padding:48rx_0_8rx
+            &_h2/font-size:36rx
+            &_h2/font-weight:200
+            &_h2/line-height:1
+            &_h2/padding:48rx_0_8rx
             """),
 
             dataFrame("demo-app", builder.appFrame),
@@ -200,11 +198,10 @@ final class Shell extends Kino.View {
   private Html.Instruction objectosLogo() {
     return svg(
         css("""
-        width:auto
+        fill:var(--color-logo)
         height:24rx
-
-        fill:logo
         transition:fill_300ms_ease
+        width:auto
         """),
 
         xmlns("http://www.w3.org/2000/svg"), width("200"), height("49.28"), viewBox("0 0 200 49.28"),
@@ -219,10 +216,9 @@ final class Shell extends Kino.View {
   private Html.Instruction gitHubLogo() {
     return svg(
         css("""
-        width:auto
+        fill:var(--color-logo)
         height:24rx
-
-        fill:logo
+        width:auto
         """),
 
         xmlns("http://www.w3.org/2000/svg"), width("98"), height("96"), viewBox("0 0 98 96"),
@@ -246,8 +242,8 @@ final class Shell extends Kino.View {
         sourceFrame,
 
         css("""
-        border-left:1px_solid_border
-        border-right:1px_solid_border
+        border-left:1px_solid_var(--color-border)
+        border-right:1px_solid_var(--color-border)
         display:flex
         font-size:14rx
         gap:4rx_8rx
@@ -255,11 +251,11 @@ final class Shell extends Kino.View {
         padding:16rx
         overflow-x:auto
 
-        lg:border-bottom:1px_solid_border
+        lg/border-bottom:1px_solid_var(--color-border)
 
-        xl:border-top:1px_solid_border
-        xl:border-right-width:0px
-        xl:flex-direction:column
+        xl/border-top:1px_solid_var(--color-border)
+        xl/border-right-width:0px
+        xl/flex-direction:column
         """),
 
         dataFrame("demo-source-menu", builder.sourceFrame),
@@ -289,10 +285,10 @@ final class Shell extends Kino.View {
           border-radius:6rx
           cursor:pointer
           padding:4rx_8rx
-          [data-selected=true]:background-color:btn-ghost-active
+          &[data-selected=true]/background-color:var(--color-btn-ghost-active)
 
-          active:background-color:btn-ghost-active
-          hover:background-color:btn-ghost-hover
+          active/background-color:var(--color-btn-ghost-active)
+          hover/background-color:var(--color-btn-ghost-hover)
           """),
 
           attr(dataSelected, Boolean.toString(idx == 0)),
@@ -333,7 +329,7 @@ final class Shell extends Kino.View {
     // the Java source code display
     div(
         css("""
-        border:1px_solid_border
+        border:1px_solid_var(--color-border)
         display:flex
         flex-direction:column
         grid-area:c
@@ -371,18 +367,18 @@ final class Shell extends Kino.View {
           font-size:13rx
           line-height:18.6rx
           padding:16rx
-          [data-selected=true]:display:flex
+          &[data-selected=true]/display:flex
 
-          span:[data-line]:display:block
-          span:[data-line]:min-height:1lh
+          &_span[data-line]/display:block
+          &_span[data-line]/min-height:1lh
 
-          span:[data-line]:nth-child(-n+15):display:none
+          &_span[data-line]:nth-child(-n+15)/display:none
 
-          span:[data-high=annotation]:color:high-meta
-          span:[data-high=comment]:color:high-comment
-          span:[data-high=comment]:font-style:italic
-          span:[data-high=keyword]:color:high-keyword
-          span:[data-high=string]:color:high-string
+          &_span[data-high=annotation]/color:var(--color-high-meta)
+          &_span[data-high=comment]/color:var(--color-high-comment)
+          &_span[data-high=comment]/font-style:italic
+          &_span[data-high=keyword]/color:var(--color-high-keyword)
+          &_span[data-high=string]/color:var(--color-high-string)
           """),
 
           attr(dataSelected, Boolean.toString(idx == 0)),

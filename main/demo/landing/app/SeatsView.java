@@ -15,10 +15,8 @@
  */
 package demo.landing.app;
 
-import objectos.way.Css;
 import objectos.way.Html;
 
-@Css.Source
 final class SeatsView extends Kino.View {
 
   static final int BACK = 999;
@@ -87,7 +85,7 @@ final class SeatsView extends Kino.View {
 
     div(
         css("""
-        border:1px_solid_border
+        border:1px_solid_var(--color-border)
         display:flex
         gap:24rx
         margin:32rx_0
@@ -127,8 +125,8 @@ final class SeatsView extends Kino.View {
     div(
         css("""
         align-items:center
-        background-color:blue-100
-        border-left:3px_solid_blue-800
+        background-color:var(--color-blue-100)
+        border-left:3px_solid_var(--color-blue-800)
         display:flex
         font-size:14rx
         line-height:16rx

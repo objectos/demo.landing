@@ -20,7 +20,7 @@ package demo.landing.app;
  */
 final class Source {
 
-  static final SourceModel NowShowing = SourceModel.create("NowShowing.java", """
+  static final SourceModel ConfirmView = SourceModel.create("ConfirmView.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
  *
@@ -38,807 +38,236 @@ final class Source {
  */
 package demo.landing.app;
 
-import java.util.List;
+import demo.landing.app.Kino.Page;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
 
-/**
- * The "Now Showing" controller.
- */
-final class NowShowing implements Kino.GET {
+final class ConfirmView extends Kino.View {
 
   private final Kino.Ctx ctx;
 
-  NowShowing(Kino.Ctx ctx) {
-    this.ctx = ctx;
-  }
+  private final ConfirmDetails details;
 
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+  private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
-
-    return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "now-showing";
-
-      shell.app = new NowShowingView(ctx, items);
-
-      shell.sources(
-          Source.NowShowing,
-          Source.NowShowingModel,
-          Source.NowShowingView
-      );
-    });
-  }
-
-}
-""");
-
-  static final SourceModel Shell = SourceModel.create("Shell.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.function.Consumer;
-import objectos.way.Css;
-import objectos.way.Html;
-import objectos.way.Syntax;
-
-/**
- * The demo UI shell responsible for displaying the application on the
- * top/right and the source code on the bottom/left.
- */
-@Css.Source // Indicates to the CSS Generator that it should scan this class for CSS utilities.
-final class Shell extends Kino.View {
-
-  static final class Builder {
-
-    String appFrame;
-
-    Html.Component app;
-
-    String sourceFrame;
-
-    private final List<SourceModel> sources = new ArrayList<>();
-
-    private Builder() {}
-
-    final void sources(SourceModel... values) {
-      for (SourceModel value : values) {
-        sources.add(value);
-      }
-    }
-
-    private Shell build() {
-      Objects.requireNonNull(appFrame, "appFrame == null");
-      Objects.requireNonNull(app, "app == null");
-      Objects.requireNonNull(sourceFrame, "sourceFrame == null");
-
-      sources.add(Source.Kino);
-      sources.add(Source.Shell);
-      sources.add(Source.SourceModel_);
-
-      return new Shell(this);
-    }
-
-  }
-
-  static final Html.Id APP = Html.Id.of("demo-app");
-
-  private final Builder builder;
-
-  private Shell(Builder builder) {
-    this.builder = builder;
-  }
-
-  public static Shell create(Consumer<Builder> config) {
-    final Builder builder;
-    builder = new Builder();
-
-    config.accept(builder);
-
-    return builder.build();
-  }
-
-  private final Html.Id sourceFrame = Html.Id.of("source-frame");
-
-  private final Html.AttributeName dataButton = Html.AttributeName.of("data-button");
-
-  private final Html.AttributeName dataPanel = Html.AttributeName.of("data-panel");
-
-  private final Html.AttributeName dataSelected = Html.AttributeName.of("data-selected");
-
-  @Override
-  protected final void render() {
-    // the demo container
-    div(
-        css(\"""
-        display:grid
-        grid-template:'a'_448rx_'b'_auto_'c'_448rx_/_1fr
-
-        lg:grid-template:'c_a'_512rx_'b_b'_auto_/_1fr_1fr
-
-        xl:grid-template:'b_c_a'_512rx_/_200rx_1fr_1fr
-        \"""),
-
-        f(this::renderApp),
-
-        f(this::renderSourceMenu),
-
-        f(this::renderSourceCode)
-    );
-  }
-
-  private void renderApp() {
-    // the app container
-    div(
-        APP,
-
-        css(\"""
-        border:1px_solid_border
-        overflow:auto
-        grid-area:a
-        position:relative
-
-        lg:border-bottom-width:1px
-        lg:border-left-width:0px
-        \"""),
-
-        div(
-            css(\"""
-            align-items:center
-            background-color:layer
-            color:gray-500
-            display:flex
-            height:64rx
-            justify-content:space-between
-            padding:0_16rx
-            position:sticky
-            top:0px
-            z-index:8000
-            \"""),
-
-            a(
-                css(\"""
-                align-items:center
-                display:flex
-                gap:6rx
-                height:100%
-                \"""),
-
-                href("/index.html"),
-
-                dataOnClick(this::navigate),
-
-                objectosLogo(),
-
-                span(
-                    css(\"""
-                    font-size:24rx
-                    font-weight:300
-                    line-height:1
-                    transform:translateY(-1px)
-                    \"""),
-
-                    text("kino")
-                )
-            ),
-
-            a(
-                css(\"""
-                align-items:center
-                border-radius:6rx
-                display:flex
-                padding:8rx
-
-                active:background-color:btn-ghost-active
-                hover:background-color:btn-ghost-hover
-                \"""),
-
-                href("https://github.com/objectos/demo.landing"),
-
-                gitHubLogo()
-            )
-        ),
-
-        div(
-            css(\"""
-            padding:0_16rx_16rx
-
-            h2:font-size:36rx
-            h2:font-weight:200
-            h2:line-height:1
-            h2:padding:48rx_0_8rx
-            \"""),
-
-            dataFrame("demo-app", builder.appFrame),
-
-            renderComponent(builder.app)
-        )
-    );
-  }
-
-  private Html.Instruction objectosLogo() {
-    return svg(
-        css(\"""
-        width:auto
-        height:24rx
-
-        fill:logo
-        transition:fill_300ms_ease
-        \"""),
-
-        xmlns("http://www.w3.org/2000/svg"), width("200"), height("49.28"), viewBox("0 0 200 49.28"),
-
-        path(
-            d("m189.6 38.21q-2.53 0-5.3-0.932-2.76-0.903-4.6-3.087-0.38-0.495-0.35-1.02 0.12-0.582 0.64-0.99 0.5-0.32 1.02-0.233 0.58 0.09 0.93 0.524 1.4 1.66 3.38 2.33 2.04 0.641 4.43 0.641 4.08 0 5.77-1.456 1.71-1.456 1.71-3.408 0-1.893-1.86-3.087-1.78-1.281-5.56-1.806-4.87-0.669-7.2-2.621-2.33-1.951-2.33-4.514 0-2.417 1.23-4.077 1.19-1.689 3.29-2.534 2.12-0.874 4.86-0.874 3.29 0 5.56 1.223 2.31 1.165 3.7 3.146 0.38 0.495 0.24 1.077-0.1 0.525-0.73 0.874-0.47 0.233-1.02 0.146-0.53-0.09-0.9-0.583-1.23-1.543-2.97-2.33-1.69-0.815-3.99-0.815-3.06 0-4.75 1.31-1.69 1.311-1.69 3.146 0 1.252 0.67 2.242 0.73 0.903 2.33 1.602 1.6 0.612 4.28 1.02 3.64 0.466 5.71 1.63 2.15 1.165 3.03 2.738 0.9 1.485 0.9 3.233 0 2.301-1.46 3.99-1.45 1.689-3.81 2.621-2.39 0.874-5.16 0.874zm-27.97 0q-3.9 0-6.99-1.748-3.05-1.805-4.85-4.863-1.75-3.088-1.75-6.932 0-3.873 1.75-6.931 1.8-3.117 4.85-4.864 3.09-1.806 6.99-1.806 3.89 0 6.95 1.806 3.05 1.747 4.8 4.864 1.81 3.058 1.81 6.931 0 3.844-1.81 6.932-1.75 3.058-4.8 4.863-3.06 1.748-6.95 1.748zm0-2.709q3.07 0 5.43-1.427 2.45-1.456 3.79-3.873 1.42-2.476 1.42-5.592 0-3.058-1.42-5.475-1.34-2.476-3.79-3.874-2.36-1.456-5.43-1.456-3.03 0-5.45 1.456-2.41 1.398-3.83 3.874-1.4 2.417-1.4 5.533 0 3.058 1.4 5.534 1.42 2.417 3.83 3.873 2.42 1.427 5.45 1.427zm-19.01 2.418q-2.65-0.06-4.75-1.224-2.09-1.194-3.26-3.291-1.16-2.126-1.16-4.805v-24.17q0-0.67 0.4-1.078 0.44-0.436 1.05-0.436 0.7 0 1.08 0.436 0.44 0.408 0.44 1.078v24.17q0 2.825 1.74 4.601 1.75 1.748 4.52 1.748h1.08q0.67 0 1.05 0.437 0.43 0.407 0.43 1.077 0 0.641-0.43 1.078-0.38 0.379-1.05 0.379zm-12.96-22.95q-0.58 0-0.96-0.35-0.35-0.378-0.35-0.961 0-0.582 0.35-0.932 0.38-0.378 0.96-0.378h13.16q0.59 0 0.94 0.378 0.38 0.35 0.38 0.932 0 0.583-0.38 0.961-0.35 0.35-0.94 0.35zm-13.09 23.24q-3.78 0-6.79-1.806-2.96-1.776-4.71-4.834-1.7-3.059-1.7-6.903 0-3.873 1.6-6.931t4.42-4.806q2.81-1.806 6.45-1.806 3.1 0 5.7 1.224 2.56 1.165 4.45 3.582 0.38 0.495 0.29 1.019-0.1 0.525-0.64 0.874-0.44 0.349-0.96 0.291-0.52-0.09-0.93-0.582-3.09-3.699-7.91-3.699-2.86 0-5.04 1.427-2.14 1.398-3.35 3.815-1.17 2.447-1.17 5.592 0 3.058 1.31 5.534 1.31 2.417 3.59 3.873 2.33 1.427 5.39 1.427 1.99 0 3.74-0.582 1.81-0.583 3.12-1.806 0.44-0.379 0.96-0.437 0.52-0.06 0.93 0.35 0.47 0.437 0.47 1.019 0.1 0.524-0.38 0.903-3.55 3.262-8.84 3.262zm-27.69-0.06q-3.84 0-6.85-1.69-2.96-1.747-4.66-4.805t-1.7-6.99q0-3.99 1.61-6.99 1.6-3.058 4.41-4.805 2.82-1.748 6.46-1.748 3.59 0 6.36 1.69 2.76 1.66 4.31 4.63 1.56 2.913 1.56 6.728 0 0.641-0.39 1.019-0.39 0.35-1.02 0.35h-21.35v-2.534h22.13l-2.14 1.602q0.1-3.146-1.07-5.563-1.16-2.446-3.35-3.786-2.13-1.427-5.04-1.427-2.77 0-4.95 1.427-2.14 1.34-3.4 3.786-1.21 2.417-1.21 5.621 0 3.146 1.31 5.592 1.31 2.417 3.64 3.815 2.33 1.369 5.34 1.369 1.89 0 3.78-0.641 1.94-0.67 3.06-1.747 0.39-0.379 0.92-0.379 0.58-0.06 0.97 0.291 0.54 0.437 0.54 0.962 0 0.553-0.44 0.99-1.55 1.398-4.08 2.33-2.47 0.903-4.75 0.903zm-30.93 11.13q-0.64 0-1.07-0.44-0.44-0.38-0.44-1.02 0-0.67 0.44-1.1 0.43-0.41 1.07-0.41 2.47 0 4.31-1.05 1.9-1.08 2.97-2.97 1.06-1.89 1.06-4.313v-25.16q0-0.67 0.39-1.049 0.44-0.408 1.07-0.408 0.68 0 1.07 0.408 0.43 0.379 0.43 1.049v25.16q0 3.291-1.45 5.821-1.46 2.57-4.03 4.02-2.52 1.46-5.82 1.46zm9.75-43.48q-0.92 0-1.6-0.641-0.63-0.67-0.63-1.66 0-1.107 0.68-1.631 0.73-0.582 1.6-0.582 0.82 0 1.5 0.582 0.73 0.524 0.73 1.631 0 0.99-0.68 1.66-0.63 0.641-1.6 0.641zm-21.55 32.42q-3.79 0-6.84-1.748-3.06-1.747-4.86-4.747-1.75-3.029-1.84-6.815v-23.44q0-0.67 0.39-1.048 0.43-0.408 1.06-0.408 0.68 0 1.07 0.408 0.39 0.378 0.39 1.048v15.14q1.55-2.505 4.32-4.019 2.82-1.515 6.31-1.515 3.88 0 6.94 1.806 3.11 1.747 4.85 4.805 1.8 3.058 1.8 6.932 0 3.902-1.8 6.99-1.74 3.058-4.85 4.863-3.06 1.748-6.94 1.748zm0-2.709q3.06 0 5.44-1.427 2.42-1.456 3.83-3.873 1.41-2.476 1.41-5.592 0-3.087-1.41-5.534-1.41-2.417-3.83-3.815-2.38-1.456-5.44-1.456-3.01 0-5.44 1.456-2.42 1.398-3.83 3.815-1.36 2.447-1.36 5.534 0 3.116 1.36 5.592 1.41 2.417 3.83 3.873 2.43 1.427 5.44 1.427zm-32.53 2.709q-3.88 0-6.99-1.748-3.06-1.805-4.85-4.863-1.75-3.088-1.75-6.932 0-3.873 1.75-6.931 1.79-3.117 4.85-4.864 3.11-1.806 6.99-1.806t6.94 1.806q3.06 1.747 4.8 4.864 1.8 3.058 1.8 6.931 0 3.844-1.8 6.932-1.74 3.058-4.8 4.863-3.06 1.748-6.94 1.748zm0-2.709q3.06 0 5.44-1.427 2.42-1.456 3.78-3.873 1.41-2.476 1.41-5.592 0-3.058-1.41-5.475-1.36-2.476-3.78-3.874-2.38-1.456-5.44-1.456-3.01 0-5.44 1.456-2.42 1.398-3.83 3.874-1.41 2.417-1.41 5.533 0 3.058 1.41 5.534 1.41 2.417 3.83 3.873 2.43 1.427 5.44 1.427z"),
-            strokeWidth(".9101")
-        )
-    );
-  }
-
-  private Html.Instruction gitHubLogo() {
-    return svg(
-        css(\"""
-        width:auto
-        height:24rx
-
-        fill:logo
-        \"""),
-
-        xmlns("http://www.w3.org/2000/svg"), width("98"), height("96"), viewBox("0 0 98 96"),
-
-        path(
-            fillRule("evenodd"), clipRule("evenodd"), d(
-                "M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z")
-        )
-    );
-  }
-
-  private void renderSourceMenu() {
-    final List<SourceModel> items;
-    items = builder.sources;
-
-    final SourceModel first;
-    first = items.getFirst();
-
-    // the source file selector
-    div(
-        sourceFrame,
-
-        css(\"""
-        border-left:1px_solid_border
-        border-right:1px_solid_border
-        display:flex
-        font-size:14rx
-        gap:4rx_8rx
-        grid-area:b
-        padding:16rx
-        overflow-x:auto
-
-        lg:border-bottom:1px_solid_border
-
-        xl:border-top:1px_solid_border
-        xl:border-right-width:0px
-        xl:flex-direction:column
-        \"""),
-
-        dataFrame("demo-source-menu", builder.sourceFrame),
-
-        // stores the current selected button in the data-button attribute
-        attr(dataButton, first.button().value()),
-
-        // stores the current selected panel in the data-panel attribute
-        attr(dataPanel, first.panel().value()),
-
-        f(this::renderSourceMenuItems)
-    );
-  }
-
-  private void renderSourceMenuItems() {
-    final List<SourceModel> items;
-    items = builder.sources;
-
-    for (int idx = 0, size = items.size(); idx < size; idx++) {
-      final SourceModel item;
-      item = items.get(idx);
-
-      button(
-          item.button(),
-
-          css(\"""
-          border-radius:6rx
-          cursor:pointer
-          padding:4rx_8rx
-          [data-selected=true]:background-color:btn-ghost-active
-
-          active:background-color:btn-ghost-active
-          hover:background-color:btn-ghost-hover
-          \"""),
-
-          attr(dataSelected, Boolean.toString(idx == 0)),
-
-          dataOnClick(script -> {
-            // 'deselects' current
-            var frame = script.elementById(sourceFrame);
-
-            var selectedButton = script.elementById(frame.attr(dataButton));
-
-            selectedButton.attr(dataSelected, "false");
-
-            var selectedPanel = script.elementById(frame.attr(dataPanel));
-
-            selectedPanel.attr(dataSelected, "false");
-
-            // 'selects' self
-            var selfButton = script.elementById(item.button());
-
-            selfButton.attr(dataSelected, "true");
-
-            var selfPanel = script.elementById(item.panel());
-
-            selfPanel.attr(dataSelected, "true");
-
-            // stores selected
-            frame.attr(dataButton, item.button().value());
-
-            frame.attr(dataPanel, item.panel().value());
-          }),
-
-          text(item.name())
-      );
-    }
-  }
-
-  private void renderSourceCode() {
-    // the Java source code display
-    div(
-        css(\"""
-        border:1px_solid_border
-        display:flex
-        flex-direction:column
-        grid-area:c
-        \"""),
-
-        css(\"""
-        flex:1
-        min-height:0
-        overflow:auto
-        \"""),
-
-        dataFrame("demo-source-code", builder.sourceFrame),
-
-        f(this::renderSourceCodeItems)
-    );
-  }
-
-  private void renderSourceCodeItems() {
-    final List<SourceModel> items;
-    items = builder.sources;
-
-    for (int idx = 0, size = items.size(); idx < size; idx++) {
-      final SourceModel item;
-      item = items.get(idx);
-
-      final String source;
-      source = item.value();
-
-      pre(
-          item.panel(),
-
-          css(\"""
-          display:none
-          font-family:mono
-          font-size:13rx
-          line-height:18.6rx
-          padding:16rx
-          [data-selected=true]:display:flex
-
-          span:[data-line]:display:block
-          span:[data-line]:min-height:1lh
-
-          span:[data-line]:nth-child(-n+15):display:none
-
-          span:[data-high=annotation]:color:high-meta
-          span:[data-high=comment]:color:high-comment
-          span:[data-high=comment]:font-style:italic
-          span:[data-high=keyword]:color:high-keyword
-          span:[data-high=string]:color:high-string
-          \"""),
-
-          attr(dataSelected, Boolean.toString(idx == 0)),
-
-          code(
-              css(\"""
-              flex-grow:1
-              \"""),
-
-              renderComponent(
-                  Syntax.highlight(Syntax.JAVA, source)
-              )
-          )
-      );
-    }
-  }
-
-}
-""");
-
-  static final SourceModel Movie = SourceModel.create("Movie.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
-
-final class Movie implements Kino.GET {
-
-  private final Kino.Ctx ctx;
-
-  Movie(Kino.Ctx ctx) {
-    this.ctx = ctx;
-  }
-
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
-    final int movieId;
-    movieId = query.idAsInt();
-
-    final Optional<MovieDetails> maybeDetails;
-    maybeDetails = MovieDetails.queryOptional(trx, movieId);
-
-    if (maybeDetails.isEmpty()) {
-      return NotFound.create();
-    }
-
-    final MovieDetails details;
-    details = maybeDetails.get();
-
-    final LocalDateTime today;
-    today = ctx.today();
-
-    final List<MovieScreening> screenings;
-    screenings = MovieScreening.query(trx, movieId, today);
-
-    return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "movie-" + movieId;
-
-      shell.app = new MovieView(ctx, details, screenings);
-
-      shell.sources(
-          Source.Movie,
-          Source.MovieDetails,
-          Source.MovieScreening,
-          Source.MovieView
-      );
-    });
-  }
-
-}
-""");
-
-  static final SourceModel MovieView = SourceModel.create("MovieView.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.util.List;
-import objectos.way.Css;
-
-/**
- * Movie details and screening selection view.
- */
-@Css.Source
-final class MovieView extends Kino.View {
-
-  private final Kino.Ctx ctx;
-
-  private final MovieDetails details;
-
-  private final List<MovieScreening> screenings;
-
-  MovieView(Kino.Ctx ctx, MovieDetails details, List<MovieScreening> screenings) {
+  ConfirmView(Kino.Ctx ctx, ConfirmDetails details) {
     this.ctx = ctx;
 
     this.details = details;
-
-    this.screenings = screenings;
   }
 
   @Override
   protected final void render() {
-    backLink(ctx, Kino.Page.NOW_SHOWING);
+    backLink(ctx, Page.SEATS, details.reservationId(), SeatsView.BACK);
+
+    h2("Your Order");
+
+    // testable node only
+    testableH1("Order #" + details.reservationId());
+
+    p("Please review and confirm your order");
 
     div(
         css(\"""
-        display:grid
-        gap:16rx
-        grid-template-columns:1fr_160rx
+        border:1px_solid_var(--color-border)
+        display:flex
+        gap:24rx
+        margin:32rx_0
+        overflow-x:auto
+        padding:32rx_24rx
+
+        &_h3/font-size:24rx
+        &_h3/font-weight:300
+        &_h3/padding-bottom:16rx
         \"""),
 
-        f(this::renderMovieDetails)
+        div(
+            css(\"""
+            display:flex
+            flex:1.5
+            flex-direction:column
+            gap:12rx
+            \"""),
+
+            f(this::renderLeft)
+        ),
+
+        div(
+            css(\"""
+            display:flex
+            flex:2
+            flex-direction:column
+            gap:12rx
+            \"""),
+
+            f(this::renderRight)
+        )
+    );
+  }
+
+  private void renderLeft() {
+    h3("Movie");
+
+    renderDetailsItem(Kino.Icon.FILM, "title", details.title());
+
+    renderDetailsItem(Kino.Icon.CALENDAR_CHECK, "date", details.date());
+
+    renderDetailsItem(Kino.Icon.CLOCK, "time", details.time());
+
+    renderDetailsItem(Kino.Icon.PROJECTOR, "screen", details.screen());
+  }
+
+  private Html.Instruction.OfElement renderDetailsItem(Kino.Icon icon, String name, String value) {
+    return div(
+        css(\"""
+        display:flex
+        gap:12rx
+        \"""),
+
+        icon(
+            icon,
+
+            css(\"""
+            height:auto
+            width:16rx
+            \""")
+        ),
+
+        span(
+            css(\"""
+            font-size:14rx
+            line-height:16rx
+            \"""),
+
+            text(testableField(name, value))
+        )
+    );
+  }
+
+  private void renderRight() {
+    h3(
+        testableH2("Order Details")
+    );
+
+    for (var item : details.items()) {
+      div(
+          css(\"""
+          display:flex
+          font-size:14rx
+          justify-content:space-between
+          line-height:16rx
+          \"""),
+
+          div(
+              text("Seat "),
+              text(testableCell(item.seat(), 5))
+          ),
+
+          div(
+              css(\"""
+
+              \"""),
+
+              text(testableCell(format(item.price()), 6))
+          )
+      );
+
+      testableNewLine();
+    }
+
+    div(
+        css(\"""
+        border-top:1px_solid_var(--color-border)
+        display:flex
+        font-size:14rx
+        justify-content:space-between
+        line-height:16rx
+        padding-top:12rx
+        \"""),
+
+        div(text(testableCell("Total", 5))),
+
+        div(
+            css(\"""
+            font-weight:600
+            \"""),
+
+            text(testableCell(format(details.totalPrice()), 6))
+        )
     );
 
     div(
         css(\"""
         display:flex
-        flex-direction:column
-        gap:16rx
-        padding:64rx_0_0
+        font-size:14rx
+        justify-content:space-between
+        line-height:16rx
+        margin-top:24rx
         \"""),
 
-        f(this::renderMovieScreenings)
-    );
-  }
+        div("Payment Method"),
 
-  private void renderMovieDetails() {
-    div(
-        h2(
-            text(testableH1(details.title()))
-        ),
-
-        p(
-            text(testableField("synopsys", details.synopsys()))
-        ),
-
-        dl(
+        div(
             css(\"""
-            display:grid
-            font-size:14rx
-            grid-template-columns:repeat(2,1fr)
-
-            dt:font-weight:600
-            dt:padding-top:12rx
+            display:flex
+            gap:8rx
             \"""),
 
-            div(
-                dt(
-                    text("Rating")
-                ),
+            icon(
+                Kino.Icon.CREDIT_CARD,
 
-                dd(
-                    text("N/A")
-                )
+                css(\"""
+                height:auto
+                width:16rx
+                \""")
             ),
 
-            div(
-                dt(
-                    text("Runtime")
-                ),
-
-                dd(
-                    text(testableField("runtime", details.runtime()))
-                )
-            ),
-
-            div(
-                dt(
-                    text("Release date")
-                ),
-
-                dd(
-                    text(testableField("release-date", details.releaseDate()))
-                )
-            ),
-
-            div(
-                dt(
-                    text("Genres")
-                ),
-
-                dd(
-                    text(testableField("genres", details.genres()))
-                )
-            )
+            span("4321")
         )
-
     );
 
-    div(
+    testableNewLine();
+
+    final long reservationId;
+    reservationId = details.reservationId();
+
+    form(
+        formAction(ctx, Kino.Page.CONFIRM, reservationId),
+
         css(\"""
-        padding-top:16rx
+        display:flex
+        justify-content:end
+        margin-top:24rx
         \"""),
 
-        img(
-            css(\"""
-            border-radius:6rx
-            width:100%
-            \"""),
+        dataOnSuccess(script -> {
+          final String successUrl;
+          successUrl = ctx.href(Kino.Page.TICKET, reservationId);
 
-            alt(details.title()),
+          script.replaceState(successUrl);
+        }),
 
-            src("/demo/landing/poster" + details.movieId() + ".jpg")
+        method("post"),
+
+        button(
+            PRIMARY,
+
+            type("submit"),
+
+            text("Confirm")
         )
     );
   }
 
-  private void renderMovieScreenings() {
-    h3(
-        css(\"""
-        font-size:24rx
-        font-weight:300
-        line-height:1
-        \"""),
-
-        text(testableH1("Showtimes"))
-    );
-
-    for (MovieScreening screening : screenings) {
-      div(
-          css(\"""
-          border:1px_solid_border
-          display:flex
-          gap:32rx
-          padding:16rx
-          position:relative
-          \"""),
-
-          div(
-              css(\"""
-              align-items:center
-              display:flex
-              flex-direction:column
-              gap:8rx
-              justify-content:center
-              \"""),
-
-              icon(
-                  Kino.Icon.CALENDAR_CHECK,
-
-                  css(\"""
-                  stroke:icon
-                  \""")
-              ),
-
-              span(
-                  css(\"""
-                  text-align:center
-                  width:6rch
-                  \"""),
-
-                  text(testableH2(screening.date()))
-              )
-          ),
-
-          div(
-
-              h4(
-                  css(\"""
-                  font-weight:500
-                  line-height:1
-                  padding-top:8rx
-                  \"""),
-
-                  text(testableField("screen", screening.screenName()))
-              ),
-
-              div(
-                  css(\"""
-                  font-size:14rx
-                  font-weight:300
-                  padding:8rx_0
-                  \"""),
-
-                  text(testableField("features", screening.features()))
-              ),
-
-              ul(
-                  css(\"""
-                  display:flex
-                  flex-wrap:wrap
-                  gap:12rx
-                  \"""),
-
-                  testableNewLine(),
-
-                  f(this::renderShowtimes, screening.showtimes())
-              )
-
-          )
-      );
-    }
-  }
-
-  private void renderShowtimes(List<MovieScreening.Showtime> showtimes) {
-    for (MovieScreening.Showtime showtime : showtimes) {
-      final int showId;
-      showId = showtime.showId();
-
-      final Kino.Query query;
-      query = Kino.Page.SEATS.query(showId);
-
-      testableCell(query.toString(), 32);
-
-      final String time;
-      time = showtime.time();
-
-      li(
-          a(
-              css(\"""
-              border:1px_solid_border
-              border-radius:9999rx
-              display:flex
-              padding:8rx_16rx
-
-              active:background-color:btn-ghost-active
-              hover:background-color:btn-ghost-hover
-              \"""),
-
-              dataOnClick(this::navigate),
-
-              href(ctx.href(query)),
-
-              rel("nofollow"),
-
-              span(testableCell(time, 5))
-          ),
-
-          testableNewLine()
-      );
-    }
+  private String format(double price) {
+    return formatter.format(price);
   }
 
 }
 """);
 
-  static final SourceModel Reservation = SourceModel.create("Reservation.java", """
+  static final SourceModel KinoStyles = SourceModel.create("KinoStyles.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
  *
@@ -856,61 +285,85 @@ final class MovieView extends Kino.View {
  */
 package demo.landing.app;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.random.RandomGenerator;
+import objectos.way.Css;
 
-/**
- * Generates a 64-bit Snowflake ID to uniquely identify an user making seat
- * reservations.
- */
-final class Reservation {
+final class KinoStyles implements Css.Library {
 
-  private static final long TIMESTAMP_BITS = 41;
+  @Override
+  public final void configure(Css.Library.Options opts) {
+    opts.scanClasses(
+        ConfirmView.class,
+        Kino.View.class,
+        MovieView.class,
+        NotFoundView.class,
+        NowShowingView.class,
+        SeatsView.class,
+        Shell.class,
+        TicketView.class
+    );
 
-  private static final long RANDOM_BITS = 64 - TIMESTAMP_BITS;
+    opts.theme(\"""
+    :root {
+      --font-sans: 'InterVariable', var(--default-font-sans);
+      --font-mono: 'Hack', var(--default-font-mono);
+      --color-body: var(--color-white);
+      --color-border: var(--color-gray-200);
+      --color-btn-ghost: var(--color-body);
+      --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, black 15%);
+      --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, black 10%);
+      --color-btn-ghost-text: var(--color-text);
+      --color-btn-primary: var(--color-blue-600);
+      --color-btn-primary-active: color-mix(in oklab, var(--color-btn-primary) 70%, black 30%);
+      --color-btn-primary-hover: color-mix(in oklab, var(--color-btn-primary) 85%, black 15%);
+      --color-btn-primary-text: var(--color-gray-50);
+      --color-focus: var(--color-blue-600);
+      --color-footer: var(--color-gray-700);
+      --color-footer-text: var(--color-gray-100);
+      --color-high-comment: var(--color-gray-500);
+      --color-high-keyword: var(--color-blue-700);
+      --color-high-literal: var(--color-red-600);
+      --color-high-meta: var(--color-yellow-600);
+      --color-high-string: var(--color-green-700);
+      --color-html: var(--color-gray-50);
+      --color-icon: var(--color-gray-800);
+      --color-layer: var(--color-stone-100);
+      --color-link: var(--color-blue-600);
+      --color-link-hover: color-mix(in oklab, var(--color-link) 85%, black 15%);
+      --color-logo: var(--color-gray-800);
+      --color-logo-hover: var(--color-link);
+      --color-text: var(--color-gray-800);
+      --color-text-secondary: var(--color-gray-600);
+    }
+    \""");
 
-  private static final long MAX_RANDOM = (1L << RANDOM_BITS) - 1;
-
-  private final Clock clock;
-
-  // January 1st, 2025 @ 00:00 @ GMT-3
-  private final Instant epoch;
-
-  private final RandomGenerator randomGenerator;
-
-  Reservation(Clock clock, Instant epoch, RandomGenerator randomGenerator) {
-    this.clock = clock;
-
-    this.epoch = epoch;
-
-    this.randomGenerator = randomGenerator;
-  }
-
-  public final long next() {
-    final Instant now;
-    now = clock.instant();
-
-    final Duration duration;
-    duration = Duration.between(epoch, now);
-
-    long epochTime;
-    epochTime = duration.toMillis();
-
-    final long timestamp;
-    timestamp = epochTime << RANDOM_BITS;
-
-    final long randomBits;
-    randomBits = randomGenerator.nextLong(MAX_RANDOM);
-
-    return timestamp | randomBits;
+    opts.theme(\"""
+    :root { @media (prefers-color-scheme: dark) {
+      --color-body: var(--color-neutral-800);
+      --color-border: var(--color-neutral-600);
+      --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, white 15%);
+      --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, white 10%);
+      --color-focus: var(--color-white);
+      --color-high-comment: var(--color-fuchsia-400);
+      --color-high-keyword: var(--color-blue-400);
+      --color-high-literal: var(--color-red-400);
+      --color-high-meta: var(--color-pink-400);
+      --color-high-string: var(--color-green-300);
+      --color-icon: var(--color-gray-200);
+      --color-layer: var(--color-stone-900);
+      --color-link: var(--color-blue-400);
+      --color-link-hover: color-mix(in oklab, var(--color-link) 85%, white 15%);
+      --color-logo: var(--color-neutral-100);
+      --color-text: var(--color-neutral-100);
+      --color-text-secondary: var(--color-neutral-300);
+    }}
+    \""");
   }
 
 }
+
 """);
 
-  static final SourceModel Seats = SourceModel.create("Seats.java", """
+  static final SourceModel Confirm = SourceModel.create("Confirm.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
  *
@@ -929,21 +382,25 @@ final class Reservation {
 package demo.landing.app;
 
 import demo.landing.LandingDemo;
-import demo.landing.app.Kino.Query;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import objectos.way.Html;
 import objectos.way.Http;
-import objectos.way.Note;
 import objectos.way.Sql;
 
-final class Seats implements Kino.GET, Kino.POST {
-
-  static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(Seats.class, "Read", Note.DEBUG);
+final class Confirm implements Kino.GET, Kino.POST {
 
   private final Kino.Ctx ctx;
 
-  Seats(Kino.Ctx ctx) {
+  Confirm(Kino.Ctx ctx) {
     this.ctx = ctx;
+  }
+
+  public static Html.Component create(Kino.Ctx ctx, Sql.Transaction trx, long reservationId) {
+    final Confirm action;
+    action = new Confirm(ctx);
+
+    return action.view(trx, reservationId);
   }
 
   @Override
@@ -954,66 +411,10 @@ final class Seats implements Kino.GET, Kino.POST {
     final Kino.Query query;
     query = http.get(Kino.Query.class);
 
-    final int state;
-    state = query.aux();
-
-    if (state == SeatsView.BACK) {
-      return getBackButton(trx, query);
-    }
-
-    final int showId;
-    showId = query.idAsInt();
-
-    final Optional<SeatsShow> maybeShow;
-    maybeShow = SeatsShow.queryOptional(trx, showId);
-
-    if (maybeShow.isEmpty()) {
-      return NotFound.create();
-    }
-
-    final long reservationId;
-    reservationId = ctx.nextReservation();
-
-    trx.sql(\"""
-    insert into
-      RESERVATION (RESERVATION_ID, SHOW_ID)
-    values
-      (?, ?)
-    \""");
-
-    trx.param(reservationId);
-
-    trx.param(showId);
-
-    trx.update();
-
-    final SeatsShow show;
-    show = maybeShow.get();
-
-    final SeatsGrid grid;
-    grid = SeatsGrid.query(trx, reservationId);
-
-    return view(state, reservationId, show, grid);
-  }
-
-  private Html.Component getBackButton(Sql.Transaction trx, Query query) {
-    final long reservationId;
+    long reservationId;
     reservationId = query.id();
 
-    final Optional<SeatsShow> maybeShow;
-    maybeShow = SeatsShow.queryBackButton(trx, reservationId);
-
-    if (maybeShow.isEmpty()) {
-      return NotFound.create();
-    }
-
-    final SeatsShow show;
-    show = maybeShow.get();
-
-    final SeatsGrid grid;
-    grid = SeatsGrid.query(trx, reservationId);
-
-    return view(SeatsView.DEFAULT, reservationId, show, grid);
+    return view(trx, reservationId);
   }
 
   @Override
@@ -1021,825 +422,51 @@ final class Seats implements Kino.GET, Kino.POST {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final SeatsData data;
-    data = SeatsData.parse(http);
+    final ConfirmData data;
+    data = ConfirmData.parse(http);
 
-    ctx.send(DATA_READ, data);
+    final LocalDateTime today;
+    today = ctx.today();
 
-    if (data.seats() == 0) {
-      // no seats were selected...
-      return postState(trx, data, SeatsView.EMPTY);
-    }
+    final Sql.Update ticketResult;
+    ticketResult = data.persistTicket(trx, today);
 
-    if (data.seats() > 6) {
-      // too many seats were selected...
-      return postState(trx, data, SeatsView.LIMIT);
-    }
+    return switch (ticketResult) {
+      case Sql.UpdateFailed _ -> {
 
-    final Sql.BatchUpdate tmpSelectionResult;
-    tmpSelectionResult = data.persistTmpSelection(trx);
+        throw new UnsupportedOperationException("Implement me");
 
-    return switch (tmpSelectionResult) {
-      case Sql.BatchUpdateFailed _ -> tmpSelectionError(trx, data);
+      }
 
-      case Sql.BatchUpdateSuccess _ -> tmpSelectionOk(trx, data);
+      case Sql.UpdateSuccess _ -> LandingDemo.embedOk(
+          Ticket.create(trx, data)
+      );
     };
   }
 
-  private Kino.PostResult postState(Sql.Transaction trx, SeatsData data, int state) {
-    // just in case, clear this user's selection
-    data.clearUserSelection(trx);
+  private Html.Component view(Sql.Transaction trx, long reservationId) {
+    final Optional<ConfirmDetails> maybe;
+    maybe = ConfirmDetails.queryOptional(trx, reservationId);
 
-    final long reservationId;
-    reservationId = data.reservationId();
-
-    return embedView(trx, state, reservationId);
-  }
-
-  private Kino.PostResult embedView(Sql.Transaction trx, int state, long reservationId) {
-    final SeatsShow show;
-    show = SeatsShow.queryReservation(trx, reservationId);
-
-    final SeatsGrid grid;
-    grid = SeatsGrid.query(trx, reservationId);
-
-    final Html.Component view;
-    view = view(state, reservationId, show, grid);
-
-    return LandingDemo.embedOk(view);
-  }
-
-  private Kino.PostResult tmpSelectionError(Sql.Transaction trx, SeatsData data) {
-    // clear TMP_SELECTION just in case some of the records were inserted
-    data.clearTmpSelection(trx);
-
-    return LandingDemo.embedBadRequest(NotFound.create());
-  }
-
-  private Kino.PostResult tmpSelectionOk(Sql.Transaction trx, SeatsData data) {
-    final Sql.Update userSelectionResult;
-    userSelectionResult = data.persisUserSelection(trx);
-
-    return switch (userSelectionResult) {
-      case Sql.UpdateFailed error -> userSelectionError(trx, data, error);
-
-      case Sql.UpdateSuccess ok -> userSelectionOk(trx, data, ok);
-    };
-  }
-
-  private Kino.PostResult userSelectionError(Sql.Transaction trx, SeatsData data, Sql.UpdateFailed error) {
-    // one or more seats were committed by another trx...
-    // inform user
-
-    final int state;
-    state = SeatsView.BOOKED;
-
-    final long reservationId;
-    reservationId = data.reservationId();
-
-    if (data.wayRequest()) {
-      return embedView(trx, state, reservationId);
-    } else {
-      final Kino.Query query;
-      query = Kino.Page.SEATS.query(reservationId, state);
-
-      final String href;
-      href = ctx.href(query);
-
-      return LandingDemo.redirect(href);
-    }
-  }
-
-  private Kino.PostResult userSelectionOk(Sql.Transaction trx, SeatsData data, Sql.UpdateSuccess ok) {
-    int count;
-    count = ok.count();
-
-    if (data.seats() != count) {
-
-      // some or possibly all of the seats were not selected.
-      // 1) maybe an already sold ticket was submitted
-      // 2) seats refer to a different show
-      // anyways... bad data
-
-      // clear SELECTION just in case some of the records were inserted
-      data.clearUserSelection(trx);
-
-      return LandingDemo.embedBadRequest(NotFound.create());
-
+    if (maybe.isEmpty()) {
+      return NotFound.create();
     }
 
-    // all seats were persisted.
-    // go to next screen.
+    final ConfirmDetails details;
+    details = maybe.get();
 
-    final long reservationId;
-    reservationId = data.reservationId();
-
-    return data.wayRequest()
-        ? LandingDemo.embedOk(
-            Confirm.create(ctx, trx, reservationId)
-        )
-        : LandingDemo.redirect(
-            ctx.href(Kino.Page.CONFIRM, reservationId)
-        );
-
-  }
-
-  private Html.Component view(int state, long reservationId, SeatsShow show, SeatsGrid grid) {
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "show-" + show.showId();
+      shell.appFrame = shell.sourceFrame = "confirm-" + reservationId;
 
-      shell.app = new SeatsView(ctx, state, reservationId, show, grid);
+      shell.app = new ConfirmView(ctx, details);
 
       shell.sources(
-          Source.Seats,
-          Source.SeatsData,
-          Source.SeatsGrid,
-          Source.SeatsShow,
-          Source.SeatsView
+          Source.Confirm,
+          Source.ConfirmData,
+          Source.ConfirmDetails,
+          Source.ConfirmView
       );
     });
-  }
-
-}
-""");
-
-  static final SourceModel SeatsView = SourceModel.create("SeatsView.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import objectos.way.Css;
-import objectos.way.Html;
-
-@Css.Source
-final class SeatsView extends Kino.View {
-
-  static final int BACK = 999;
-
-  static final int DEFAULT = 0;
-
-  static final int BOOKED = 1;
-
-  static final int EMPTY = 2;
-
-  static final int LIMIT = 3;
-
-  private static final String BOOKED_MSG = \"""
-  We regret to inform you that another customer has already reserved one or more of the selected seats. \
-  Kindly choose alternative seats.\""";
-
-  private static final String EMPTY_MSG = \"""
-  Kindly choose at least 1 seat.\""";
-
-  private static final String LIMIT_MSG = \"""
-  We regret to inform you that we limit purchases to 6 tickets per person. \
-  Kindly choose at most 6 seats.\""";
-
-  private static final String FORM_ID = "seats-form";
-
-  private final Kino.Ctx ctx;
-
-  private final int state;
-
-  private final long reservationId;
-
-  private final SeatsShow show;
-
-  private final SeatsGrid grid;
-
-  SeatsView(Kino.Ctx ctx, int state, long reservationId, SeatsShow show, SeatsGrid grid) {
-    this.ctx = ctx;
-
-    this.state = state;
-
-    this.reservationId = reservationId;
-
-    this.show = show;
-
-    this.grid = grid;
-  }
-
-  @Override
-  protected final void render() {
-    backLink(ctx, Kino.Page.MOVIE, show.movieId());
-
-    // this node is for testing only, it is not rendered in the final HTML
-    testableH1("Show details");
-
-    h2(
-        testableField("title", show.title())
-    );
-
-    p("Please choose your seats");
-
-    div(
-        dataFrame("seats-alert", Integer.toString(state)),
-
-        f(this::renderAlert)
-    );
-
-    div(
-        css(\"""
-        border:1px_solid_border
-        display:flex
-        gap:24rx
-        margin:32rx_0
-        overflow-x:auto
-        padding:32rx_24rx
-        \"""),
-
-        f(this::renderDetails),
-
-        f(this::renderSeats)
-    );
-  }
-
-  private void renderAlert() {
-    switch (state) {
-      case BOOKED -> {
-        testableField("alert", "BOOKED");
-
-        renderAlert(BOOKED_MSG);
-      }
-
-      case EMPTY -> {
-        testableField("alert", "EMPTY");
-
-        renderAlert(EMPTY_MSG);
-      }
-
-      case LIMIT -> {
-        testableField("alert", "LIMIT");
-
-        renderAlert(LIMIT_MSG);
-      }
-    }
-  }
-
-  private void renderAlert(String msg) {
-    div(
-        css(\"""
-        align-items:center
-        background-color:blue-100
-        border-left:3px_solid_blue-800
-        display:flex
-        font-size:14rx
-        line-height:16rx
-        margin:16rx_0
-        padding:16rx
-        \"""),
-
-        icon(
-            Kino.Icon.INFO,
-
-            css(\"""
-            height:20rx
-            width:auto
-            padding-right:16rx
-            \""")
-        ),
-
-        div(
-            css(\"""
-            flex:1
-            \"""),
-
-            text(msg)
-        )
-    );
-  }
-
-  private void renderDetails() {
-    div(
-        css(\"""
-        display:flex
-        flex-direction:column
-        font-size:14rx
-        gap:16rx
-        \"""),
-
-        renderDetailsItem(Kino.Icon.CALENDAR_CHECK, "date", show.date()),
-
-        renderDetailsItem(Kino.Icon.CLOCK, "time", show.time()),
-
-        renderDetailsItem(Kino.Icon.PROJECTOR, "screen", show.screen())
-    );
-  }
-
-  private Html.Instruction.OfElement renderDetailsItem(Kino.Icon icon, String name, String value) {
-    return div(
-        css(\"""
-        align-items:center
-        display:flex
-        flex-direction:column
-        gap:4rx
-        \"""),
-
-        icon(
-            icon,
-
-            css(\"""
-            height:auto
-            stroke:icon
-            width:20rx
-            \""")
-        ),
-
-        span(
-            css(\"""
-            text-align:center
-            width:6rch
-            \"""),
-
-            text(testableField(name, value))
-        )
-    );
-  }
-
-  private void renderSeats() {
-    // this node is for testing only, it is not rendered in the final HTML
-    testableH1("Seats");
-
-    div(
-        css(\"""
-        display:flex
-        flex-direction:column
-        flex-grow:1
-        justify-content:start
-        \"""),
-
-        f(this::renderSeatsScreen),
-
-        f(this::renderSeatsForm),
-
-        f(this::renderSeatsAction)
-    );
-  }
-
-  private void renderSeatsScreen() {
-    svg(
-        css(\"""
-        display:block
-        margin:0_auto
-        max-height:60rx
-        max-width:400rx
-        min-height:0
-        min-width:0
-        stroke:icon
-        width:100%
-        \"""),
-
-        width("400"), height("60"), viewBox("0 0 400 60"), xmlns("http://www.w3.org/2000/svg"),
-        path(d("M 0 50 Q 200 0 400 50")), fill("none"), strokeWidth("1.25")
-    );
-
-    p(
-        css(\"""
-        font-size:14rx
-        inset:-32rx_0_auto
-        position:relative
-        text-align:center
-        \"""),
-
-        text("Screen")
-    );
-  }
-
-  private void renderSeatsForm() {
-    form(
-        id(FORM_ID),
-
-        formAction(ctx, Kino.Page.SEATS, reservationId, show.screenId()),
-
-        css(\"""
-        aspect-ratio:1.15
-        display:grid
-        flex-grow:1
-        gap:8rx
-        grid-template-columns:repeat(10,1fr)
-        grid-template-rows:repeat(10,minmax(20rx,1fr))
-        margin:0_auto
-        max-width:400rx
-        width:100%
-        \"""),
-
-        dataOnSuccess(script -> {
-          final String successUrl;
-          successUrl = ctx.href(Kino.Page.CONFIRM, reservationId);
-
-          script.replaceState(successUrl);
-        }),
-
-        method("post"),
-
-        f(this::renderSeatsFormGrid)
-    );
-  }
-
-  private void renderSeatsFormGrid() {
-    for (SeatsGrid.Cell cell : grid) {
-      final int seatId;
-      seatId = cell.seatId();
-
-      if (seatId < 0) {
-        div();
-      } else {
-        final String seatIdValue;
-        seatIdValue = Integer.toString(seatId);
-
-        input(
-            css(\"""
-            cursor:pointer
-
-            disabled:cursor:default
-            \"""),
-
-            name("seat"),
-
-            type("checkbox"),
-
-            cell.checked() ? checked() : noop(),
-
-            cell.reserved() ? disabled() : noop(),
-
-            value(seatIdValue)
-        );
-
-        if (cell.checked()) {
-          testableField("checked", seatIdValue);
-        }
-      }
-    }
-  }
-
-  private void renderSeatsAction() {
-    div(
-        css(\"""
-        display:flex
-        justify-content:end
-        padding-top:64rx
-        margin:0_auto
-        max-width:400rx
-        width:100%
-        \"""),
-
-        button(
-            PRIMARY,
-
-            form(FORM_ID),
-
-            type("submit"),
-
-            text("Book seats")
-        )
-    );
-  }
-
-}
-""");
-
-  static final SourceModel MovieDetails = SourceModel.create("MovieDetails.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
-
-record MovieDetails(
-    int movieId,
-    String title,
-    String runtime,
-    String releaseDate,
-    String genres,
-    String synopsys
-) {
-
-  MovieDetails(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++)
-    );
-  }
-
-  public static Optional<MovieDetails> queryOptional(Sql.Transaction trx, int id) {
-    trx.sql(\"""
-    select
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE,
-      concat (MOVIE.RUNTIME / 60, 'h ', MOVIE.RUNTIME % 60, 'm'),
-      formatdatetime (MOVIE.RELEASE_DATE, 'MMM dd, yyyy'),
-      listagg (GENRE.NAME, ', ') within group (
-        order by
-          GENRE.NAME
-      ),
-      MOVIE.SYNOPSYS
-    from
-      MOVIE
-      natural join MOVIE_GENRE
-      natural join GENRE
-    where
-      MOVIE.MOVIE_ID = ?
-    group by
-      MOVIE.MOVIE_ID
-    \""");
-
-    trx.param(id);
-
-    return trx.queryOptional(MovieDetails::new);
-  }
-
-}
-""");
-
-  static final SourceModel MovieScreening = SourceModel.create("MovieScreening.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
-import objectos.way.Sql;
-
-record MovieScreening(
-    int screenId,
-    String screenName,
-    String features,
-    String date,
-    List<Showtime> showtimes
-) {
-
-  record Showtime(int showId, String time) {
-
-    Showtime(Object[] row) {
-      this(
-          Integer.parseInt(row[0].toString()),
-          row[1].toString()
-      );
-    }
-
-    static List<Showtime> of(Array array) throws SQLException {
-      Object[] values;
-      values = (Object[]) array.getArray();
-
-      List<Showtime> list;
-      list = new ArrayList<>(values.length);
-
-      for (Object value : values) {
-        Array inner;
-        inner = (Array) value;
-
-        Object[] row;
-        row = (Object[]) inner.getArray();
-
-        Showtime showtime;
-        showtime = new Showtime(row);
-
-        list.add(showtime);
-      }
-
-      return List.copyOf(list);
-    }
-
-  }
-
-  MovieScreening(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        Showtime.of(rs.getArray(idx++))
-    );
-  }
-
-  public static List<MovieScreening> query(Sql.Transaction trx, int id, LocalDateTime dateTime) {
-    trx.sql(\"""
-    select
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      (
-        select
-          listagg (FEATURE.NAME, ', ') within group (order by FEATURE.FEATURE_ID)
-        from
-          SCREENING_FEATURE
-          natural join FEATURE
-        where
-          SCREENING_FEATURE.SCREENING_ID = SCREENING.SCREENING_ID
-        group by
-          SCREENING_FEATURE.SCREENING_ID
-      ) as F,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      array_agg (
-        array [cast(SHOW.SHOW_ID as varchar), formatdatetime(SHOW.SHOWTIME, 'kk:mm')]
-        order by SHOW.SHOWTIME
-      )
-    from
-      SHOW
-      natural join SCREENING
-      natural join SCREEN
-    where
-      SCREENING.MOVIE_ID = ?
-      and (
-        (
-          SHOW.SHOWDATE = ?
-          and SHOW.SHOWTIME > ?
-        )
-        or SHOW.SHOWDATE > ?
-      )
-    group by
-      SHOW.SHOWDATE,
-      SCREEN.SCREEN_ID
-    order by
-      SHOW.SHOWDATE,
-      SCREEN.SCREEN_ID
-    \""");
-
-    trx.param(id);
-
-    final LocalDate date;
-    date = dateTime.toLocalDate();
-
-    trx.param(date);
-
-    final LocalTime time;
-    time = dateTime.toLocalTime();
-
-    trx.param(time);
-
-    trx.param(date);
-
-    return trx.query(MovieScreening::new);
-  }
-
-}
-""");
-
-  static final SourceModel SeatsShow = SourceModel.create("SeatsShow.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
-
-record SeatsShow(
-    int showId,
-    String date,
-    String time,
-
-    int screenId,
-    String screen,
-    int capacity,
-
-    int movieId,
-    String title
-) {
-
-  private SeatsShow(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getInt(idx++),
-
-        rs.getInt(idx++),
-        rs.getString(idx++)
-    );
-  }
-
-  public static Optional<SeatsShow> queryOptional(Sql.Transaction trx, int id) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      SHOW.SHOW_ID = ?
-    \""");
-
-    trx.param(id);
-
-    return trx.queryOptional(SeatsShow::new);
-  }
-
-  public static Optional<SeatsShow> queryBackButton(Sql.Transaction trx, long reservationId) {
-    reservation(trx, reservationId);
-
-    return trx.queryOptional(SeatsShow::new);
-  }
-
-  public static SeatsShow queryReservation(Sql.Transaction trx, long reservationId) {
-    reservation(trx, reservationId);
-
-    return trx.querySingle(SeatsShow::new);
-  }
-
-  private static void reservation(Sql.Transaction trx, long reservationId) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      RESERVATION
-      natural join SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-    \""");
-
-    trx.param(reservationId);
   }
 
 }
@@ -2039,647 +666,6 @@ final class SeatsGrid implements Iterable<SeatsGrid.Cell> {
 }
 """);
 
-  static final SourceModel Confirm = SourceModel.create("Confirm.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import demo.landing.LandingDemo;
-import java.time.LocalDateTime;
-import java.util.Optional;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
-
-final class Confirm implements Kino.GET, Kino.POST {
-
-  private final Kino.Ctx ctx;
-
-  Confirm(Kino.Ctx ctx) {
-    this.ctx = ctx;
-  }
-
-  public static Html.Component create(Kino.Ctx ctx, Sql.Transaction trx, long reservationId) {
-    final Confirm action;
-    action = new Confirm(ctx);
-
-    return action.view(trx, reservationId);
-  }
-
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
-    long reservationId;
-    reservationId = query.id();
-
-    return view(trx, reservationId);
-  }
-
-  @Override
-  public final Kino.PostResult post(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final ConfirmData data;
-    data = ConfirmData.parse(http);
-
-    final LocalDateTime today;
-    today = ctx.today();
-
-    final Sql.Update ticketResult;
-    ticketResult = data.persistTicket(trx, today);
-
-    return switch (ticketResult) {
-      case Sql.UpdateFailed _ -> {
-
-        throw new UnsupportedOperationException("Implement me");
-
-      }
-
-      case Sql.UpdateSuccess _ -> LandingDemo.embedOk(
-          Ticket.create(trx, data)
-      );
-    };
-  }
-
-  private Html.Component view(Sql.Transaction trx, long reservationId) {
-    final Optional<ConfirmDetails> maybe;
-    maybe = ConfirmDetails.queryOptional(trx, reservationId);
-
-    if (maybe.isEmpty()) {
-      return NotFound.create();
-    }
-
-    final ConfirmDetails details;
-    details = maybe.get();
-
-    return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "confirm-" + reservationId;
-
-      shell.app = new ConfirmView(ctx, details);
-
-      shell.sources(
-          Source.Confirm,
-          Source.ConfirmData,
-          Source.ConfirmDetails,
-          Source.ConfirmView
-      );
-    });
-  }
-
-}
-""");
-
-  static final SourceModel ConfirmView = SourceModel.create("ConfirmView.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import demo.landing.app.Kino.Page;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import objectos.way.Css;
-import objectos.way.Html;
-
-@Css.Source
-final class ConfirmView extends Kino.View {
-
-  private final Kino.Ctx ctx;
-
-  private final ConfirmDetails details;
-
-  private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
-
-  ConfirmView(Kino.Ctx ctx, ConfirmDetails details) {
-    this.ctx = ctx;
-
-    this.details = details;
-  }
-
-  @Override
-  protected final void render() {
-    backLink(ctx, Page.SEATS, details.reservationId(), SeatsView.BACK);
-
-    h2("Your Order");
-
-    // testable node only
-    testableH1("Order #" + details.reservationId());
-
-    p("Please review and confirm your order");
-
-    div(
-        css(\"""
-        border:1px_solid_border
-        display:flex
-        gap:24rx
-        margin:32rx_0
-        overflow-x:auto
-        padding:32rx_24rx
-
-        h3:font-size:24rx
-        h3:font-weight:300
-        h3:padding-bottom:16rx
-        \"""),
-
-        div(
-            css(\"""
-            display:flex
-            flex:1.5
-            flex-direction:column
-            gap:12rx
-            \"""),
-
-            f(this::renderLeft)
-        ),
-
-        div(
-            css(\"""
-            display:flex
-            flex:2
-            flex-direction:column
-            gap:12rx
-            \"""),
-
-            f(this::renderRight)
-        )
-    );
-  }
-
-  private void renderLeft() {
-    h3("Movie");
-
-    renderDetailsItem(Kino.Icon.FILM, "title", details.title());
-
-    renderDetailsItem(Kino.Icon.CALENDAR_CHECK, "date", details.date());
-
-    renderDetailsItem(Kino.Icon.CLOCK, "time", details.time());
-
-    renderDetailsItem(Kino.Icon.PROJECTOR, "screen", details.screen());
-  }
-
-  private Html.Instruction.OfElement renderDetailsItem(Kino.Icon icon, String name, String value) {
-    return div(
-        css(\"""
-        display:flex
-        gap:12rx
-        \"""),
-
-        icon(
-            icon,
-
-            css(\"""
-            height:auto
-            width:16rx
-            \""")
-        ),
-
-        span(
-            css(\"""
-            font-size:14rx
-            line-height:16rx
-            \"""),
-
-            text(testableField(name, value))
-        )
-    );
-  }
-
-  private void renderRight() {
-    h3(
-        testableH2("Order Details")
-    );
-
-    for (var item : details.items()) {
-      div(
-          css(\"""
-          display:flex
-          font-size:14rx
-          justify-content:space-between
-          line-height:16rx
-          \"""),
-
-          div(
-              text("Seat "),
-              text(testableCell(item.seat(), 5))
-          ),
-
-          div(
-              css(\"""
-
-              \"""),
-
-              text(testableCell(format(item.price()), 6))
-          )
-      );
-
-      testableNewLine();
-    }
-
-    div(
-        css(\"""
-        border-top:1px_solid_border
-        display:flex
-        font-size:14rx
-        justify-content:space-between
-        line-height:16rx
-        padding-top:12rx
-        \"""),
-
-        div(text(testableCell("Total", 5))),
-
-        div(
-            css(\"""
-            font-weight:600
-            \"""),
-
-            text(testableCell(format(details.totalPrice()), 6))
-        )
-    );
-
-    div(
-        css(\"""
-        display:flex
-        font-size:14rx
-        justify-content:space-between
-        line-height:16rx
-        margin-top:24rx
-        \"""),
-
-        div("Payment Method"),
-
-        div(
-            css(\"""
-            display:flex
-            gap:8rx
-            \"""),
-
-            icon(
-                Kino.Icon.CREDIT_CARD,
-
-                css(\"""
-                height:auto
-                width:16rx
-                \""")
-            ),
-
-            span("4321")
-        )
-    );
-
-    testableNewLine();
-
-    final long reservationId;
-    reservationId = details.reservationId();
-
-    form(
-        formAction(ctx, Kino.Page.CONFIRM, reservationId),
-
-        css(\"""
-        display:flex
-        justify-content:end
-        margin-top:24rx
-        \"""),
-
-        dataOnSuccess(script -> {
-          final String successUrl;
-          successUrl = ctx.href(Kino.Page.TICKET, reservationId);
-
-          script.replaceState(successUrl);
-        }),
-
-        method("post"),
-
-        button(
-            PRIMARY,
-
-            type("submit"),
-
-            text("Confirm")
-        )
-    );
-  }
-
-  private String format(double price) {
-    return formatter.format(price);
-  }
-
-}
-""");
-
-  static final SourceModel SeatsData = SourceModel.create("SeatsData.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.util.Arrays;
-import objectos.way.Http;
-import objectos.way.Sql;
-
-/**
- * Represents the user submitted data.
- */
-record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] selection) {
-
-  public static SeatsData parse(Http.Exchange http) {
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
-    return new SeatsData(
-        wayRequest(http),
-
-        query.id(),
-
-        query.aux(),
-
-        http.formParamAllAsInt("seat", Integer.MIN_VALUE).distinct().toArray()
-    );
-  }
-
-  private static boolean wayRequest(Http.Exchange http) {
-    final String maybe;
-    maybe = http.header(Http.HeaderName.WAY_REQUEST);
-
-    return "true".equals(maybe);
-  }
-
-  @Override
-  public final String toString() {
-    return String.format(
-        "SeatsData[wayRequest=%s, reservationId=%d, screenId=%d, selection=%s]",
-        wayRequest, reservationId, screenId, Arrays.toString(selection)
-    );
-  }
-
-  final void clearTmpSelection(Sql.Transaction trx) {
-    // clear this user's current tmp selection
-
-    trx.sql(\"""
-    delete from
-      TMP_SELECTION
-    where
-      RESERVATION_ID = ?
-    \""");
-
-    trx.param(reservationId);
-
-    trx.update();
-  }
-
-  final Sql.BatchUpdate persistTmpSelection(Sql.Transaction trx) {
-    clearTmpSelection(trx);
-
-    // insert the data.
-    // it will fail if either one is true:
-    // 1) invalid RESERVATION_ID
-    // 2) invalid SEAT_ID
-    // 3) invalid SCREEN_ID
-    // 4) SEAT_ID and SCREEN_ID are valid but SEAT_ID does not belong to SCREEN_ID
-
-    trx.sql(\"""
-    insert into
-      TMP_SELECTION (RESERVATION_ID, SEAT_ID, SCREEN_ID)
-    values
-      (?, ?, ?)
-    \""");
-
-    for (int seatId : selection) {
-      trx.param(reservationId);
-
-      trx.param(seatId);
-
-      trx.param(screenId);
-
-      trx.addBatch();
-    }
-
-    return trx.batchUpdateWithResult();
-  }
-
-  final void clearUserSelection(Sql.Transaction trx) {
-    // clear this user's current selection.
-    // does nothing (hopefully) if RESERVATION_ID refers to an already sold ticket
-
-    trx.sql(\"""
-    delete from SELECTION
-    where RESERVATION_ID in (
-      select
-        RESERVATION_ID
-      from
-        RESERVATION
-      where
-        RESERVATION_ID = ?
-        and RESERVATION.TICKET_TIME is null
-    )
-    \""");
-
-    trx.param(reservationId);
-
-    trx.update();
-  }
-
-  final Sql.Update persisUserSelection(Sql.Transaction trx) {
-    clearUserSelection(trx);
-
-    // persist this user's selection.
-    // it will fail if:
-    // 1) we try to insert an already selected seat (unique constraint)
-    //
-    // it will select only a subset (possibly empty) if:
-    // 1) RESERVATION_ID refers to an already sold ticket
-    // 2) SEAT is from a different screen that the current SHOW
-
-    trx.sql(\"""
-    insert into
-      SELECTION (RESERVATION_ID, SEAT_ID, SHOW_ID)
-    select
-      TMP_SELECTION.RESERVATION_ID,
-      TMP_SELECTION.SEAT_ID,
-      SHOW.SHOW_ID
-    from
-      TMP_SELECTION
-      join RESERVATION on TMP_SELECTION.RESERVATION_ID = RESERVATION.RESERVATION_ID
-      join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
-      join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
-      join SEAT on TMP_SELECTION.SEAT_ID = SEAT.SEAT_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-      and RESERVATION.TICKET_TIME is null
-      and SCREENING.SCREEN_ID = SEAT.SCREEN_ID
-    \""");
-
-    trx.param(reservationId);
-
-    return trx.updateWithResult();
-  }
-
-  final int seats() {
-    return selection.length;
-  }
-
-}
-""");
-
-  static final SourceModel ConfirmDetails = SourceModel.create("ConfirmDetails.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Sql;
-
-final record ConfirmDetails(
-    long reservationId,
-    String title,
-    String screen,
-    String date,
-    String time,
-    double totalPrice,
-    List<Item> items
-) {
-
-  record Item(String seat, double price) {
-
-    private Item(ResultSet rs, int idx) throws SQLException {
-      this(
-          rs.getString(idx++),
-          rs.getDouble(idx++)
-      );
-    }
-
-    static List<Item> of(Array array) throws SQLException {
-      Object[] values;
-      values = (Object[]) array.getArray();
-
-      List<Item> list;
-      list = new ArrayList<>(values.length);
-
-      for (Object value : values) {
-        ResultSet rs;
-        rs = (ResultSet) value;
-
-        if (!rs.next()) {
-          continue;
-        }
-
-        Item item;
-        item = new Item(rs, 1);
-
-        list.add(item);
-      }
-
-      return List.copyOf(list);
-    }
-
-  }
-
-  private ConfirmDetails(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getLong(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getDouble(idx++),
-        Item.of(rs.getArray(idx++))
-    );
-  }
-
-  public static Optional<ConfirmDetails> queryOptional(Sql.Transaction trx, long reservationId) {
-    trx.sql(\"""
-    select
-      RESERVATION.RESERVATION_ID,
-      MOVIE.TITLE,
-      SCREEN.NAME,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-      sum(SHOW.SEAT_PRICE),
-      array_agg (
-        row (concat(SEAT.SEAT_ROW, SEAT.SEAT_COL), SHOW.SEAT_PRICE)
-      )
-    from
-      RESERVATION
-      join SELECTION on RESERVATION.RESERVATION_ID = SELECTION.RESERVATION_ID
-      join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
-      join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
-      join MOVIE on SCREENING.MOVIE_ID = MOVIE.MOVIE_ID
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-      join SEAT on SELECTION.SEAT_ID = SEAT.SEAT_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-    group by
-      RESERVATION.RESERVATION_ID
-    \""");
-
-    trx.param(reservationId);
-
-    return trx.queryOptional(ConfirmDetails::new);
-  }
-
-}
-""");
-
   static final SourceModel NotFound = SourceModel.create("NotFound.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2729,741 +715,6 @@ final class NotFound implements Kino.GET, Kino.POST {
 }
 """);
 
-  static final SourceModel ConfirmData = SourceModel.create("ConfirmData.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.time.LocalDateTime;
-import objectos.way.Http;
-import objectos.way.Sql;
-
-record ConfirmData(long reservationId, boolean wayRequest) {
-
-  static ConfirmData parse(Http.Exchange http) {
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
-    long reservationId;
-    reservationId = query.id();
-
-    return new ConfirmData(
-        reservationId,
-
-        wayRequest(http)
-    );
-  }
-
-  private static boolean wayRequest(Http.Exchange http) {
-    final String maybe;
-    maybe = http.header(Http.HeaderName.WAY_REQUEST);
-
-    return "true".equals(maybe);
-  }
-
-  public final Sql.Update persistTicket(Sql.Transaction trx, LocalDateTime today) {
-    trx.sql(\"""
-    update
-      RESERVATION
-    set
-      TICKET_TIME = ?
-    where
-      RESERVATION_ID = ?
-      and TICKET_TIME is null
-    \""");
-
-    trx.param(today);
-
-    trx.param(reservationId);
-
-    return trx.updateWithResult();
-  }
-
-}
-""");
-
-  static final SourceModel TicketModel = SourceModel.create("TicketModel.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Sql;
-
-record TicketModel(
-    long id,
-    String purchaseTime,
-    String title,
-    String screen,
-    String date,
-    String time,
-    double ammountPaid,
-    List<Item> items
-) {
-
-  record Item(String seat, double price) {
-
-    private Item(ResultSet rs, int idx) throws SQLException {
-      this(
-          rs.getString(idx++),
-          rs.getDouble(idx++)
-      );
-    }
-
-    private static List<Item> of(Array array) throws SQLException {
-      Object[] values;
-      values = (Object[]) array.getArray();
-
-      List<Item> list;
-      list = new ArrayList<>(values.length);
-
-      for (Object value : values) {
-        ResultSet rs;
-        rs = (ResultSet) value;
-
-        if (!rs.next()) {
-          continue;
-        }
-
-        Item item;
-        item = new Item(rs, 1);
-
-        list.add(item);
-      }
-
-      return List.copyOf(list);
-    }
-
-  }
-
-  private TicketModel(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getLong(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-        rs.getDouble(idx++),
-        Item.of(rs.getArray(idx++))
-    );
-  }
-
-  public static Optional<TicketModel> queryOptional(Sql.Transaction trx, long id) {
-    trx.sql(\"""
-    select
-      RESERVATION.RESERVATION_ID,
-      formatdatetime(RESERVATION.TICKET_TIME, 'EEE dd/LLL kk:mm'),
-      MOVIE.TITLE,
-      SCREEN.NAME,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-      sum(SHOW.SEAT_PRICE),
-      array_agg (
-        row (concat(SEAT.SEAT_ROW, SEAT.SEAT_COL), SHOW.SEAT_PRICE)
-      )
-    from
-      RESERVATION
-      join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
-      join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
-      join MOVIE on SCREENING.MOVIE_ID = MOVIE.MOVIE_ID
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-      join SELECTION on RESERVATION.RESERVATION_ID = SELECTION.RESERVATION_ID
-      join SEAT on SELECTION.SEAT_ID = SEAT.SEAT_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-      and TICKET_TIME is not null
-    group by
-      RESERVATION.RESERVATION_ID
-    \""");
-
-    trx.param(id);
-
-    return trx.queryOptional(TicketModel::new);
-  }
-
-  final boolean singular() {
-    return items.size() == 1;
-  }
-
-}
-""");
-
-  static final SourceModel Ticket = SourceModel.create("Ticket.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.util.Optional;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
-
-final class Ticket implements Kino.GET {
-
-  Ticket() {}
-
-  public static Html.Component create(Sql.Transaction trx, ConfirmData data) {
-    final Ticket action;
-    action = new Ticket();
-
-    final long ticketId;
-    ticketId = data.reservationId();
-
-    return action.view(trx, ticketId);
-  }
-
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
-    final long ticketId;
-    ticketId = query.id();
-
-    return view(trx, ticketId);
-  }
-
-  private Html.Component view(Sql.Transaction trx, long ticketId) {
-    final Optional<TicketModel> maybe;
-    maybe = TicketModel.queryOptional(trx, ticketId);
-
-    if (maybe.isPresent()) {
-      final TicketModel model;
-      model = maybe.get();
-
-      return Shell.create(shell -> {
-        shell.appFrame = "ticket-" + ticketId;
-
-        shell.app = new TicketView(model);
-
-        shell.sourceFrame = "ticket";
-
-        shell.sources(
-            Source.Ticket,
-            Source.TicketModel,
-            Source.TicketView
-        );
-      });
-    } else {
-      return NotFound.create();
-    }
-  }
-
-}
-""");
-
-  static final SourceModel TicketView = SourceModel.create("TicketView.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import objectos.way.Css;
-
-@Css.Source
-final class TicketView extends Kino.View {
-
-  private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
-
-  private final TicketModel model;
-
-  TicketView(TicketModel model) {
-    this.model = model;
-  }
-
-  @Override
-  protected final void render() {
-    testableH1("Ticket #" + model.id());
-
-    h2("Thank You");
-
-    p("Here's your receipt");
-
-    div(
-        css(\"""
-        position:relative
-        \"""),
-
-        icon(
-            Kino.Icon.RECEIPT,
-
-            css(\"""
-            border:1px_solid_border
-            border-radius:9999px
-            height:auto
-            inset:-80rx_0_auto_auto
-            padding:16rx
-            position:absolute
-            stroke-width:1rx
-            width:80rx
-            \""")
-        )
-    );
-
-    dl(
-        css(\"""
-        border:1px_solid_border
-        display:flex
-        flex-direction:column
-        gap:4rx
-        margin:32rx_0_0
-        padding:16rx
-
-        div:display:flex
-        div:justify-content:space-between
-
-        dd:font-weight:500
-        \"""),
-
-        div(
-            dt(testableFieldName("Ammount Paid")),
-            dd(testableFieldValue(format(model.ammountPaid())))
-        ),
-
-        div(
-            dt(testableFieldName("Purchase Time")),
-            dd(testableFieldValue(model.purchaseTime()))
-        )
-    );
-
-    h2(testableH2("Tickets"));
-
-    p(model.singular() ? "Here's your ticket" : "Here are your tickets");
-
-    div(
-        css(\"""
-        display:flex
-        flex-direction:column
-        gap:16rx
-        padding:32rx_0_0
-        \"""),
-
-        f(this::renderTickets)
-    );
-  }
-
-  private void renderTickets() {
-    for (var item : model.items()) {
-      div(
-          css(\"""
-          border:1px_solid_border
-          display:flex
-          justify-content:space-between
-          padding:16rx
-          \"""),
-
-          icon(
-              Kino.Icon.TICKET,
-
-              css(\"""
-              height:auto
-              margin-right:16rx
-              padding:16rx
-              stroke-width:1rx
-              width:80rx
-              \""")
-          ),
-
-          ul(
-              css(\"""
-              font-size:14rx
-              flex:1
-              \"""),
-
-              li(testableCell(model.title(), 8)),
-              li(testableCell(model.date(), 10)),
-              li(testableCell(model.time(), 6)),
-              li(testableCell(model.screen(), 8))
-          ),
-
-          div(
-              css(\"""
-              align-items:end
-              display:flex
-              flex-direction:column
-              justify-content:space-around
-              \"""),
-
-              div(
-                  css(\"""
-                  font-size:20rx
-                  font-weight:300
-                  \"""),
-
-                  text("Seat "),
-                  text(testableCell(item.seat(), 5))
-              ),
-
-              div(
-                  css(\"""
-                  font-size:14rx
-                  font-weight:600
-                  \"""),
-
-                  text(testableCell(format(item.price()), 6))
-              )
-          )
-      );
-
-      testableNewLine();
-    }
-  }
-
-  private String format(double price) {
-    return formatter.format(price);
-  }
-
-}
-""");
-
-  static final SourceModel SourceModel_ = SourceModel.create("SourceModel.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import objectos.way.Html;
-
-record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
-
-  private static int INDEX = 0;
-
-  public static SourceModel create(String name, String value) {
-    final int index;
-    index = INDEX++;
-
-    return new SourceModel(
-        name,
-
-        value,
-
-        Html.Id.of("src-btn-" + index),
-
-        Html.Id.of("src-panel-" + index)
-    );
-  }
-
-}
-""");
-
-  static final SourceModel NotFoundView = SourceModel.create("NotFoundView.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import objectos.way.Css;
-
-@Css.Source
-final class NotFoundView extends Kino.View {
-
-  @Override
-  protected final void render() {
-    h2(
-        testableH1("Something Went Wrong")
-    );
-
-    p("Sorry, we could not find the page you're looking for.");
-
-    div(
-        css(\"""
-        display:flex
-        justify-content:center
-        padding:48rx_0
-        \"""),
-
-        icon(
-            Kino.Icon.FROWN,
-
-            css(\"""
-            height:auto
-            stroke-width:0.5rx
-            width:120rx
-            \""")
-        )
-    );
-
-    div(
-        css(\"""
-        display:flex
-        justify-content:center
-        \"""),
-
-        a(
-            PRIMARY,
-
-            dataOnClick(this::navigate),
-
-            href("/index.html"),
-
-            text("Get Tickets")
-        )
-    );
-  }
-
-}
-""");
-
-  static final SourceModel NowShowingModel = SourceModel.create("NowShowingModel.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-import objectos.way.Sql;
-
-/**
- * Represents a movie in the "Now Showing" view.
- */
-record NowShowingModel(
-    int id,
-    String title
-) {
-
-  private NowShowingModel(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++)
-    );
-  }
-
-  public static List<NowShowingModel> query(Sql.Transaction trx) {
-    trx.sql(\"""
-    select
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-
-    from
-      MOVIE
-
-    order by
-      MOVIE_ID
-    \""");
-
-    return trx.query(NowShowingModel::new);
-  }
-
-}
-""");
-
-  static final SourceModel NowShowingView = SourceModel.create("NowShowingView.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.util.List;
-import objectos.way.Css;
-
-/**
- * Renders the "Now Showing" view.
- */
-@Css.Source
-final class NowShowingView extends Kino.View {
-
-  private final Kino.Ctx ctx;
-
-  private final List<NowShowingModel> items;
-
-  NowShowingView(Kino.Ctx ctx, List<NowShowingModel> items) {
-    this.ctx = ctx;
-
-    this.items = items;
-  }
-
-  @Override
-  protected final void render() {
-    div(
-        css(\"""
-        margin-bottom:32rx
-        \"""),
-
-        h2(
-            text("Now Showing")
-        ),
-
-        p(
-            text("Please choose a movie")
-        )
-    );
-
-    ul(
-        css(\"""
-        display:flex
-        flex-wrap:wrap
-        gap:16rx
-        justify-content:space-evenly
-        \"""),
-
-        f(this::renderItems)
-    );
-  }
-
-  private void renderItems() {
-    for (NowShowingModel item : items) {
-      li(
-          css(\"""
-          flex:0_0_128rx
-          \"""),
-
-          a(
-              css(\"""
-              group
-              \"""),
-
-              dataOnClick(this::navigate),
-
-              href(ctx.href(Kino.Page.MOVIE, item.id())),
-
-              rel("nofollow"),
-
-              img(
-                  css(\"""
-                  aspect-ratio:2/3
-                  background-color:neutral-400
-                  border-radius:6rx
-
-                  group-hover:outline:2px_solid_gray-500
-                  \"""),
-
-                  src("/demo/landing/poster" + item.id() + ".jpg")
-              ),
-
-              h3(
-                  css(\"""
-                  font-size:14rx
-                  line-height:18rx
-                  text-align:center
-                  padding-top:8rx
-
-                  group-hover:text-decoration:underline
-                  \"""),
-
-                  text(
-                      testableField("movie.title", item.title())
-                  )
-              )
-          )
-      );
-    }
-  }
-
-}
-""");
-
   static final SourceModel Kino = SourceModel.create("Kino.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -3506,7 +757,7 @@ public final class Kino implements LandingDemo {
   }
 
   /**
-   * Creates a new {@code Demo} instance with the specified configuration.
+   * Creates a new {@code Kino} instance with the specified configuration.
    */
   public static Kino create(LandingDemoConfig config) {
     Objects.requireNonNull(config, "config == null");
@@ -3515,6 +766,12 @@ public final class Kino implements LandingDemo {
     ctx = Ctx.of(config);
 
     return new Kino(ctx);
+  }
+
+  /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
+  /// @return a new instance of the demo's `Css.StyleSheet` configuration
+  public static Css.Library styles() {
+    return new KinoStyles();
   }
 
   /**
@@ -3622,21 +879,20 @@ public final class Kino implements LandingDemo {
    * Base HTML template of the application. Provides a utility methods for
    * rendering UI fragments common to the application.
    */
-  @Css.Source // Indicates to the CSS Generator that it should scan this class for CSS utilities.
   static abstract class View extends Html.Template {
 
     static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""
     appearance:none
-    background-color:btn-primary
-    color:btn-primary-text
+    background-color:var(--color-btn-primary)
+    color:var(--color-btn-primary-text)
     cursor:pointer
     display:flex
     font-size:14rx
     min-height:48rx
     padding:14rx_63rx_14rx_15rx
 
-    active:background-color:btn-primary-active
-    hover:background-color:btn-primary-hover
+    active/background-color:var(--color-btn-primary-active)
+    hover/background-color:var(--color-btn-primary-hover)
     \""");
 
     //
@@ -3683,8 +939,8 @@ public final class Kino implements LandingDemo {
           margin:6rx_0_0_-6rx
           position:absolute
 
-          active:background-color:btn-ghost-active
-          hover:background-color:btn-ghost-hover
+          active/background-color:var(--color-btn-ghost-active)
+          hover/background-color:var(--color-btn-ghost-hover)
           \"""),
 
           dataOnClick(this::navigate),
@@ -4218,5 +1474,2833 @@ final class KinoCodec {
 
 }
 
+""");
+
+  static final SourceModel TicketModel = SourceModel.create("TicketModel.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.Array;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import objectos.way.Sql;
+
+record TicketModel(
+    long id,
+    String purchaseTime,
+    String title,
+    String screen,
+    String date,
+    String time,
+    double ammountPaid,
+    List<Item> items
+) {
+
+  record Item(String seat, double price) {
+
+    private Item(ResultSet rs, int idx) throws SQLException {
+      this(
+          rs.getString(idx++),
+          rs.getDouble(idx++)
+      );
+    }
+
+    private static List<Item> of(Array array) throws SQLException {
+      Object[] values;
+      values = (Object[]) array.getArray();
+
+      List<Item> list;
+      list = new ArrayList<>(values.length);
+
+      for (Object value : values) {
+        ResultSet rs;
+        rs = (ResultSet) value;
+
+        if (!rs.next()) {
+          continue;
+        }
+
+        Item item;
+        item = new Item(rs, 1);
+
+        list.add(item);
+      }
+
+      return List.copyOf(list);
+    }
+
+  }
+
+  private TicketModel(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getLong(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getDouble(idx++),
+        Item.of(rs.getArray(idx++))
+    );
+  }
+
+  public static Optional<TicketModel> queryOptional(Sql.Transaction trx, long id) {
+    trx.sql(\"""
+    select
+      RESERVATION.RESERVATION_ID,
+      formatdatetime(RESERVATION.TICKET_TIME, 'EEE dd/LLL kk:mm'),
+      MOVIE.TITLE,
+      SCREEN.NAME,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+      sum(SHOW.SEAT_PRICE),
+      array_agg (
+        row (concat(SEAT.SEAT_ROW, SEAT.SEAT_COL), SHOW.SEAT_PRICE)
+      )
+    from
+      RESERVATION
+      join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
+      join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
+      join MOVIE on SCREENING.MOVIE_ID = MOVIE.MOVIE_ID
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+      join SELECTION on RESERVATION.RESERVATION_ID = SELECTION.RESERVATION_ID
+      join SEAT on SELECTION.SEAT_ID = SEAT.SEAT_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+      and TICKET_TIME is not null
+    group by
+      RESERVATION.RESERVATION_ID
+    \""");
+
+    trx.param(id);
+
+    return trx.queryOptional(TicketModel::new);
+  }
+
+  final boolean singular() {
+    return items.size() == 1;
+  }
+
+}
+""");
+
+  static final SourceModel ConfirmData = SourceModel.create("ConfirmData.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.time.LocalDateTime;
+import objectos.way.Http;
+import objectos.way.Sql;
+
+record ConfirmData(long reservationId, boolean wayRequest) {
+
+  static ConfirmData parse(Http.Exchange http) {
+    final Kino.Query query;
+    query = http.get(Kino.Query.class);
+
+    long reservationId;
+    reservationId = query.id();
+
+    return new ConfirmData(
+        reservationId,
+
+        wayRequest(http)
+    );
+  }
+
+  private static boolean wayRequest(Http.Exchange http) {
+    final String maybe;
+    maybe = http.header(Http.HeaderName.WAY_REQUEST);
+
+    return "true".equals(maybe);
+  }
+
+  public final Sql.Update persistTicket(Sql.Transaction trx, LocalDateTime today) {
+    trx.sql(\"""
+    update
+      RESERVATION
+    set
+      TICKET_TIME = ?
+    where
+      RESERVATION_ID = ?
+      and TICKET_TIME is null
+    \""");
+
+    trx.param(today);
+
+    trx.param(reservationId);
+
+    return trx.updateWithResult();
+  }
+
+}
+""");
+
+  static final SourceModel Shell = SourceModel.create("Shell.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
+import objectos.way.Html;
+import objectos.way.Syntax;
+
+/**
+ * The demo UI shell responsible for displaying the application on the
+ * top/right and the source code on the bottom/left.
+ */
+final class Shell extends Kino.View {
+
+  static final class Builder {
+
+    String appFrame;
+
+    Html.Component app;
+
+    String sourceFrame;
+
+    private final List<SourceModel> sources = new ArrayList<>();
+
+    private Builder() {}
+
+    final void sources(SourceModel... values) {
+      for (SourceModel value : values) {
+        sources.add(value);
+      }
+    }
+
+    private Shell build() {
+      Objects.requireNonNull(appFrame, "appFrame == null");
+      Objects.requireNonNull(app, "app == null");
+      Objects.requireNonNull(sourceFrame, "sourceFrame == null");
+
+      sources.add(Source.Kino);
+      sources.add(Source.Shell);
+      sources.add(Source.SourceModel_);
+
+      return new Shell(this);
+    }
+
+  }
+
+  static final Html.Id APP = Html.Id.of("demo-app");
+
+  private final Builder builder;
+
+  private Shell(Builder builder) {
+    this.builder = builder;
+  }
+
+  public static Shell create(Consumer<Builder> config) {
+    final Builder builder;
+    builder = new Builder();
+
+    config.accept(builder);
+
+    return builder.build();
+  }
+
+  private final Html.Id sourceFrame = Html.Id.of("source-frame");
+
+  private final Html.AttributeName dataButton = Html.AttributeName.of("data-button");
+
+  private final Html.AttributeName dataPanel = Html.AttributeName.of("data-panel");
+
+  private final Html.AttributeName dataSelected = Html.AttributeName.of("data-selected");
+
+  @Override
+  protected final void render() {
+    // the demo container
+    div(
+        css(\"""
+        display:grid
+        grid-template:'a'_448rx_'b'_auto_'c'_448rx_/_1fr
+
+        lg/grid-template:'c_a'_512rx_'b_b'_auto_/_1fr_1fr
+
+        xl/grid-template:'b_c_a'_512rx_/_200rx_1fr_1fr
+        \"""),
+
+        f(this::renderApp),
+
+        f(this::renderSourceMenu),
+
+        f(this::renderSourceCode)
+    );
+  }
+
+  private void renderApp() {
+    // the app container
+    div(
+        APP,
+
+        css(\"""
+        border:1px_solid_var(--color-border)
+        grid-area:a
+        overflow:auto
+        position:relative
+
+        lg/border-bottom-width:1px
+        lg/border-left-width:0px
+        \"""),
+
+        div(
+            css(\"""
+            align-items:center
+            background-color:var(--color-layer)
+            color:var(--color-gray-500)
+            display:flex
+            height:64rx
+            justify-content:space-between
+            padding:0_16rx
+            position:sticky
+            top:0px
+            z-index:8000
+            \"""),
+
+            a(
+                css(\"""
+                align-items:center
+                display:flex
+                gap:6rx
+                height:100%
+                \"""),
+
+                href("/index.html"),
+
+                dataOnClick(this::navigate),
+
+                objectosLogo(),
+
+                span(
+                    css(\"""
+                    font-size:24rx
+                    font-weight:300
+                    line-height:1
+                    transform:translateY(-1px)
+                    \"""),
+
+                    text("kino")
+                )
+            ),
+
+            a(
+                css(\"""
+                align-items:center
+                border-radius:6rx
+                display:flex
+                padding:8rx
+
+                active/background-color:var(--color-btn-ghost-active)
+                hover/background-color:var(--color-btn-ghost-hover)
+                \"""),
+
+                href("https://github.com/objectos/demo.landing"),
+
+                gitHubLogo()
+            )
+        ),
+
+        div(
+            css(\"""
+            padding:0_16rx_16rx
+
+            &_h2/font-size:36rx
+            &_h2/font-weight:200
+            &_h2/line-height:1
+            &_h2/padding:48rx_0_8rx
+            \"""),
+
+            dataFrame("demo-app", builder.appFrame),
+
+            c(builder.app)
+        )
+    );
+  }
+
+  private Html.Instruction objectosLogo() {
+    return svg(
+        css(\"""
+        fill:var(--color-logo)
+        height:24rx
+        transition:fill_300ms_ease
+        width:auto
+        \"""),
+
+        xmlns("http://www.w3.org/2000/svg"), width("200"), height("49.28"), viewBox("0 0 200 49.28"),
+
+        path(
+            d("m189.6 38.21q-2.53 0-5.3-0.932-2.76-0.903-4.6-3.087-0.38-0.495-0.35-1.02 0.12-0.582 0.64-0.99 0.5-0.32 1.02-0.233 0.58 0.09 0.93 0.524 1.4 1.66 3.38 2.33 2.04 0.641 4.43 0.641 4.08 0 5.77-1.456 1.71-1.456 1.71-3.408 0-1.893-1.86-3.087-1.78-1.281-5.56-1.806-4.87-0.669-7.2-2.621-2.33-1.951-2.33-4.514 0-2.417 1.23-4.077 1.19-1.689 3.29-2.534 2.12-0.874 4.86-0.874 3.29 0 5.56 1.223 2.31 1.165 3.7 3.146 0.38 0.495 0.24 1.077-0.1 0.525-0.73 0.874-0.47 0.233-1.02 0.146-0.53-0.09-0.9-0.583-1.23-1.543-2.97-2.33-1.69-0.815-3.99-0.815-3.06 0-4.75 1.31-1.69 1.311-1.69 3.146 0 1.252 0.67 2.242 0.73 0.903 2.33 1.602 1.6 0.612 4.28 1.02 3.64 0.466 5.71 1.63 2.15 1.165 3.03 2.738 0.9 1.485 0.9 3.233 0 2.301-1.46 3.99-1.45 1.689-3.81 2.621-2.39 0.874-5.16 0.874zm-27.97 0q-3.9 0-6.99-1.748-3.05-1.805-4.85-4.863-1.75-3.088-1.75-6.932 0-3.873 1.75-6.931 1.8-3.117 4.85-4.864 3.09-1.806 6.99-1.806 3.89 0 6.95 1.806 3.05 1.747 4.8 4.864 1.81 3.058 1.81 6.931 0 3.844-1.81 6.932-1.75 3.058-4.8 4.863-3.06 1.748-6.95 1.748zm0-2.709q3.07 0 5.43-1.427 2.45-1.456 3.79-3.873 1.42-2.476 1.42-5.592 0-3.058-1.42-5.475-1.34-2.476-3.79-3.874-2.36-1.456-5.43-1.456-3.03 0-5.45 1.456-2.41 1.398-3.83 3.874-1.4 2.417-1.4 5.533 0 3.058 1.4 5.534 1.42 2.417 3.83 3.873 2.42 1.427 5.45 1.427zm-19.01 2.418q-2.65-0.06-4.75-1.224-2.09-1.194-3.26-3.291-1.16-2.126-1.16-4.805v-24.17q0-0.67 0.4-1.078 0.44-0.436 1.05-0.436 0.7 0 1.08 0.436 0.44 0.408 0.44 1.078v24.17q0 2.825 1.74 4.601 1.75 1.748 4.52 1.748h1.08q0.67 0 1.05 0.437 0.43 0.407 0.43 1.077 0 0.641-0.43 1.078-0.38 0.379-1.05 0.379zm-12.96-22.95q-0.58 0-0.96-0.35-0.35-0.378-0.35-0.961 0-0.582 0.35-0.932 0.38-0.378 0.96-0.378h13.16q0.59 0 0.94 0.378 0.38 0.35 0.38 0.932 0 0.583-0.38 0.961-0.35 0.35-0.94 0.35zm-13.09 23.24q-3.78 0-6.79-1.806-2.96-1.776-4.71-4.834-1.7-3.059-1.7-6.903 0-3.873 1.6-6.931t4.42-4.806q2.81-1.806 6.45-1.806 3.1 0 5.7 1.224 2.56 1.165 4.45 3.582 0.38 0.495 0.29 1.019-0.1 0.525-0.64 0.874-0.44 0.349-0.96 0.291-0.52-0.09-0.93-0.582-3.09-3.699-7.91-3.699-2.86 0-5.04 1.427-2.14 1.398-3.35 3.815-1.17 2.447-1.17 5.592 0 3.058 1.31 5.534 1.31 2.417 3.59 3.873 2.33 1.427 5.39 1.427 1.99 0 3.74-0.582 1.81-0.583 3.12-1.806 0.44-0.379 0.96-0.437 0.52-0.06 0.93 0.35 0.47 0.437 0.47 1.019 0.1 0.524-0.38 0.903-3.55 3.262-8.84 3.262zm-27.69-0.06q-3.84 0-6.85-1.69-2.96-1.747-4.66-4.805t-1.7-6.99q0-3.99 1.61-6.99 1.6-3.058 4.41-4.805 2.82-1.748 6.46-1.748 3.59 0 6.36 1.69 2.76 1.66 4.31 4.63 1.56 2.913 1.56 6.728 0 0.641-0.39 1.019-0.39 0.35-1.02 0.35h-21.35v-2.534h22.13l-2.14 1.602q0.1-3.146-1.07-5.563-1.16-2.446-3.35-3.786-2.13-1.427-5.04-1.427-2.77 0-4.95 1.427-2.14 1.34-3.4 3.786-1.21 2.417-1.21 5.621 0 3.146 1.31 5.592 1.31 2.417 3.64 3.815 2.33 1.369 5.34 1.369 1.89 0 3.78-0.641 1.94-0.67 3.06-1.747 0.39-0.379 0.92-0.379 0.58-0.06 0.97 0.291 0.54 0.437 0.54 0.962 0 0.553-0.44 0.99-1.55 1.398-4.08 2.33-2.47 0.903-4.75 0.903zm-30.93 11.13q-0.64 0-1.07-0.44-0.44-0.38-0.44-1.02 0-0.67 0.44-1.1 0.43-0.41 1.07-0.41 2.47 0 4.31-1.05 1.9-1.08 2.97-2.97 1.06-1.89 1.06-4.313v-25.16q0-0.67 0.39-1.049 0.44-0.408 1.07-0.408 0.68 0 1.07 0.408 0.43 0.379 0.43 1.049v25.16q0 3.291-1.45 5.821-1.46 2.57-4.03 4.02-2.52 1.46-5.82 1.46zm9.75-43.48q-0.92 0-1.6-0.641-0.63-0.67-0.63-1.66 0-1.107 0.68-1.631 0.73-0.582 1.6-0.582 0.82 0 1.5 0.582 0.73 0.524 0.73 1.631 0 0.99-0.68 1.66-0.63 0.641-1.6 0.641zm-21.55 32.42q-3.79 0-6.84-1.748-3.06-1.747-4.86-4.747-1.75-3.029-1.84-6.815v-23.44q0-0.67 0.39-1.048 0.43-0.408 1.06-0.408 0.68 0 1.07 0.408 0.39 0.378 0.39 1.048v15.14q1.55-2.505 4.32-4.019 2.82-1.515 6.31-1.515 3.88 0 6.94 1.806 3.11 1.747 4.85 4.805 1.8 3.058 1.8 6.932 0 3.902-1.8 6.99-1.74 3.058-4.85 4.863-3.06 1.748-6.94 1.748zm0-2.709q3.06 0 5.44-1.427 2.42-1.456 3.83-3.873 1.41-2.476 1.41-5.592 0-3.087-1.41-5.534-1.41-2.417-3.83-3.815-2.38-1.456-5.44-1.456-3.01 0-5.44 1.456-2.42 1.398-3.83 3.815-1.36 2.447-1.36 5.534 0 3.116 1.36 5.592 1.41 2.417 3.83 3.873 2.43 1.427 5.44 1.427zm-32.53 2.709q-3.88 0-6.99-1.748-3.06-1.805-4.85-4.863-1.75-3.088-1.75-6.932 0-3.873 1.75-6.931 1.79-3.117 4.85-4.864 3.11-1.806 6.99-1.806t6.94 1.806q3.06 1.747 4.8 4.864 1.8 3.058 1.8 6.931 0 3.844-1.8 6.932-1.74 3.058-4.8 4.863-3.06 1.748-6.94 1.748zm0-2.709q3.06 0 5.44-1.427 2.42-1.456 3.78-3.873 1.41-2.476 1.41-5.592 0-3.058-1.41-5.475-1.36-2.476-3.78-3.874-2.38-1.456-5.44-1.456-3.01 0-5.44 1.456-2.42 1.398-3.83 3.874-1.41 2.417-1.41 5.533 0 3.058 1.41 5.534 1.41 2.417 3.83 3.873 2.43 1.427 5.44 1.427z"),
+            strokeWidth(".9101")
+        )
+    );
+  }
+
+  private Html.Instruction gitHubLogo() {
+    return svg(
+        css(\"""
+        fill:var(--color-logo)
+        height:24rx
+        width:auto
+        \"""),
+
+        xmlns("http://www.w3.org/2000/svg"), width("98"), height("96"), viewBox("0 0 98 96"),
+
+        path(
+            fillRule("evenodd"), clipRule("evenodd"), d(
+                "M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z")
+        )
+    );
+  }
+
+  private void renderSourceMenu() {
+    final List<SourceModel> items;
+    items = builder.sources;
+
+    final SourceModel first;
+    first = items.getFirst();
+
+    // the source file selector
+    div(
+        sourceFrame,
+
+        css(\"""
+        border-left:1px_solid_var(--color-border)
+        border-right:1px_solid_var(--color-border)
+        display:flex
+        font-size:14rx
+        gap:4rx_8rx
+        grid-area:b
+        padding:16rx
+        overflow-x:auto
+
+        lg/border-bottom:1px_solid_var(--color-border)
+
+        xl/border-top:1px_solid_var(--color-border)
+        xl/border-right-width:0px
+        xl/flex-direction:column
+        \"""),
+
+        dataFrame("demo-source-menu", builder.sourceFrame),
+
+        // stores the current selected button in the data-button attribute
+        attr(dataButton, first.button().attrValue()),
+
+        // stores the current selected panel in the data-panel attribute
+        attr(dataPanel, first.panel().attrValue()),
+
+        f(this::renderSourceMenuItems)
+    );
+  }
+
+  private void renderSourceMenuItems() {
+    final List<SourceModel> items;
+    items = builder.sources;
+
+    for (int idx = 0, size = items.size(); idx < size; idx++) {
+      final SourceModel item;
+      item = items.get(idx);
+
+      button(
+          item.button(),
+
+          css(\"""
+          border-radius:6rx
+          cursor:pointer
+          padding:4rx_8rx
+          &[data-selected=true]/background-color:var(--color-btn-ghost-active)
+
+          active/background-color:var(--color-btn-ghost-active)
+          hover/background-color:var(--color-btn-ghost-hover)
+          \"""),
+
+          attr(dataSelected, Boolean.toString(idx == 0)),
+
+          dataOnClick(script -> {
+            // 'deselects' current
+            var frame = script.elementById(sourceFrame);
+
+            var selectedButton = script.elementById(frame.attr(dataButton));
+
+            selectedButton.attr(dataSelected, "false");
+
+            var selectedPanel = script.elementById(frame.attr(dataPanel));
+
+            selectedPanel.attr(dataSelected, "false");
+
+            // 'selects' self
+            var selfButton = script.elementById(item.button());
+
+            selfButton.attr(dataSelected, "true");
+
+            var selfPanel = script.elementById(item.panel());
+
+            selfPanel.attr(dataSelected, "true");
+
+            // stores selected
+            frame.attr(dataButton, item.button().attrValue());
+
+            frame.attr(dataPanel, item.panel().attrValue());
+          }),
+
+          text(item.name())
+      );
+    }
+  }
+
+  private void renderSourceCode() {
+    // the Java source code display
+    div(
+        css(\"""
+        border:1px_solid_var(--color-border)
+        display:flex
+        flex-direction:column
+        grid-area:c
+        \"""),
+
+        css(\"""
+        flex:1
+        min-height:0
+        overflow:auto
+        \"""),
+
+        dataFrame("demo-source-code", builder.sourceFrame),
+
+        f(this::renderSourceCodeItems)
+    );
+  }
+
+  private void renderSourceCodeItems() {
+    final List<SourceModel> items;
+    items = builder.sources;
+
+    for (int idx = 0, size = items.size(); idx < size; idx++) {
+      final SourceModel item;
+      item = items.get(idx);
+
+      final String source;
+      source = item.value();
+
+      pre(
+          item.panel(),
+
+          css(\"""
+          display:none
+          font-family:mono
+          font-size:13rx
+          line-height:18.6rx
+          padding:16rx
+          &[data-selected=true]/display:flex
+
+          &_span[data-line]/display:block
+          &_span[data-line]/min-height:1lh
+
+          &_span[data-line]:nth-child(-n+15)/display:none
+
+          &_span[data-high=annotation]/color:var(--color-high-meta)
+          &_span[data-high=comment]/color:var(--color-high-comment)
+          &_span[data-high=comment]/font-style:italic
+          &_span[data-high=keyword]/color:var(--color-high-keyword)
+          &_span[data-high=string]/color:var(--color-high-string)
+          \"""),
+
+          attr(dataSelected, Boolean.toString(idx == 0)),
+
+          code(
+              css(\"""
+              flex-grow:1
+              \"""),
+
+              c(
+                  Syntax.highlight(Syntax.JAVA, source)
+              )
+          )
+      );
+    }
+  }
+
+}
+""");
+
+  static final SourceModel Movie = SourceModel.create("Movie.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import objectos.way.Html;
+import objectos.way.Http;
+import objectos.way.Sql;
+
+final class Movie implements Kino.GET {
+
+  private final Kino.Ctx ctx;
+
+  Movie(Kino.Ctx ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override
+  public final Html.Component get(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final Kino.Query query;
+    query = http.get(Kino.Query.class);
+
+    final int movieId;
+    movieId = query.idAsInt();
+
+    final Optional<MovieDetails> maybeDetails;
+    maybeDetails = MovieDetails.queryOptional(trx, movieId);
+
+    if (maybeDetails.isEmpty()) {
+      return NotFound.create();
+    }
+
+    final MovieDetails details;
+    details = maybeDetails.get();
+
+    final LocalDateTime today;
+    today = ctx.today();
+
+    final List<MovieScreening> screenings;
+    screenings = MovieScreening.query(trx, movieId, today);
+
+    return Shell.create(shell -> {
+      shell.appFrame = shell.sourceFrame = "movie-" + movieId;
+
+      shell.app = new MovieView(ctx, details, screenings);
+
+      shell.sources(
+          Source.Movie,
+          Source.MovieDetails,
+          Source.MovieScreening,
+          Source.MovieView
+      );
+    });
+  }
+
+}
+""");
+
+  static final SourceModel Seats = SourceModel.create("Seats.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import demo.landing.LandingDemo;
+import demo.landing.app.Kino.Query;
+import java.util.Optional;
+import objectos.way.Html;
+import objectos.way.Http;
+import objectos.way.Note;
+import objectos.way.Sql;
+
+final class Seats implements Kino.GET, Kino.POST {
+
+  static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(Seats.class, "Read", Note.DEBUG);
+
+  private final Kino.Ctx ctx;
+
+  Seats(Kino.Ctx ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override
+  public final Html.Component get(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final Kino.Query query;
+    query = http.get(Kino.Query.class);
+
+    final int state;
+    state = query.aux();
+
+    if (state == SeatsView.BACK) {
+      return getBackButton(trx, query);
+    }
+
+    final int showId;
+    showId = query.idAsInt();
+
+    final Optional<SeatsShow> maybeShow;
+    maybeShow = SeatsShow.queryOptional(trx, showId);
+
+    if (maybeShow.isEmpty()) {
+      return NotFound.create();
+    }
+
+    final long reservationId;
+    reservationId = ctx.nextReservation();
+
+    trx.sql(\"""
+    insert into
+      RESERVATION (RESERVATION_ID, SHOW_ID)
+    values
+      (?, ?)
+    \""");
+
+    trx.param(reservationId);
+
+    trx.param(showId);
+
+    trx.update();
+
+    final SeatsShow show;
+    show = maybeShow.get();
+
+    final SeatsGrid grid;
+    grid = SeatsGrid.query(trx, reservationId);
+
+    return view(state, reservationId, show, grid);
+  }
+
+  private Html.Component getBackButton(Sql.Transaction trx, Query query) {
+    final long reservationId;
+    reservationId = query.id();
+
+    final Optional<SeatsShow> maybeShow;
+    maybeShow = SeatsShow.queryBackButton(trx, reservationId);
+
+    if (maybeShow.isEmpty()) {
+      return NotFound.create();
+    }
+
+    final SeatsShow show;
+    show = maybeShow.get();
+
+    final SeatsGrid grid;
+    grid = SeatsGrid.query(trx, reservationId);
+
+    return view(SeatsView.DEFAULT, reservationId, show, grid);
+  }
+
+  @Override
+  public final Kino.PostResult post(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final SeatsData data;
+    data = SeatsData.parse(http);
+
+    ctx.send(DATA_READ, data);
+
+    if (data.seats() == 0) {
+      // no seats were selected...
+      return postState(trx, data, SeatsView.EMPTY);
+    }
+
+    if (data.seats() > 6) {
+      // too many seats were selected...
+      return postState(trx, data, SeatsView.LIMIT);
+    }
+
+    final Sql.BatchUpdate tmpSelectionResult;
+    tmpSelectionResult = data.persistTmpSelection(trx);
+
+    return switch (tmpSelectionResult) {
+      case Sql.BatchUpdateFailed _ -> tmpSelectionError(trx, data);
+
+      case Sql.BatchUpdateSuccess _ -> tmpSelectionOk(trx, data);
+    };
+  }
+
+  private Kino.PostResult postState(Sql.Transaction trx, SeatsData data, int state) {
+    // just in case, clear this user's selection
+    data.clearUserSelection(trx);
+
+    final long reservationId;
+    reservationId = data.reservationId();
+
+    return embedView(trx, state, reservationId);
+  }
+
+  private Kino.PostResult embedView(Sql.Transaction trx, int state, long reservationId) {
+    final SeatsShow show;
+    show = SeatsShow.queryReservation(trx, reservationId);
+
+    final SeatsGrid grid;
+    grid = SeatsGrid.query(trx, reservationId);
+
+    final Html.Component view;
+    view = view(state, reservationId, show, grid);
+
+    return LandingDemo.embedOk(view);
+  }
+
+  private Kino.PostResult tmpSelectionError(Sql.Transaction trx, SeatsData data) {
+    // clear TMP_SELECTION just in case some of the records were inserted
+    data.clearTmpSelection(trx);
+
+    return LandingDemo.embedBadRequest(NotFound.create());
+  }
+
+  private Kino.PostResult tmpSelectionOk(Sql.Transaction trx, SeatsData data) {
+    final Sql.Update userSelectionResult;
+    userSelectionResult = data.persisUserSelection(trx);
+
+    return switch (userSelectionResult) {
+      case Sql.UpdateFailed error -> userSelectionError(trx, data, error);
+
+      case Sql.UpdateSuccess ok -> userSelectionOk(trx, data, ok);
+    };
+  }
+
+  private Kino.PostResult userSelectionError(Sql.Transaction trx, SeatsData data, Sql.UpdateFailed error) {
+    // one or more seats were committed by another trx...
+    // inform user
+
+    final int state;
+    state = SeatsView.BOOKED;
+
+    final long reservationId;
+    reservationId = data.reservationId();
+
+    if (data.wayRequest()) {
+      return embedView(trx, state, reservationId);
+    } else {
+      final Kino.Query query;
+      query = Kino.Page.SEATS.query(reservationId, state);
+
+      final String href;
+      href = ctx.href(query);
+
+      return LandingDemo.redirect(href);
+    }
+  }
+
+  private Kino.PostResult userSelectionOk(Sql.Transaction trx, SeatsData data, Sql.UpdateSuccess ok) {
+    int count;
+    count = ok.count();
+
+    if (data.seats() != count) {
+
+      // some or possibly all of the seats were not selected.
+      // 1) maybe an already sold ticket was submitted
+      // 2) seats refer to a different show
+      // anyways... bad data
+
+      // clear SELECTION just in case some of the records were inserted
+      data.clearUserSelection(trx);
+
+      return LandingDemo.embedBadRequest(NotFound.create());
+
+    }
+
+    // all seats were persisted.
+    // go to next screen.
+
+    final long reservationId;
+    reservationId = data.reservationId();
+
+    return data.wayRequest()
+        ? LandingDemo.embedOk(
+            Confirm.create(ctx, trx, reservationId)
+        )
+        : LandingDemo.redirect(
+            ctx.href(Kino.Page.CONFIRM, reservationId)
+        );
+
+  }
+
+  private Html.Component view(int state, long reservationId, SeatsShow show, SeatsGrid grid) {
+    return Shell.create(shell -> {
+      shell.appFrame = shell.sourceFrame = "show-" + show.showId();
+
+      shell.app = new SeatsView(ctx, state, reservationId, show, grid);
+
+      shell.sources(
+          Source.Seats,
+          Source.SeatsData,
+          Source.SeatsGrid,
+          Source.SeatsShow,
+          Source.SeatsView
+      );
+    });
+  }
+
+}
+""");
+
+  static final SourceModel NowShowing = SourceModel.create("NowShowing.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.util.List;
+import objectos.way.Html;
+import objectos.way.Http;
+import objectos.way.Sql;
+
+/**
+ * The "Now Showing" controller.
+ */
+final class NowShowing implements Kino.GET {
+
+  private final Kino.Ctx ctx;
+
+  NowShowing(Kino.Ctx ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override
+  public final Html.Component get(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final List<NowShowingModel> items;
+    items = NowShowingModel.query(trx);
+
+    return Shell.create(shell -> {
+      shell.appFrame = shell.sourceFrame = "now-showing";
+
+      shell.app = new NowShowingView(ctx, items);
+
+      shell.sources(
+          Source.NowShowing,
+          Source.NowShowingModel,
+          Source.NowShowingView
+      );
+    });
+  }
+
+}
+""");
+
+  static final SourceModel Reservation = SourceModel.create("Reservation.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.random.RandomGenerator;
+
+/**
+ * Generates a 64-bit Snowflake ID to uniquely identify an user making seat
+ * reservations.
+ */
+final class Reservation {
+
+  private static final long TIMESTAMP_BITS = 41;
+
+  private static final long RANDOM_BITS = 64 - TIMESTAMP_BITS;
+
+  private static final long MAX_RANDOM = (1L << RANDOM_BITS) - 1;
+
+  private final Clock clock;
+
+  // January 1st, 2025 @ 00:00 @ GMT-3
+  private final Instant epoch;
+
+  private final RandomGenerator randomGenerator;
+
+  Reservation(Clock clock, Instant epoch, RandomGenerator randomGenerator) {
+    this.clock = clock;
+
+    this.epoch = epoch;
+
+    this.randomGenerator = randomGenerator;
+  }
+
+  public final long next() {
+    final Instant now;
+    now = clock.instant();
+
+    final Duration duration;
+    duration = Duration.between(epoch, now);
+
+    long epochTime;
+    epochTime = duration.toMillis();
+
+    final long timestamp;
+    timestamp = epochTime << RANDOM_BITS;
+
+    final long randomBits;
+    randomBits = randomGenerator.nextLong(MAX_RANDOM);
+
+    return timestamp | randomBits;
+  }
+
+}
+""");
+
+  static final SourceModel NotFoundView = SourceModel.create("NotFoundView.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+final class NotFoundView extends Kino.View {
+
+  @Override
+  protected final void render() {
+    h2(
+        testableH1("Something Went Wrong")
+    );
+
+    p("Sorry, we could not find the page you're looking for.");
+
+    div(
+        css(\"""
+        display:flex
+        justify-content:center
+        padding:48rx_0
+        \"""),
+
+        icon(
+            Kino.Icon.FROWN,
+
+            css(\"""
+            height:auto
+            stroke-width:0.5rx
+            width:120rx
+            \""")
+        )
+    );
+
+    div(
+        css(\"""
+        display:flex
+        justify-content:center
+        \"""),
+
+        a(
+            PRIMARY,
+
+            dataOnClick(this::navigate),
+
+            href("/index.html"),
+
+            text("Get Tickets")
+        )
+    );
+  }
+
+}
+""");
+
+  static final SourceModel TicketView = SourceModel.create("TicketView.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+
+final class TicketView extends Kino.View {
+
+  private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
+
+  private final TicketModel model;
+
+  TicketView(TicketModel model) {
+    this.model = model;
+  }
+
+  @Override
+  protected final void render() {
+    testableH1("Ticket #" + model.id());
+
+    h2("Thank You");
+
+    p("Here's your receipt");
+
+    div(
+        css(\"""
+        position:relative
+        \"""),
+
+        icon(
+            Kino.Icon.RECEIPT,
+
+            css(\"""
+            border:1px_solid_var(--color-border)
+            border-radius:9999px
+            height:auto
+            inset:-80rx_0_auto_auto
+            padding:16rx
+            position:absolute
+            stroke-width:1rx
+            width:80rx
+            \""")
+        )
+    );
+
+    dl(
+        css(\"""
+        border:1px_solid_var(--color-border)
+        display:flex
+        flex-direction:column
+        gap:4rx
+        margin:32rx_0_0
+        padding:16rx
+
+        div:display:flex
+        div:justify-content:space-between
+
+        dd:font-weight:500
+        \"""),
+
+        div(
+            dt(testableFieldName("Ammount Paid")),
+            dd(testableFieldValue(format(model.ammountPaid())))
+        ),
+
+        div(
+            dt(testableFieldName("Purchase Time")),
+            dd(testableFieldValue(model.purchaseTime()))
+        )
+    );
+
+    h2(testableH2("Tickets"));
+
+    p(model.singular() ? "Here's your ticket" : "Here are your tickets");
+
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        gap:16rx
+        padding:32rx_0_0
+        \"""),
+
+        f(this::renderTickets)
+    );
+  }
+
+  private void renderTickets() {
+    for (var item : model.items()) {
+      div(
+          css(\"""
+          border:1px_solid_var(--color-border)
+          display:flex
+          justify-content:space-between
+          padding:16rx
+          \"""),
+
+          icon(
+              Kino.Icon.TICKET,
+
+              css(\"""
+              height:auto
+              margin-right:16rx
+              padding:16rx
+              stroke-width:1rx
+              width:80rx
+              \""")
+          ),
+
+          ul(
+              css(\"""
+              font-size:14rx
+              flex:1
+              \"""),
+
+              li(testableCell(model.title(), 8)),
+              li(testableCell(model.date(), 10)),
+              li(testableCell(model.time(), 6)),
+              li(testableCell(model.screen(), 8))
+          ),
+
+          div(
+              css(\"""
+              align-items:end
+              display:flex
+              flex-direction:column
+              justify-content:space-around
+              \"""),
+
+              div(
+                  css(\"""
+                  font-size:20rx
+                  font-weight:300
+                  \"""),
+
+                  text("Seat "),
+                  text(testableCell(item.seat(), 5))
+              ),
+
+              div(
+                  css(\"""
+                  font-size:14rx
+                  font-weight:600
+                  \"""),
+
+                  text(testableCell(format(item.price()), 6))
+              )
+          )
+      );
+
+      testableNewLine();
+    }
+  }
+
+  private String format(double price) {
+    return formatter.format(price);
+  }
+
+}
+""");
+
+  static final SourceModel SourceModel_ = SourceModel.create("SourceModel.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import objectos.way.Html;
+
+record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
+
+  private static int INDEX = 0;
+
+  public static SourceModel create(String name, String value) {
+    final int index;
+    index = INDEX++;
+
+    return new SourceModel(
+        name,
+
+        value,
+
+        Html.Id.of("src-btn-" + index),
+
+        Html.Id.of("src-panel-" + index)
+    );
+  }
+
+}
+""");
+
+  static final SourceModel SeatsShow = SourceModel.create("SeatsShow.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Optional;
+import objectos.way.Sql;
+
+record SeatsShow(
+    int showId,
+    String date,
+    String time,
+
+    int screenId,
+    String screen,
+    int capacity,
+
+    int movieId,
+    String title
+) {
+
+  private SeatsShow(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getInt(idx++),
+
+        rs.getInt(idx++),
+        rs.getString(idx++)
+    );
+  }
+
+  public static Optional<SeatsShow> queryOptional(Sql.Transaction trx, int id) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      SHOW.SHOW_ID = ?
+    \""");
+
+    trx.param(id);
+
+    return trx.queryOptional(SeatsShow::new);
+  }
+
+  public static Optional<SeatsShow> queryBackButton(Sql.Transaction trx, long reservationId) {
+    reservation(trx, reservationId);
+
+    return trx.queryOptional(SeatsShow::new);
+  }
+
+  public static SeatsShow queryReservation(Sql.Transaction trx, long reservationId) {
+    reservation(trx, reservationId);
+
+    return trx.querySingle(SeatsShow::new);
+  }
+
+  private static void reservation(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      RESERVATION
+      natural join SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+    \""");
+
+    trx.param(reservationId);
+  }
+
+}
+""");
+
+  static final SourceModel ConfirmDetails = SourceModel.create("ConfirmDetails.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.Array;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import objectos.way.Sql;
+
+final record ConfirmDetails(
+    long reservationId,
+    String title,
+    String screen,
+    String date,
+    String time,
+    double totalPrice,
+    List<Item> items
+) {
+
+  record Item(String seat, double price) {
+
+    private Item(ResultSet rs, int idx) throws SQLException {
+      this(
+          rs.getString(idx++),
+          rs.getDouble(idx++)
+      );
+    }
+
+    static List<Item> of(Array array) throws SQLException {
+      Object[] values;
+      values = (Object[]) array.getArray();
+
+      List<Item> list;
+      list = new ArrayList<>(values.length);
+
+      for (Object value : values) {
+        ResultSet rs;
+        rs = (ResultSet) value;
+
+        if (!rs.next()) {
+          continue;
+        }
+
+        Item item;
+        item = new Item(rs, 1);
+
+        list.add(item);
+      }
+
+      return List.copyOf(list);
+    }
+
+  }
+
+  private ConfirmDetails(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getLong(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getDouble(idx++),
+        Item.of(rs.getArray(idx++))
+    );
+  }
+
+  public static Optional<ConfirmDetails> queryOptional(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    select
+      RESERVATION.RESERVATION_ID,
+      MOVIE.TITLE,
+      SCREEN.NAME,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+      sum(SHOW.SEAT_PRICE),
+      array_agg (
+        row (concat(SEAT.SEAT_ROW, SEAT.SEAT_COL), SHOW.SEAT_PRICE)
+      )
+    from
+      RESERVATION
+      join SELECTION on RESERVATION.RESERVATION_ID = SELECTION.RESERVATION_ID
+      join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
+      join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
+      join MOVIE on SCREENING.MOVIE_ID = MOVIE.MOVIE_ID
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+      join SEAT on SELECTION.SEAT_ID = SEAT.SEAT_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+    group by
+      RESERVATION.RESERVATION_ID
+    \""");
+
+    trx.param(reservationId);
+
+    return trx.queryOptional(ConfirmDetails::new);
+  }
+
+}
+""");
+
+  static final SourceModel NowShowingView = SourceModel.create("NowShowingView.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.util.List;
+
+/**
+ * Renders the "Now Showing" view.
+ */
+final class NowShowingView extends Kino.View {
+
+  private final Kino.Ctx ctx;
+
+  private final List<NowShowingModel> items;
+
+  NowShowingView(Kino.Ctx ctx, List<NowShowingModel> items) {
+    this.ctx = ctx;
+
+    this.items = items;
+  }
+
+  @Override
+  protected final void render() {
+    div(
+        css(\"""
+        margin-bottom:32rx
+        \"""),
+
+        h2(
+            text("Now Showing")
+        ),
+
+        p(
+            text("Please choose a movie")
+        )
+    );
+
+    ul(
+        css(\"""
+        display:flex
+        flex-wrap:wrap
+        gap:16rx
+        justify-content:space-evenly
+        \"""),
+
+        f(this::renderItems)
+    );
+  }
+
+  private void renderItems() {
+    for (NowShowingModel item : items) {
+      li(
+          css(\"""
+          flex:0_0_128rx
+          \"""),
+
+          a(
+              css(\"""
+              group
+              \"""),
+
+              dataOnClick(this::navigate),
+
+              href(ctx.href(Kino.Page.MOVIE, item.id())),
+
+              rel("nofollow"),
+
+              img(
+                  css(\"""
+                  aspect-ratio:2/3
+                  background-color:var(--color-neutral-400)
+                  border-radius:6rx
+
+                  &:is(:where(.group):hover_*)/outline:2px_solid_var(--color-gray-500)
+                  \"""),
+
+                  src("/demo/landing/poster" + item.id() + ".jpg")
+              ),
+
+              h3(
+                  css(\"""
+                  font-size:14rx
+                  line-height:18rx
+                  text-align:center
+                  padding-top:8rx
+
+                  &:is(:where(.group):hover_*)/text-decoration:underline
+                  \"""),
+
+                  text(
+                      testableField("movie.title", item.title())
+                  )
+              )
+          )
+      );
+    }
+  }
+
+}
+""");
+
+  static final SourceModel SeatsView = SourceModel.create("SeatsView.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import objectos.way.Html;
+
+final class SeatsView extends Kino.View {
+
+  static final int BACK = 999;
+
+  static final int DEFAULT = 0;
+
+  static final int BOOKED = 1;
+
+  static final int EMPTY = 2;
+
+  static final int LIMIT = 3;
+
+  private static final String BOOKED_MSG = \"""
+  We regret to inform you that another customer has already reserved one or more of the selected seats. \
+  Kindly choose alternative seats.\""";
+
+  private static final String EMPTY_MSG = \"""
+  Kindly choose at least 1 seat.\""";
+
+  private static final String LIMIT_MSG = \"""
+  We regret to inform you that we limit purchases to 6 tickets per person. \
+  Kindly choose at most 6 seats.\""";
+
+  private static final String FORM_ID = "seats-form";
+
+  private final Kino.Ctx ctx;
+
+  private final int state;
+
+  private final long reservationId;
+
+  private final SeatsShow show;
+
+  private final SeatsGrid grid;
+
+  SeatsView(Kino.Ctx ctx, int state, long reservationId, SeatsShow show, SeatsGrid grid) {
+    this.ctx = ctx;
+
+    this.state = state;
+
+    this.reservationId = reservationId;
+
+    this.show = show;
+
+    this.grid = grid;
+  }
+
+  @Override
+  protected final void render() {
+    backLink(ctx, Kino.Page.MOVIE, show.movieId());
+
+    // this node is for testing only, it is not rendered in the final HTML
+    testableH1("Show details");
+
+    h2(
+        testableField("title", show.title())
+    );
+
+    p("Please choose your seats");
+
+    div(
+        dataFrame("seats-alert", Integer.toString(state)),
+
+        f(this::renderAlert)
+    );
+
+    div(
+        css(\"""
+        border:1px_solid_var(--color-border)
+        display:flex
+        gap:24rx
+        margin:32rx_0
+        overflow-x:auto
+        padding:32rx_24rx
+        \"""),
+
+        f(this::renderDetails),
+
+        f(this::renderSeats)
+    );
+  }
+
+  private void renderAlert() {
+    switch (state) {
+      case BOOKED -> {
+        testableField("alert", "BOOKED");
+
+        renderAlert(BOOKED_MSG);
+      }
+
+      case EMPTY -> {
+        testableField("alert", "EMPTY");
+
+        renderAlert(EMPTY_MSG);
+      }
+
+      case LIMIT -> {
+        testableField("alert", "LIMIT");
+
+        renderAlert(LIMIT_MSG);
+      }
+    }
+  }
+
+  private void renderAlert(String msg) {
+    div(
+        css(\"""
+        align-items:center
+        background-color:var(--color-blue-100)
+        border-left:3px_solid_var(--color-blue-800)
+        display:flex
+        font-size:14rx
+        line-height:16rx
+        margin:16rx_0
+        padding:16rx
+        \"""),
+
+        icon(
+            Kino.Icon.INFO,
+
+            css(\"""
+            height:20rx
+            width:auto
+            padding-right:16rx
+            \""")
+        ),
+
+        div(
+            css(\"""
+            flex:1
+            \"""),
+
+            text(msg)
+        )
+    );
+  }
+
+  private void renderDetails() {
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        font-size:14rx
+        gap:16rx
+        \"""),
+
+        renderDetailsItem(Kino.Icon.CALENDAR_CHECK, "date", show.date()),
+
+        renderDetailsItem(Kino.Icon.CLOCK, "time", show.time()),
+
+        renderDetailsItem(Kino.Icon.PROJECTOR, "screen", show.screen())
+    );
+  }
+
+  private Html.Instruction.OfElement renderDetailsItem(Kino.Icon icon, String name, String value) {
+    return div(
+        css(\"""
+        align-items:center
+        display:flex
+        flex-direction:column
+        gap:4rx
+        \"""),
+
+        icon(
+            icon,
+
+            css(\"""
+            height:auto
+            stroke:icon
+            width:20rx
+            \""")
+        ),
+
+        span(
+            css(\"""
+            text-align:center
+            width:6rch
+            \"""),
+
+            text(testableField(name, value))
+        )
+    );
+  }
+
+  private void renderSeats() {
+    // this node is for testing only, it is not rendered in the final HTML
+    testableH1("Seats");
+
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        flex-grow:1
+        justify-content:start
+        \"""),
+
+        f(this::renderSeatsScreen),
+
+        f(this::renderSeatsForm),
+
+        f(this::renderSeatsAction)
+    );
+  }
+
+  private void renderSeatsScreen() {
+    svg(
+        css(\"""
+        display:block
+        margin:0_auto
+        max-height:60rx
+        max-width:400rx
+        min-height:0
+        min-width:0
+        stroke:icon
+        width:100%
+        \"""),
+
+        width("400"), height("60"), viewBox("0 0 400 60"), xmlns("http://www.w3.org/2000/svg"),
+        path(d("M 0 50 Q 200 0 400 50")), fill("none"), strokeWidth("1.25")
+    );
+
+    p(
+        css(\"""
+        font-size:14rx
+        inset:-32rx_0_auto
+        position:relative
+        text-align:center
+        \"""),
+
+        text("Screen")
+    );
+  }
+
+  private void renderSeatsForm() {
+    form(
+        id(FORM_ID),
+
+        formAction(ctx, Kino.Page.SEATS, reservationId, show.screenId()),
+
+        css(\"""
+        aspect-ratio:1.15
+        display:grid
+        flex-grow:1
+        gap:8rx
+        grid-template-columns:repeat(10,1fr)
+        grid-template-rows:repeat(10,minmax(20rx,1fr))
+        margin:0_auto
+        max-width:400rx
+        width:100%
+        \"""),
+
+        dataOnSuccess(script -> {
+          final String successUrl;
+          successUrl = ctx.href(Kino.Page.CONFIRM, reservationId);
+
+          script.replaceState(successUrl);
+        }),
+
+        method("post"),
+
+        f(this::renderSeatsFormGrid)
+    );
+  }
+
+  private void renderSeatsFormGrid() {
+    for (SeatsGrid.Cell cell : grid) {
+      final int seatId;
+      seatId = cell.seatId();
+
+      if (seatId < 0) {
+        div();
+      } else {
+        final String seatIdValue;
+        seatIdValue = Integer.toString(seatId);
+
+        input(
+            css(\"""
+            cursor:pointer
+
+            disabled:cursor:default
+            \"""),
+
+            name("seat"),
+
+            type("checkbox"),
+
+            cell.checked() ? checked : noop(),
+
+            cell.reserved() ? disabled : noop(),
+
+            value(seatIdValue)
+        );
+
+        if (cell.checked()) {
+          testableField("checked", seatIdValue);
+        }
+      }
+    }
+  }
+
+  private void renderSeatsAction() {
+    div(
+        css(\"""
+        display:flex
+        justify-content:end
+        padding-top:64rx
+        margin:0_auto
+        max-width:400rx
+        width:100%
+        \"""),
+
+        button(
+            PRIMARY,
+
+            form(FORM_ID),
+
+            type("submit"),
+
+            text("Book seats")
+        )
+    );
+  }
+
+}
+""");
+
+  static final SourceModel NowShowingModel = SourceModel.create("NowShowingModel.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.List;
+import objectos.way.Sql;
+
+/**
+ * Represents a movie in the "Now Showing" view.
+ */
+record NowShowingModel(
+    int id,
+    String title
+) {
+
+  private NowShowingModel(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++)
+    );
+  }
+
+  public static List<NowShowingModel> query(Sql.Transaction trx) {
+    trx.sql(\"""
+    select
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+
+    from
+      MOVIE
+
+    order by
+      MOVIE_ID
+    \""");
+
+    return trx.query(NowShowingModel::new);
+  }
+
+}
+""");
+
+  static final SourceModel MovieScreening = SourceModel.create("MovieScreening.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.Array;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
+import objectos.way.Sql;
+
+record MovieScreening(
+    int screenId,
+    String screenName,
+    String features,
+    String date,
+    List<Showtime> showtimes
+) {
+
+  record Showtime(int showId, String time) {
+
+    Showtime(Object[] row) {
+      this(
+          Integer.parseInt(row[0].toString()),
+          row[1].toString()
+      );
+    }
+
+    static List<Showtime> of(Array array) throws SQLException {
+      Object[] values;
+      values = (Object[]) array.getArray();
+
+      List<Showtime> list;
+      list = new ArrayList<>(values.length);
+
+      for (Object value : values) {
+        Array inner;
+        inner = (Array) value;
+
+        Object[] row;
+        row = (Object[]) inner.getArray();
+
+        Showtime showtime;
+        showtime = new Showtime(row);
+
+        list.add(showtime);
+      }
+
+      return List.copyOf(list);
+    }
+
+  }
+
+  MovieScreening(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        Showtime.of(rs.getArray(idx++))
+    );
+  }
+
+  public static List<MovieScreening> query(Sql.Transaction trx, int id, LocalDateTime dateTime) {
+    trx.sql(\"""
+    select
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      (
+        select
+          listagg (FEATURE.NAME, ', ') within group (order by FEATURE.FEATURE_ID)
+        from
+          SCREENING_FEATURE
+          natural join FEATURE
+        where
+          SCREENING_FEATURE.SCREENING_ID = SCREENING.SCREENING_ID
+        group by
+          SCREENING_FEATURE.SCREENING_ID
+      ) as F,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      array_agg (
+        array [cast(SHOW.SHOW_ID as varchar), formatdatetime(SHOW.SHOWTIME, 'kk:mm')]
+        order by SHOW.SHOWTIME
+      )
+    from
+      SHOW
+      natural join SCREENING
+      natural join SCREEN
+    where
+      SCREENING.MOVIE_ID = ?
+      and (
+        (
+          SHOW.SHOWDATE = ?
+          and SHOW.SHOWTIME > ?
+        )
+        or SHOW.SHOWDATE > ?
+      )
+    group by
+      SHOW.SHOWDATE,
+      SCREEN.SCREEN_ID
+    order by
+      SHOW.SHOWDATE,
+      SCREEN.SCREEN_ID
+    \""");
+
+    trx.param(id);
+
+    final LocalDate date;
+    date = dateTime.toLocalDate();
+
+    trx.param(date);
+
+    final LocalTime time;
+    time = dateTime.toLocalTime();
+
+    trx.param(time);
+
+    trx.param(date);
+
+    return trx.query(MovieScreening::new);
+  }
+
+}
+""");
+
+  static final SourceModel MovieDetails = SourceModel.create("MovieDetails.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Optional;
+import objectos.way.Sql;
+
+record MovieDetails(
+    int movieId,
+    String title,
+    String runtime,
+    String releaseDate,
+    String genres,
+    String synopsys
+) {
+
+  MovieDetails(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++)
+    );
+  }
+
+  public static Optional<MovieDetails> queryOptional(Sql.Transaction trx, int id) {
+    trx.sql(\"""
+    select
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE,
+      concat (MOVIE.RUNTIME / 60, 'h ', MOVIE.RUNTIME % 60, 'm'),
+      formatdatetime (MOVIE.RELEASE_DATE, 'MMM dd, yyyy'),
+      listagg (GENRE.NAME, ', ') within group (
+        order by
+          GENRE.NAME
+      ),
+      MOVIE.SYNOPSYS
+    from
+      MOVIE
+      natural join MOVIE_GENRE
+      natural join GENRE
+    where
+      MOVIE.MOVIE_ID = ?
+    group by
+      MOVIE.MOVIE_ID
+    \""");
+
+    trx.param(id);
+
+    return trx.queryOptional(MovieDetails::new);
+  }
+
+}
+""");
+
+  static final SourceModel SeatsData = SourceModel.create("SeatsData.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.util.Arrays;
+import objectos.way.Http;
+import objectos.way.Sql;
+
+/**
+ * Represents the user submitted data.
+ */
+record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] selection) {
+
+  public static SeatsData parse(Http.Exchange http) {
+    final Kino.Query query;
+    query = http.get(Kino.Query.class);
+
+    return new SeatsData(
+        wayRequest(http),
+
+        query.id(),
+
+        query.aux(),
+
+        http.formParamAllAsInt("seat", Integer.MIN_VALUE).distinct().toArray()
+    );
+  }
+
+  private static boolean wayRequest(Http.Exchange http) {
+    final String maybe;
+    maybe = http.header(Http.HeaderName.WAY_REQUEST);
+
+    return "true".equals(maybe);
+  }
+
+  @Override
+  public final String toString() {
+    return String.format(
+        "SeatsData[wayRequest=%s, reservationId=%d, screenId=%d, selection=%s]",
+        wayRequest, reservationId, screenId, Arrays.toString(selection)
+    );
+  }
+
+  final void clearTmpSelection(Sql.Transaction trx) {
+    // clear this user's current tmp selection
+
+    trx.sql(\"""
+    delete from
+      TMP_SELECTION
+    where
+      RESERVATION_ID = ?
+    \""");
+
+    trx.param(reservationId);
+
+    trx.update();
+  }
+
+  final Sql.BatchUpdate persistTmpSelection(Sql.Transaction trx) {
+    clearTmpSelection(trx);
+
+    // insert the data.
+    // it will fail if either one is true:
+    // 1) invalid RESERVATION_ID
+    // 2) invalid SEAT_ID
+    // 3) invalid SCREEN_ID
+    // 4) SEAT_ID and SCREEN_ID are valid but SEAT_ID does not belong to SCREEN_ID
+
+    trx.sql(\"""
+    insert into
+      TMP_SELECTION (RESERVATION_ID, SEAT_ID, SCREEN_ID)
+    values
+      (?, ?, ?)
+    \""");
+
+    for (int seatId : selection) {
+      trx.param(reservationId);
+
+      trx.param(seatId);
+
+      trx.param(screenId);
+
+      trx.addBatch();
+    }
+
+    return trx.batchUpdateWithResult();
+  }
+
+  final void clearUserSelection(Sql.Transaction trx) {
+    // clear this user's current selection.
+    // does nothing (hopefully) if RESERVATION_ID refers to an already sold ticket
+
+    trx.sql(\"""
+    delete from SELECTION
+    where RESERVATION_ID in (
+      select
+        RESERVATION_ID
+      from
+        RESERVATION
+      where
+        RESERVATION_ID = ?
+        and RESERVATION.TICKET_TIME is null
+    )
+    \""");
+
+    trx.param(reservationId);
+
+    trx.update();
+  }
+
+  final Sql.Update persisUserSelection(Sql.Transaction trx) {
+    clearUserSelection(trx);
+
+    // persist this user's selection.
+    // it will fail if:
+    // 1) we try to insert an already selected seat (unique constraint)
+    //
+    // it will select only a subset (possibly empty) if:
+    // 1) RESERVATION_ID refers to an already sold ticket
+    // 2) SEAT is from a different screen that the current SHOW
+
+    trx.sql(\"""
+    insert into
+      SELECTION (RESERVATION_ID, SEAT_ID, SHOW_ID)
+    select
+      TMP_SELECTION.RESERVATION_ID,
+      TMP_SELECTION.SEAT_ID,
+      SHOW.SHOW_ID
+    from
+      TMP_SELECTION
+      join RESERVATION on TMP_SELECTION.RESERVATION_ID = RESERVATION.RESERVATION_ID
+      join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
+      join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
+      join SEAT on TMP_SELECTION.SEAT_ID = SEAT.SEAT_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+      and RESERVATION.TICKET_TIME is null
+      and SCREENING.SCREEN_ID = SEAT.SCREEN_ID
+    \""");
+
+    trx.param(reservationId);
+
+    return trx.updateWithResult();
+  }
+
+  final int seats() {
+    return selection.length;
+  }
+
+}
+""");
+
+  static final SourceModel Ticket = SourceModel.create("Ticket.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.util.Optional;
+import objectos.way.Html;
+import objectos.way.Http;
+import objectos.way.Sql;
+
+final class Ticket implements Kino.GET {
+
+  Ticket() {}
+
+  public static Html.Component create(Sql.Transaction trx, ConfirmData data) {
+    final Ticket action;
+    action = new Ticket();
+
+    final long ticketId;
+    ticketId = data.reservationId();
+
+    return action.view(trx, ticketId);
+  }
+
+  @Override
+  public final Html.Component get(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final Kino.Query query;
+    query = http.get(Kino.Query.class);
+
+    final long ticketId;
+    ticketId = query.id();
+
+    return view(trx, ticketId);
+  }
+
+  private Html.Component view(Sql.Transaction trx, long ticketId) {
+    final Optional<TicketModel> maybe;
+    maybe = TicketModel.queryOptional(trx, ticketId);
+
+    if (maybe.isPresent()) {
+      final TicketModel model;
+      model = maybe.get();
+
+      return Shell.create(shell -> {
+        shell.appFrame = "ticket-" + ticketId;
+
+        shell.app = new TicketView(model);
+
+        shell.sourceFrame = "ticket";
+
+        shell.sources(
+            Source.Ticket,
+            Source.TicketModel,
+            Source.TicketView
+        );
+      });
+    } else {
+      return NotFound.create();
+    }
+  }
+
+}
+""");
+
+  static final SourceModel MovieView = SourceModel.create("MovieView.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.util.List;
+
+/**
+ * Movie details and screening selection view.
+ */
+final class MovieView extends Kino.View {
+
+  private final Kino.Ctx ctx;
+
+  private final MovieDetails details;
+
+  private final List<MovieScreening> screenings;
+
+  MovieView(Kino.Ctx ctx, MovieDetails details, List<MovieScreening> screenings) {
+    this.ctx = ctx;
+
+    this.details = details;
+
+    this.screenings = screenings;
+  }
+
+  @Override
+  protected final void render() {
+    backLink(ctx, Kino.Page.NOW_SHOWING);
+
+    div(
+        css(\"""
+        display:grid
+        gap:16rx
+        grid-template-columns:1fr_160rx
+        \"""),
+
+        f(this::renderMovieDetails)
+    );
+
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        gap:16rx
+        padding:64rx_0_0
+        \"""),
+
+        f(this::renderMovieScreenings)
+    );
+  }
+
+  private void renderMovieDetails() {
+    div(
+        h2(
+            text(testableH1(details.title()))
+        ),
+
+        p(
+            text(testableField("synopsys", details.synopsys()))
+        ),
+
+        dl(
+            css(\"""
+            display:grid
+            font-size:14rx
+            grid-template-columns:repeat(2,1fr)
+
+            &_dt/font-weight:600
+            &_dt/padding-top:12rx
+            \"""),
+
+            div(
+                dt(
+                    text("Rating")
+                ),
+
+                dd(
+                    text("N/A")
+                )
+            ),
+
+            div(
+                dt(
+                    text("Runtime")
+                ),
+
+                dd(
+                    text(testableField("runtime", details.runtime()))
+                )
+            ),
+
+            div(
+                dt(
+                    text("Release date")
+                ),
+
+                dd(
+                    text(testableField("release-date", details.releaseDate()))
+                )
+            ),
+
+            div(
+                dt(
+                    text("Genres")
+                ),
+
+                dd(
+                    text(testableField("genres", details.genres()))
+                )
+            )
+        )
+
+    );
+
+    div(
+        css(\"""
+        padding-top:16rx
+        \"""),
+
+        img(
+            css(\"""
+            border-radius:6rx
+            width:100%
+            \"""),
+
+            alt(details.title()),
+
+            src("/demo/landing/poster" + details.movieId() + ".jpg")
+        )
+    );
+  }
+
+  private void renderMovieScreenings() {
+    h3(
+        css(\"""
+        font-size:24rx
+        font-weight:300
+        line-height:1
+        \"""),
+
+        text(testableH1("Showtimes"))
+    );
+
+    for (MovieScreening screening : screenings) {
+      div(
+          css(\"""
+          border:1px_solid_var(--color-border)
+          display:flex
+          gap:32rx
+          padding:16rx
+          position:relative
+          \"""),
+
+          div(
+              css(\"""
+              align-items:center
+              display:flex
+              flex-direction:column
+              gap:8rx
+              justify-content:center
+              \"""),
+
+              icon(
+                  Kino.Icon.CALENDAR_CHECK,
+
+                  css(\"""
+                  stroke:icon
+                  \""")
+              ),
+
+              span(
+                  css(\"""
+                  text-align:center
+                  width:6rch
+                  \"""),
+
+                  text(testableH2(screening.date()))
+              )
+          ),
+
+          div(
+
+              h4(
+                  css(\"""
+                  font-weight:500
+                  line-height:1
+                  padding-top:8rx
+                  \"""),
+
+                  text(testableField("screen", screening.screenName()))
+              ),
+
+              div(
+                  css(\"""
+                  font-size:14rx
+                  font-weight:300
+                  padding:8rx_0
+                  \"""),
+
+                  text(testableField("features", screening.features()))
+              ),
+
+              ul(
+                  css(\"""
+                  display:flex
+                  flex-wrap:wrap
+                  gap:12rx
+                  \"""),
+
+                  testableNewLine(),
+
+                  f(this::renderShowtimes, screening.showtimes())
+              )
+
+          )
+      );
+    }
+  }
+
+  private void renderShowtimes(List<MovieScreening.Showtime> showtimes) {
+    for (MovieScreening.Showtime showtime : showtimes) {
+      final int showId;
+      showId = showtime.showId();
+
+      final Kino.Query query;
+      query = Kino.Page.SEATS.query(showId);
+
+      testableCell(query.toString(), 32);
+
+      final String time;
+      time = showtime.time();
+
+      li(
+          a(
+              css(\"""
+              border:1px_solid_var(--color-border)
+              border-radius:9999px
+              display:flex
+              padding:8rx_16rx
+
+              active/background-color:var(--color-btn-ghost-active)
+              hover/background-color:var(--color-btn-ghost-hover)
+              \"""),
+
+              dataOnClick(this::navigate),
+
+              href(ctx.href(query)),
+
+              rel("nofollow"),
+
+              span(testableCell(time, 5))
+          ),
+
+          testableNewLine()
+      );
+    }
+  }
+
+}
 """);
 }

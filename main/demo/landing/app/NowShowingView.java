@@ -16,12 +16,10 @@
 package demo.landing.app;
 
 import java.util.List;
-import objectos.way.Css;
 
 /**
  * Renders the "Now Showing" view.
  */
-@Css.Source
 final class NowShowingView extends Kino.View {
 
   private final Kino.Ctx ctx;
@@ -83,10 +81,10 @@ final class NowShowingView extends Kino.View {
               img(
                   css("""
                   aspect-ratio:2/3
-                  background-color:neutral-400
+                  background-color:var(--color-neutral-400)
                   border-radius:6rx
 
-                  group-hover:outline:2px_solid_gray-500
+                  &:is(:where(.group):hover_*)/outline:2px_solid_var(--color-gray-500)
                   """),
 
                   src("/demo/landing/poster" + item.id() + ".jpg")
@@ -99,7 +97,7 @@ final class NowShowingView extends Kino.View {
                   text-align:center
                   padding-top:8rx
 
-                  group-hover:text-decoration:underline
+                  &:is(:where(.group):hover_*)/text-decoration:underline
                   """),
 
                   text(

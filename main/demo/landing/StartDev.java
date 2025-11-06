@@ -17,10 +17,8 @@ package demo.landing;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.nio.file.Path;
 import java.util.HexFormat;
 import objectos.way.App;
-import objectos.way.Css;
 import objectos.way.Http;
 import objectos.way.Note;
 import objectos.way.Sql;
@@ -29,8 +27,6 @@ import objectos.way.Sql;
  * Starts the application in development mode.
  */
 public final class StartDev extends Start {
-
-  private final Path classOutput = Path.of("work", "main");
 
   private StartDev() {}
 
@@ -64,19 +60,6 @@ public final class StartDev extends Start {
 
       config.noteSink(noteSink);
     });
-  }
-
-  @Override
-  final void injector(App.Injector.Options opts) {
-    super.injector(opts);
-
-    final Note.Sink noteSink;
-    noteSink = opts.getInstance(Note.Sink.class);
-
-    final Css.StyleSheet css;
-    css = css(noteSink, classOutput);
-
-    opts.putInstance(Css.StyleSheet.class, css);
   }
 
   private record Reloader(App.Injector injector) implements App.Reloader.HandlerFactory {

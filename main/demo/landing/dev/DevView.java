@@ -17,7 +17,6 @@ package demo.landing.dev;
 
 import objectos.way.Css;
 import objectos.way.Html;
-import objectos.way.Html.Component;
 
 @Css.Source
 final class DevView extends Html.Template {
@@ -26,7 +25,7 @@ final class DevView extends Html.Template {
 
   private final Html.Component demo;
 
-  public DevView(Component head, Component demo) {
+  public DevView(Html.Component head, Html.Component demo) {
     this.head = head;
 
     this.demo = demo;
@@ -38,12 +37,10 @@ final class DevView extends Html.Template {
 
     html(
         css("""
+        background-color:var(--color-html)
+        color:var(--color-text)
         min-height:100vh
         width:100%
-
-        background-color:html
-
-        color:text
         """),
 
         lang("en"),
@@ -65,10 +62,9 @@ final class DevView extends Html.Template {
   private Html.Instruction.OfElement renderBody() {
     return body(
         css("""
-        width:100%
+        background-color:var(--color-body)
         min-height:100vh
-
-        background-color:body
+        width:100%
         """),
 
         hero(),
@@ -78,17 +74,17 @@ final class DevView extends Html.Template {
   }
 
   private static final Html.ClassName SECTION = Html.ClassName.ofText("""
-  border-bottom:1px_solid_border
+  border-bottom:1px_solid_var(--color-border)
   """);
 
   private static final Html.ClassName CONTAINER = Html.ClassName.ofText("""
-  max-width:calc(var(--breakpoint-2xl)_-_66rx)
+  max-width:calc(var(--breakpoint-x2)_-_66rx)
 
-  sm:border-left:1px_solid_border
-  sm:border-right:1px_solid_border
-  sm:margin:0_32rx
+  sm/border-left:1px_solid_var(--color-border)
+  sm/border-right:1px_solid_var(--color-border)
+  sm/margin:0_32rx
 
-  2xl:margin:0_auto
+  x2/margin:0_auto
   """);
 
   private Html.Instruction hero() {
@@ -108,9 +104,9 @@ final class DevView extends Html.Template {
                 font-weight:200
                 line-height:1
 
-                xl:font-size:48rx
+                xl/font-size:48rx
 
-                2xl:font-size:60rx
+                x2/font-size:60rx
                 """),
 
                 text("This website is built entirely using Java")
@@ -120,7 +116,7 @@ final class DevView extends Html.Template {
                 css("""
                 margin-top:28rx
 
-                lg:mt-spacing-12
+                lg/margin-top:48rx
                 """),
 
                 text("""
@@ -163,7 +159,7 @@ final class DevView extends Html.Template {
                 using Objectos Way, JDK 23 and the H2 database engine.
                 """),
 
-                br(css("display:none md:display:inline")),
+                br(css("display:none md/display:inline")),
 
                 text("""
                 The main panel displays the application itself,

@@ -15,13 +15,15 @@
  */
 package demo.landing.dev;
 
+import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
 import demo.landing.app.Kino;
+import java.nio.file.Path;
 import objectos.way.App;
 import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
-import objectos.way.Media;
+import objectos.way.Note;
 import objectos.way.Web;
 
 public final class DevModule implements Http.Routing.Module {
@@ -90,10 +92,16 @@ public final class DevModule implements Http.Routing.Module {
   }
 
   private void styles(Http.Exchange http) {
-    final Media.Text css;
-    css = injector.getInstance(Css.StyleSheet.class);
+    http.ok(Css.StyleSheet.create(opts -> {
+      final Note.Sink noteSink;
+      noteSink = injector.getInstance(Note.Sink.class);
 
-    http.ok(css);
+      opts.noteSink(noteSink);
+
+      opts.include(LandingDemo.styles());
+
+      opts.scanDirectory(Path.of("work", "main"));
+    }));
   }
 
   private void respond(Http.Exchange http, Http.Status status, Html.Component view) {
