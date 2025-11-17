@@ -477,57 +477,57 @@ public final class LandingDemoDb {
     return rs;
   }
 
-  public static void createPosters(Sql.Database db, Web.Resources.Options options) {
-    record Poster(int id, byte[] contents) implements Media.Bytes {
-      Poster(ResultSet rs, int idx) throws SQLException {
-        this(
-            rs.getInt(idx++),
-            rs.getBytes(idx++)
-        );
-      }
-
-      public final String path() {
-        return "/demo/landing/poster" + id + ".jpg";
-      }
-
-      @Override
-      public final String contentType() {
-        return "image/jpeg";
-      }
-
-      @Override
-      public final byte[] toByteArray() {
-        return contents;
-      }
+  private record Poster(int id, byte[] contents) implements Media.Bytes {
+    Poster(ResultSet rs, int idx) throws SQLException {
+      this(
+          rs.getInt(idx++),
+          rs.getBytes(idx++)
+      );
     }
 
-    final Sql.Transaction trx;
-    trx = db.beginTransaction(Sql.READ_COMMITED);
-
-    try {
-      trx.sql("set schema CINEMA");
-
-      trx.update();
-
-      trx.sql("""
-      select
-        MOVIE_ID,
-        DATA
-      from
-        MOVIE_POSTER
-      """);
-
-      final List<Poster> posters;
-      posters = trx.query(Poster::new);
-
-      trx.commit();
-
-      for (Poster poster : posters) {
-        options.addMedia(poster.path(), poster);
-      }
-    } finally {
-      trx.close();
+    public final String path() {
+      return "/demo/landing/poster" + id + ".jpg";
     }
+
+    @Override
+    public final String contentType() {
+      return "image/jpeg";
+    }
+
+    @Override
+    public final byte[] toByteArray() {
+      return contents;
+    }
+  }
+
+  public static Web.Resources.Library posters(Sql.Database db) {
+    return new Web.Resources.Library() {
+      @Override
+      public final void configure(Web.Resources.Library.Options opts) {
+        try (Sql.Transaction trx = db.connect()) {
+          trx.sql("set schema CINEMA");
+
+          trx.update();
+
+          trx.sql("""
+          select
+            MOVIE_ID,
+            DATA
+          from
+            MOVIE_POSTER
+          """);
+
+          final List<Poster> posters;
+          posters = trx.query(Poster::new);
+
+          trx.commit();
+
+          for (Poster poster : posters) {
+            opts.addMedia(poster.path(), poster);
+          }
+        }
+      }
+    };
   }
 
 }

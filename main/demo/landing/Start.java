@@ -195,7 +195,10 @@ abstract class Start extends App.Bootstrap {
         final Sql.Database db;
         db = injector.getInstance(Sql.Database.class);
 
-        LandingDemoDb.createPosters(db, opts);
+        final Web.Resources.Library posters;
+        posters = LandingDemoDb.posters(db);
+
+        opts.include(posters);
       });
     } catch (IOException e) {
       throw App.serviceFailed("Web.Resources", e);

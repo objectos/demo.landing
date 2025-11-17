@@ -32,8 +32,6 @@ public final class DevModule implements Http.Routing.Module {
 
   private final Kino demo;
 
-  private final Web.Resources webResources;
-
   public DevModule(App.Injector injector) {
     this.injector = injector;
 
@@ -41,8 +39,6 @@ public final class DevModule implements Http.Routing.Module {
     config = injector.getInstance(LandingDemoConfig.class);
 
     demo = Kino.create(config);
-
-    webResources = injector.getInstance(Web.Resources.class);
   }
 
   @Override
@@ -59,16 +55,14 @@ public final class DevModule implements Http.Routing.Module {
       path.allow(Http.Method.POST, this::endpoint);
     });
 
-    routing.path("/demo/landing/poster1.jpg", webResources::handlePath);
-    routing.path("/demo/landing/poster2.jpg", webResources::handlePath);
-    routing.path("/demo/landing/poster3.jpg", webResources::handlePath);
-    routing.path("/demo/landing/poster4.jpg", webResources::handlePath);
-
     routing.path("/ui/styles.css", path -> {
       path.allow(Http.Method.GET, this::styles);
     });
 
-    routing.path("/ui/{}", webResources::handlePath);
+    final Web.Resources webResources;
+    webResources = injector.getInstance(Web.Resources.class);
+
+    routing.handler(webResources);
   }
 
   private void index(Http.Exchange http) {
