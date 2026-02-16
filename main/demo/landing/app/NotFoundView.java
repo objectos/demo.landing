@@ -52,7 +52,7 @@ final class NotFoundView extends Kino.View {
         a(
             PRIMARY,
 
-            dataOnClick(this::navigate),
+            onclick(FOLLOW),
 
             href("/index.html"),
 

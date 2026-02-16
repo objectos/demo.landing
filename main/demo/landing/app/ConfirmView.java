@@ -18,6 +18,7 @@ package demo.landing.app;
 import demo.landing.app.Kino.Page;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import objectos.script.Js;
 import objectos.way.Html;
 
 final class ConfirmView extends Kino.View {
@@ -218,12 +219,14 @@ final class ConfirmView extends Kino.View {
         margin-top:24rx
         """),
 
-        dataOnSuccess(script -> {
-          final String successUrl;
-          successUrl = ctx.href(Kino.Page.TICKET, reservationId);
+        onsubmit(Js.submit()),
 
-          script.replaceState(successUrl);
-        }),
+        //        dataOnSuccess(script -> {
+        //          final String successUrl;
+        //          successUrl = ctx.href(Kino.Page.TICKET, reservationId);
+        //
+        //          script.replaceState(successUrl);
+        //        }),
 
         method("post"),
 

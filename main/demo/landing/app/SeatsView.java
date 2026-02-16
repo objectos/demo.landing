@@ -15,6 +15,7 @@
  */
 package demo.landing.app;
 
+import objectos.script.Js;
 import objectos.way.Html;
 
 final class SeatsView extends Kino.View {
@@ -78,8 +79,6 @@ final class SeatsView extends Kino.View {
     p("Please choose your seats");
 
     div(
-        dataFrame("seats-alert", Integer.toString(state)),
-
         f(this::renderAlert)
     );
 
@@ -268,14 +267,16 @@ final class SeatsView extends Kino.View {
         width:100%
         """),
 
-        dataOnSuccess(script -> {
-          final String successUrl;
-          successUrl = ctx.href(Kino.Page.CONFIRM, reservationId);
-
-          script.replaceState(successUrl);
-        }),
-
         method("post"),
+
+        onsubmit(Js.submit()),
+
+        //        dataOnSuccess(script -> {
+        //          final String successUrl;
+        //          successUrl = ctx.href(Kino.Page.CONFIRM, reservationId);
+        //
+        //          script.replaceState(successUrl);
+        //        }),
 
         f(this::renderSeatsFormGrid)
     );

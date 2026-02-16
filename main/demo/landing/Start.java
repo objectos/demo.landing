@@ -15,16 +15,10 @@
  */
 package demo.landing;
 
+import module objectos.way;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
-import objectos.way.App;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Note;
-import objectos.way.Script;
-import objectos.way.Sql;
-import objectos.way.Web;
 import org.h2.jdbcx.JdbcConnectionPool;
 
 abstract class Start extends App.Bootstrap {
@@ -190,7 +184,7 @@ abstract class Start extends App.Bootstrap {
 
         opts.addDirectory(Path.of("web-resources"));
 
-        opts.addMedia("/ui/script.js", Script.Library.of());
+        opts.addMedia("/ui/script.js", JsLibrary.of());
 
         final Sql.Database db;
         db = injector.getInstance(Sql.Database.class);

@@ -20,11 +20,12 @@ import demo.landing.LandingDemoConfig;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import objectos.script.Js;
+import objectos.script.JsAction;
 import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Note;
-import objectos.way.Script;
 import objectos.way.Sql;
 
 /**
@@ -51,6 +52,7 @@ public final class Kino implements LandingDemo {
   }
 
   /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
+  ///
   /// @return a new instance of the demo's `Css.StyleSheet` configuration
   public static Css.Library styles() {
     return new KinoStyles();
@@ -177,6 +179,10 @@ public final class Kino implements LandingDemo {
     hover/background-color:var(--color-btn-primary-hover)
     """);
 
+    static final Html.Id CONTAINER = Html.Id.of("demo-container");
+
+    static final JsAction FOLLOW = Js.follow(opts -> opts.scrollIntoView(Js.byId(CONTAINER)));
+
     //
     // component methods
     //
@@ -225,7 +231,7 @@ public final class Kino implements LandingDemo {
           hover/background-color:var(--color-btn-ghost-hover)
           """),
 
-          dataOnClick(this::navigate),
+          onclick(FOLLOW),
 
           href(href),
 
@@ -266,29 +272,6 @@ public final class Kino implements LandingDemo {
 
           raw(icon.contents)
       );
-    }
-
-    /*
-     * Typically we would use Script::navigate for "boosted" links.
-     * But a regular Script::navigate performs a scrollTo(0,0) after
-     * the request is completed. We don't want that as this demo is
-     * embedded in another page. In other words, we want the scroll
-     * position to remain the same after, e.g., we click on a movie.
-     */
-    final void navigate(Script script) {
-      var el = script.element();
-
-      script.request(req -> {
-        req.method(Script.GET);
-
-        req.url(el.attr(Html.AttributeName.HREF));
-
-        req.onSuccess(() -> {
-          var shell = script.elementById(Shell.APP);
-
-          shell.scroll(0, 0);
-        });
-      });
     }
 
   }

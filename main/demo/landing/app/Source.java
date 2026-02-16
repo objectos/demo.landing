@@ -41,6 +41,7 @@ package demo.landing.app;
 import demo.landing.app.Kino.Page;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import objectos.script.Js;
 import objectos.way.Html;
 
 final class ConfirmView extends Kino.View {
@@ -241,12 +242,14 @@ final class ConfirmView extends Kino.View {
         margin-top:24rx
         \"""),
 
-        dataOnSuccess(script -> {
-          final String successUrl;
-          successUrl = ctx.href(Kino.Page.TICKET, reservationId);
+        onsubmit(Js.submit()),
 
-          script.replaceState(successUrl);
-        }),
+        //        dataOnSuccess(script -> {
+        //          final String successUrl;
+        //          successUrl = ctx.href(Kino.Page.TICKET, reservationId);
+        //
+        //          script.replaceState(successUrl);
+        //        }),
 
         method("post"),
 
@@ -738,11 +741,12 @@ import demo.landing.LandingDemoConfig;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Objects;
+import objectos.script.Js;
+import objectos.script.JsAction;
 import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Note;
-import objectos.way.Script;
 import objectos.way.Sql;
 
 /**
@@ -769,6 +773,7 @@ public final class Kino implements LandingDemo {
   }
 
   /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
+  ///
   /// @return a new instance of the demo's `Css.StyleSheet` configuration
   public static Css.Library styles() {
     return new KinoStyles();
@@ -895,6 +900,10 @@ public final class Kino implements LandingDemo {
     hover/background-color:var(--color-btn-primary-hover)
     \""");
 
+    static final Html.Id CONTAINER = Html.Id.of("demo-container");
+
+    static final JsAction FOLLOW = Js.follow(opts -> opts.scrollIntoView(Js.byId(CONTAINER)));
+
     //
     // component methods
     //
@@ -943,7 +952,7 @@ public final class Kino implements LandingDemo {
           hover/background-color:var(--color-btn-ghost-hover)
           \"""),
 
-          dataOnClick(this::navigate),
+          onclick(FOLLOW),
 
           href(href),
 
@@ -984,29 +993,6 @@ public final class Kino implements LandingDemo {
 
           raw(icon.contents)
       );
-    }
-
-    /*
-     * Typically we would use Script::navigate for "boosted" links.
-     * But a regular Script::navigate performs a scrollTo(0,0) after
-     * the request is completed. We don't want that as this demo is
-     * embedded in another page. In other words, we want the scroll
-     * position to remain the same after, e.g., we click on a movie.
-     */
-    final void navigate(Script script) {
-      var el = script.element();
-
-      script.request(req -> {
-        req.method(Script.GET);
-
-        req.url(el.attr(Html.AttributeName.HREF));
-
-        req.onSuccess(() -> {
-          var shell = script.elementById(Shell.APP);
-
-          shell.scroll(0, 0);
-        });
-      });
     }
 
   }
@@ -1689,6 +1675,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import objectos.script.Js;
+import objectos.script.JsElement;
 import objectos.way.Html;
 import objectos.way.Syntax;
 
@@ -1759,6 +1747,8 @@ final class Shell extends Kino.View {
   protected final void render() {
     // the demo container
     div(
+        CONTAINER,
+
         css(\"""
         display:grid
         grid-template:'a'_448rx_'b'_auto_'c'_448rx_/_1fr
@@ -1815,7 +1805,7 @@ final class Shell extends Kino.View {
 
                 href("/index.html"),
 
-                dataOnClick(this::navigate),
+                onclick(FOLLOW),
 
                 objectosLogo(),
 
@@ -1857,8 +1847,6 @@ final class Shell extends Kino.View {
             &_h2/line-height:1
             &_h2/padding:48rx_0_8rx
             \"""),
-
-            dataFrame("demo-app", builder.appFrame),
 
             c(builder.app)
         )
@@ -1928,8 +1916,6 @@ final class Shell extends Kino.View {
         xl/flex-direction:column
         \"""),
 
-        dataFrame("demo-source-menu", builder.sourceFrame),
-
         // stores the current selected button in the data-button attribute
         attr(dataButton, first.button().attrValue()),
 
@@ -1963,32 +1949,18 @@ final class Shell extends Kino.View {
 
           attr(dataSelected, Boolean.toString(idx == 0)),
 
-          dataOnClick(script -> {
-            // 'deselects' current
-            var frame = script.elementById(sourceFrame);
-
-            var selectedButton = script.elementById(frame.attr(dataButton));
-
-            selectedButton.attr(dataSelected, "false");
-
-            var selectedPanel = script.elementById(frame.attr(dataPanel));
-
-            selectedPanel.attr(dataSelected, "false");
-
-            // 'selects' self
-            var selfButton = script.elementById(item.button());
-
-            selfButton.attr(dataSelected, "true");
-
-            var selfPanel = script.elementById(item.panel());
-
-            selfPanel.attr(dataSelected, "true");
-
-            // stores selected
-            frame.attr(dataButton, item.button().attrValue());
-
-            frame.attr(dataPanel, item.panel().attrValue());
-          }),
+          onclick(Js.of(
+              Js.var("frame", Js.byId(sourceFrame)),
+              // 'deselects' current
+              Js.byId(Js.var("frame").as(JsElement.type).attr(dataButton)).attr(dataSelected, "false"),
+              Js.byId(Js.var("frame").as(JsElement.type).attr(dataPanel)).attr(dataSelected, "false"),
+              // 'selects' self
+              Js.byId(item.button()).attr(dataSelected, "true"),
+              Js.byId(item.panel()).attr(dataSelected, "true"),
+              // stores selected,
+              Js.var("frame").as(JsElement.type).attr(dataButton, item.button().attrValue()),
+              Js.var("frame").as(JsElement.type).attr(dataPanel, item.panel().attrValue())
+          )),
 
           text(item.name())
       );
@@ -2010,8 +1982,6 @@ final class Shell extends Kino.View {
         min-height:0
         overflow:auto
         \"""),
-
-        dataFrame("demo-source-code", builder.sourceFrame),
 
         f(this::renderSourceCodeItems)
     );
@@ -2584,7 +2554,7 @@ final class NotFoundView extends Kino.View {
         a(
             PRIMARY,
 
-            dataOnClick(this::navigate),
+            onclick(FOLLOW),
 
             href("/index.html"),
 
@@ -3125,7 +3095,7 @@ final class NowShowingView extends Kino.View {
               group
               \"""),
 
-              dataOnClick(this::navigate),
+              onclick(FOLLOW),
 
               href(ctx.href(Kino.Page.MOVIE, item.id())),
 
@@ -3183,6 +3153,7 @@ final class NowShowingView extends Kino.View {
  */
 package demo.landing.app;
 
+import objectos.script.Js;
 import objectos.way.Html;
 
 final class SeatsView extends Kino.View {
@@ -3246,8 +3217,6 @@ final class SeatsView extends Kino.View {
     p("Please choose your seats");
 
     div(
-        dataFrame("seats-alert", Integer.toString(state)),
-
         f(this::renderAlert)
     );
 
@@ -3436,14 +3405,9 @@ final class SeatsView extends Kino.View {
         width:100%
         \"""),
 
-        dataOnSuccess(script -> {
-          final String successUrl;
-          successUrl = ctx.href(Kino.Page.CONFIRM, reservationId);
-
-          script.replaceState(successUrl);
-        }),
-
         method("post"),
+
+        onsubmit(Js.submit()),
 
         f(this::renderSeatsFormGrid)
     );
@@ -4287,7 +4251,7 @@ final class MovieView extends Kino.View {
               hover/background-color:var(--color-btn-ghost-hover)
               \"""),
 
-              dataOnClick(this::navigate),
+              onclick(FOLLOW),
 
               href(ctx.href(query)),
 

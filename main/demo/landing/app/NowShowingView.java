@@ -72,7 +72,7 @@ final class NowShowingView extends Kino.View {
               group
               """),
 
-              dataOnClick(this::navigate),
+              onclick(FOLLOW),
 
               href(ctx.href(Kino.Page.MOVIE, item.id())),
 

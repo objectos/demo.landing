@@ -22,12 +22,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HexFormat;
+import objectos.script.JsLibrary;
 import objectos.way.App;
 import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Note;
-import objectos.way.Script;
 import objectos.way.Sql;
 import org.h2.jdbcx.JdbcConnectionPool;
 import org.testng.TestNG;
@@ -137,8 +137,8 @@ public final class StartTest extends Start {
     final String css;
     css = styleSheet.generate();
 
-    final Script.Library library;
-    library = Script.Library.of();
+    final JsLibrary library;
+    library = JsLibrary.of();
 
     final String script;
     script = library.toString();

@@ -66,10 +66,10 @@ final class TicketView extends Kino.View {
         margin:32rx_0_0
         padding:16rx
 
-        div:display:flex
-        div:justify-content:space-between
+        &_div/display:flex
+        &_div/justify-content:space-between
 
-        dd:font-weight:500
+        &_dd/font-weight:500
         """),
 
         div(
