@@ -441,9 +441,15 @@ final class Confirm implements Kino.GET, Kino.POST {
 
       }
 
-      case Sql.UpdateSuccess _ -> LandingDemo.embedOk(
-          Ticket.create(trx, data)
-      );
+      case Sql.UpdateSuccess _ -> {
+        final long reservationId;
+        reservationId = data.reservationId();
+
+        final String href;
+        href = ctx.href(Kino.Page.TICKET, reservationId);
+
+        yield LandingDemo.redirect(href);
+      }
     };
   }
 
@@ -1024,7 +1030,7 @@ public final class Kino implements LandingDemo {
       codecKey = config.codecKey();
 
       final KinoCodec codec;
-      codec = new KinoCodec(clock, codecKey);
+      codec = new KinoCodec(codecKey);
 
       final Note.Sink noteSink;
       noteSink = config.noteSink;
@@ -1274,7 +1280,7 @@ public final class Kino implements LandingDemo {
  */
 package demo.landing.app;
 
-import java.time.Clock;
+import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Objects;
 
@@ -1282,46 +1288,47 @@ final class KinoCodec {
 
   private static final int BYTE_MASK = 0xFF;
 
-  private static final int LENGTH = 17;
+  private static final int LENGTH = 13;
 
   private final Kino.Query badRequest = Kino.Page.BAD_REQUEST.query();
-
-  private final Clock clock;
 
   private final HexFormat hexFormat = HexFormat.of();
 
   private final byte[] key;
 
+  private final int offset;
+
   private final Kino.Page[] views = Kino.Page.values();
 
-  KinoCodec(Clock clock, byte[] key) {
-    this.clock = Objects.requireNonNull(clock, "clock == null");
-
+  KinoCodec(byte[] key) {
     if (key.length < LENGTH) {
       throw new IllegalArgumentException("Key should have at least " + LENGTH + " bytes");
     }
 
     this.key = key;
+
+    final int hash;
+    hash = Arrays.hashCode(key);
+
+    this.offset = hash == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(hash);
   }
 
-  public static KinoCodec create(Clock clock, byte[] key) {
-    return new KinoCodec(clock, key);
+  public static KinoCodec create(byte[] key) {
+    return new KinoCodec(key);
   }
 
   /*
-  
+
    to simplify we assume the ID is always a long
-  
-   random = 4 bytes
-  
+
    page = 1 byte
-  
+
    id = 8 bytes
-  
+
    aux = 4 byte
    ------------------
-   total = 17 bytes
-  
+   total = 13 bytes
+
    */
 
   public final Kino.Query decode(String raw) {
@@ -1347,13 +1354,7 @@ final class KinoCodec {
     int index;
     index = 0;
 
-    int random = 0;
-    random |= bytes[index++] & BYTE_MASK << 24;
-    random |= bytes[index++] & BYTE_MASK << 16;
-    random |= bytes[index++] & BYTE_MASK << 8;
-    random |= bytes[index++] & BYTE_MASK << 0;
-
-    obfuscate(bytes, random);
+    obfuscate(bytes);
 
     int pageOrdinal;
     pageOrdinal = bytes[index++] & BYTE_MASK;
@@ -1395,17 +1396,6 @@ final class KinoCodec {
     int index;
     index = 0;
 
-    final long millis;
-    millis = clock.millis();
-
-    final int random;
-    random = (int) millis ^ (int) (millis >>> 32);
-
-    bytes[index++] = (byte) ((random >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 0) & BYTE_MASK);
-
     // first byte = view
     final Kino.Page view;
     view = query.page();
@@ -1435,16 +1425,13 @@ final class KinoCodec {
     bytes[index++] = (byte) ((aux >>> 8) & BYTE_MASK);
     bytes[index++] = (byte) ((aux >>> 0) & BYTE_MASK);
 
-    obfuscate(bytes, random);
+    obfuscate(bytes);
 
     return hexFormat.formatHex(bytes);
   }
 
-  private void obfuscate(byte[] bytes, int random) {
-    final int offset;
-    offset = random == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(random);
-
-    for (int idx = 4, len = bytes.length; idx < len; idx++) {
+  private void obfuscate(byte[] bytes) {
+    for (int idx = 0, len = bytes.length; idx < len; idx++) {
       byte b;
       b = bytes[idx];
 
@@ -2163,43 +2150,60 @@ final class Seats implements Kino.GET, Kino.POST {
     final int state;
     state = query.aux();
 
-    if (state == SeatsView.BACK) {
-      return getBackButton(trx, query);
-    }
+    return switch (state) {
+      case SeatsView.DEFAULT -> {
+        final int showId;
+        showId = query.idAsInt();
 
-    final int showId;
-    showId = query.idAsInt();
+        final Optional<SeatsShow> maybeShow;
+        maybeShow = SeatsShow.queryOptional(trx, showId);
 
-    final Optional<SeatsShow> maybeShow;
-    maybeShow = SeatsShow.queryOptional(trx, showId);
+        if (maybeShow.isEmpty()) {
+          yield NotFound.create();
+        }
 
-    if (maybeShow.isEmpty()) {
-      return NotFound.create();
-    }
+        final long reservationId;
+        reservationId = ctx.nextReservation();
 
-    final long reservationId;
-    reservationId = ctx.nextReservation();
+        trx.sql(\"""
+        insert into
+          RESERVATION (RESERVATION_ID, SHOW_ID)
+        values
+          (?, ?)
+        \""");
 
-    trx.sql(\"""
-    insert into
-      RESERVATION (RESERVATION_ID, SHOW_ID)
-    values
-      (?, ?)
-    \""");
+        trx.param(reservationId);
 
-    trx.param(reservationId);
+        trx.param(showId);
 
-    trx.param(showId);
+        trx.update();
 
-    trx.update();
+        final SeatsShow show;
+        show = maybeShow.get();
 
-    final SeatsShow show;
-    show = maybeShow.get();
+        final SeatsGrid grid;
+        grid = SeatsGrid.query(trx, reservationId);
 
-    final SeatsGrid grid;
-    grid = SeatsGrid.query(trx, reservationId);
+        yield view(state, reservationId, show, grid);
+      }
 
-    return view(state, reservationId, show, grid);
+      case SeatsView.BACK -> getBackButton(trx, query);
+
+      case SeatsView.BOOKED, SeatsView.EMPTY, SeatsView.LIMIT -> {
+        final long reservationId;
+        reservationId = query.id();
+
+        final SeatsShow show;
+        show = SeatsShow.queryReservation(trx, reservationId);
+
+        final SeatsGrid grid;
+        grid = SeatsGrid.query(trx, reservationId);
+
+        yield view(state, reservationId, show, grid);
+      }
+
+      default -> NotFound.create();
+    };
   }
 
   private Html.Component getBackButton(Sql.Transaction trx, Query query) {
@@ -2303,17 +2307,13 @@ final class Seats implements Kino.GET, Kino.POST {
     final long reservationId;
     reservationId = data.reservationId();
 
-    if (data.wayRequest()) {
-      return embedView(trx, state, reservationId);
-    } else {
-      final Kino.Query query;
-      query = Kino.Page.SEATS.query(reservationId, state);
+    final Kino.Query query;
+    query = Kino.Page.SEATS.query(reservationId, state);
 
-      final String href;
-      href = ctx.href(query);
+    final String href;
+    href = ctx.href(query);
 
-      return LandingDemo.redirect(href);
-    }
+    return LandingDemo.redirect(href);
   }
 
   private Kino.PostResult userSelectionOk(Sql.Transaction trx, SeatsData data, Sql.UpdateSuccess ok) {
@@ -2340,13 +2340,9 @@ final class Seats implements Kino.GET, Kino.POST {
     final long reservationId;
     reservationId = data.reservationId();
 
-    return data.wayRequest()
-        ? LandingDemo.embedOk(
-            Confirm.create(ctx, trx, reservationId)
-        )
-        : LandingDemo.redirect(
-            ctx.href(Kino.Page.CONFIRM, reservationId)
-        );
+    return LandingDemo.redirect(
+        ctx.href(Kino.Page.CONFIRM, reservationId)
+    );
 
   }
 
@@ -2635,10 +2631,10 @@ final class TicketView extends Kino.View {
         margin:32rx_0_0
         padding:16rx
 
-        div:display:flex
-        div:justify-content:space-between
+        &_div/display:flex
+        &_div/justify-content:space-between
 
-        dd:font-weight:500
+        &_dd/font-weight:500
         \"""),
 
         div(
@@ -3408,6 +3404,13 @@ final class SeatsView extends Kino.View {
         method("post"),
 
         onsubmit(Js.submit()),
+
+        //        dataOnSuccess(script -> {
+        //          final String successUrl;
+        //          successUrl = ctx.href(Kino.Page.CONFIRM, reservationId);
+        //
+        //          script.replaceState(successUrl);
+        //        }),
 
         f(this::renderSeatsFormGrid)
     );

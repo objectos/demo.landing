@@ -141,7 +141,7 @@ public class Testing implements ISuiteListener {
       final LandingDemoConfig config;
       config = INJECTOR.getInstance(LandingDemoConfig.class);
 
-      return new KinoCodec(config.clock, config.codecKey());
+      return new KinoCodec(config.codecKey());
     }
 
   }

@@ -74,65 +74,88 @@ public class SeatsTestConcurrent {
     ,      (10901, 10104, 1061);
     """);
 
-    // 902 tries to select the same seats
-    final Http.Exchange http;
-    http = Testing.http(config -> {
-      final Sql.Transaction trx;
-      trx = Testing.beginTrx();
+    Testing.rollback(trx -> {
+      // 902 tries to select the same seats
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
+        trx.sql(Sql.SCRIPT, """
+        insert into RESERVATION (RESERVATION_ID, SHOW_ID)
+        values (10902, 1061)
+        """);
 
-      trx.sql(Sql.SCRIPT, """
-      insert into RESERVATION (RESERVATION_ID, SHOW_ID)
-      values (10902, 1061)
-      """);
+        trx.batchUpdate();
 
-      trx.batchUpdate();
+        config.set(Sql.Transaction.class, trx);
 
-      config.set(Sql.Transaction.class, trx);
+        config.method(Http.Method.POST);
 
-      config.method(Http.Method.POST);
+        config.path("/demo/landing");
 
-      config.path("/demo/landing");
+        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
-      config.header(Http.HeaderName.WAY_REQUEST, "true");
+        final long reservationId;
+        reservationId = 10902;
 
-      final long reservationId;
-      reservationId = 10902;
+        final int screenId;
+        screenId = 1031;
 
-      final int screenId;
-      screenId = 1031;
+        final String demo;
+        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
 
-      final String demo;
-      demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        config.queryParam("demo", demo);
 
-      config.queryParam("demo", demo);
+        config.formParam("seat", 10103);
+      });
 
-      config.formParam("seat", 10103);
+      assertEquals(
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 302 Found
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /index.html?demo=7f9e0b7b9e2a4f461b1e3b5a0e
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/index.html");
+
+        config.queryParam("demo", "7f9e0b7b9e2a4f461b1e3b5a0e");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
+
+          """
+          HTTP/1.1 200 OK
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Type: text/html; charset=utf-8
+          Transfer-Encoding: chunked
+
+          back-link: MOVIE:1011
+
+          # Show details
+
+          title: Title 1
+          alert: BOOKED
+          date: Sat 25/Jan
+          time: 13:00
+          screen: Screen 1
+
+          # Seats
+
+          action: SEATS:10902:1031
+          """
+      );
     });
 
-    assertEquals(
-        Testing.handle0(http),
-
-        """
-        HTTP/1.1 200 OK
-        Date: Mon, 28 Apr 2025 13:01:00 GMT
-        Content-Type: text/html; charset=utf-8
-        Transfer-Encoding: chunked
-
-        back-link: MOVIE:1011
-
-        # Show details
-
-        title: Title 1
-        alert: BOOKED
-        date: Sat 25/Jan
-        time: 13:00
-        screen: Screen 1
-
-        # Seats
-
-        action: SEATS:10902:1031
-        """
-    );
   }
 
 }

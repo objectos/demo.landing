@@ -72,9 +72,15 @@ final class Confirm implements Kino.GET, Kino.POST {
 
       }
 
-      case Sql.UpdateSuccess _ -> LandingDemo.embedOk(
-          Ticket.create(trx, data)
-      );
+      case Sql.UpdateSuccess _ -> {
+        final long reservationId;
+        reservationId = data.reservationId();
+
+        final String href;
+        href = ctx.href(Kino.Page.TICKET, reservationId);
+
+        yield LandingDemo.redirect(href);
+      }
     };
   }
 

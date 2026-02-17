@@ -15,7 +15,7 @@
  */
 package demo.landing.app;
 
-import java.time.Clock;
+import java.util.Arrays;
 import java.util.HexFormat;
 import java.util.Objects;
 
@@ -23,46 +23,47 @@ final class KinoCodec {
 
   private static final int BYTE_MASK = 0xFF;
 
-  private static final int LENGTH = 17;
+  private static final int LENGTH = 13;
 
   private final Kino.Query badRequest = Kino.Page.BAD_REQUEST.query();
-
-  private final Clock clock;
 
   private final HexFormat hexFormat = HexFormat.of();
 
   private final byte[] key;
 
+  private final int offset;
+
   private final Kino.Page[] views = Kino.Page.values();
 
-  KinoCodec(Clock clock, byte[] key) {
-    this.clock = Objects.requireNonNull(clock, "clock == null");
-
+  KinoCodec(byte[] key) {
     if (key.length < LENGTH) {
       throw new IllegalArgumentException("Key should have at least " + LENGTH + " bytes");
     }
 
     this.key = key;
+
+    final int hash;
+    hash = Arrays.hashCode(key);
+
+    this.offset = hash == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(hash);
   }
 
-  public static KinoCodec create(Clock clock, byte[] key) {
-    return new KinoCodec(clock, key);
+  public static KinoCodec create(byte[] key) {
+    return new KinoCodec(key);
   }
 
   /*
-  
+
    to simplify we assume the ID is always a long
-  
-   random = 4 bytes
-  
+
    page = 1 byte
-  
+
    id = 8 bytes
-  
+
    aux = 4 byte
    ------------------
-   total = 17 bytes
-  
+   total = 13 bytes
+
    */
 
   public final Kino.Query decode(String raw) {
@@ -88,13 +89,7 @@ final class KinoCodec {
     int index;
     index = 0;
 
-    int random = 0;
-    random |= bytes[index++] & BYTE_MASK << 24;
-    random |= bytes[index++] & BYTE_MASK << 16;
-    random |= bytes[index++] & BYTE_MASK << 8;
-    random |= bytes[index++] & BYTE_MASK << 0;
-
-    obfuscate(bytes, random);
+    obfuscate(bytes);
 
     int pageOrdinal;
     pageOrdinal = bytes[index++] & BYTE_MASK;
@@ -136,17 +131,6 @@ final class KinoCodec {
     int index;
     index = 0;
 
-    final long millis;
-    millis = clock.millis();
-
-    final int random;
-    random = (int) millis ^ (int) (millis >>> 32);
-
-    bytes[index++] = (byte) ((random >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 0) & BYTE_MASK);
-
     // first byte = view
     final Kino.Page view;
     view = query.page();
@@ -176,16 +160,13 @@ final class KinoCodec {
     bytes[index++] = (byte) ((aux >>> 8) & BYTE_MASK);
     bytes[index++] = (byte) ((aux >>> 0) & BYTE_MASK);
 
-    obfuscate(bytes, random);
+    obfuscate(bytes);
 
     return hexFormat.formatHex(bytes);
   }
 
-  private void obfuscate(byte[] bytes, int random) {
-    final int offset;
-    offset = random == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(random);
-
-    for (int idx = 4, len = bytes.length; idx < len; idx++) {
+  private void obfuscate(byte[] bytes) {
+    for (int idx = 0, len = bytes.length; idx < len; idx++) {
       byte b;
       b = bytes[idx];
 

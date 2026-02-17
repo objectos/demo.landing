@@ -44,43 +44,60 @@ final class Seats implements Kino.GET, Kino.POST {
     final int state;
     state = query.aux();
 
-    if (state == SeatsView.BACK) {
-      return getBackButton(trx, query);
-    }
+    return switch (state) {
+      case SeatsView.DEFAULT -> {
+        final int showId;
+        showId = query.idAsInt();
 
-    final int showId;
-    showId = query.idAsInt();
+        final Optional<SeatsShow> maybeShow;
+        maybeShow = SeatsShow.queryOptional(trx, showId);
 
-    final Optional<SeatsShow> maybeShow;
-    maybeShow = SeatsShow.queryOptional(trx, showId);
+        if (maybeShow.isEmpty()) {
+          yield NotFound.create();
+        }
 
-    if (maybeShow.isEmpty()) {
-      return NotFound.create();
-    }
+        final long reservationId;
+        reservationId = ctx.nextReservation();
 
-    final long reservationId;
-    reservationId = ctx.nextReservation();
+        trx.sql("""
+        insert into
+          RESERVATION (RESERVATION_ID, SHOW_ID)
+        values
+          (?, ?)
+        """);
 
-    trx.sql("""
-    insert into
-      RESERVATION (RESERVATION_ID, SHOW_ID)
-    values
-      (?, ?)
-    """);
+        trx.param(reservationId);
 
-    trx.param(reservationId);
+        trx.param(showId);
 
-    trx.param(showId);
+        trx.update();
 
-    trx.update();
+        final SeatsShow show;
+        show = maybeShow.get();
 
-    final SeatsShow show;
-    show = maybeShow.get();
+        final SeatsGrid grid;
+        grid = SeatsGrid.query(trx, reservationId);
 
-    final SeatsGrid grid;
-    grid = SeatsGrid.query(trx, reservationId);
+        yield view(state, reservationId, show, grid);
+      }
 
-    return view(state, reservationId, show, grid);
+      case SeatsView.BACK -> getBackButton(trx, query);
+
+      case SeatsView.BOOKED, SeatsView.EMPTY, SeatsView.LIMIT -> {
+        final long reservationId;
+        reservationId = query.id();
+
+        final SeatsShow show;
+        show = SeatsShow.queryReservation(trx, reservationId);
+
+        final SeatsGrid grid;
+        grid = SeatsGrid.query(trx, reservationId);
+
+        yield view(state, reservationId, show, grid);
+      }
+
+      default -> NotFound.create();
+    };
   }
 
   private Html.Component getBackButton(Sql.Transaction trx, Query query) {
@@ -184,17 +201,13 @@ final class Seats implements Kino.GET, Kino.POST {
     final long reservationId;
     reservationId = data.reservationId();
 
-    if (data.wayRequest()) {
-      return embedView(trx, state, reservationId);
-    } else {
-      final Kino.Query query;
-      query = Kino.Page.SEATS.query(reservationId, state);
+    final Kino.Query query;
+    query = Kino.Page.SEATS.query(reservationId, state);
 
-      final String href;
-      href = ctx.href(query);
+    final String href;
+    href = ctx.href(query);
 
-      return LandingDemo.redirect(href);
-    }
+    return LandingDemo.redirect(href);
   }
 
   private Kino.PostResult userSelectionOk(Sql.Transaction trx, SeatsData data, Sql.UpdateSuccess ok) {
@@ -221,13 +234,9 @@ final class Seats implements Kino.GET, Kino.POST {
     final long reservationId;
     reservationId = data.reservationId();
 
-    return data.wayRequest()
-        ? LandingDemo.embedOk(
-            Confirm.create(ctx, trx, reservationId)
-        )
-        : LandingDemo.redirect(
-            ctx.href(Kino.Page.CONFIRM, reservationId)
-        );
+    return LandingDemo.redirect(
+        ctx.href(Kino.Page.CONFIRM, reservationId)
+    );
 
   }
 

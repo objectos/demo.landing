@@ -303,7 +303,7 @@ public final class Kino implements LandingDemo {
       codecKey = config.codecKey();
 
       final KinoCodec codec;
-      codec = new KinoCodec(clock, codecKey);
+      codec = new KinoCodec(codecKey);
 
       final Note.Sink noteSink;
       noteSink = config.noteSink;

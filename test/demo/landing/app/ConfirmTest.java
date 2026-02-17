@@ -114,8 +114,8 @@ public class ConfirmTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
@@ -126,7 +126,30 @@ public class ConfirmTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 302 Found
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /index.html?demo=799e0b7b9e2a4f6f081e3b5a0f
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/index.html");
+
+        config.queryParam("demo", "799e0b7b9e2a4f6f081e3b5a0f");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK

@@ -116,8 +116,8 @@ public class SeatsTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
@@ -141,7 +141,30 @@ public class SeatsTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 302 Found
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/index.html");
+
+        config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK
@@ -181,8 +204,8 @@ public class SeatsTest {
       values (901, 103, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
@@ -210,7 +233,30 @@ public class SeatsTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 302 Found
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/index.html");
+
+        config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK
@@ -254,8 +300,8 @@ public class SeatsTest {
       ,      (901, 105, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
@@ -281,7 +327,30 @@ public class SeatsTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 302 Found
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/index.html");
+
+        config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK
@@ -347,8 +416,6 @@ public class SeatsTest {
         config.formParam("seat", 104);
       });
 
-      assertEquals(Testing.decode("9d8c39141e3c5e7b9a0f2d4feb8b1a3f5c"), Kino.Page.CONFIRM.query(901));
-
       assertEquals(
           Testing.handle0(http),
 
@@ -356,10 +423,12 @@ public class SeatsTest {
           HTTP/1.1 302 Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?demo=9d8c39141e3c5e7b9a0f2d4feb8b1a3f5c
+          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
 
           """
       );
+
+      assertEquals(Testing.decode("7e9e0b7b9e2a4f6f081e3b5a0f"), Kino.Page.CONFIRM.query(901));
     });
   }
 
@@ -562,8 +631,8 @@ public class SeatsTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
@@ -592,7 +661,30 @@ public class SeatsTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 302 Found
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/index.html");
+
+        config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK

@@ -23,8 +23,6 @@ import org.testng.annotations.Test;
 
 public class KinoCodecTest {
 
-  private final FixedClock clock = new FixedClock(2025, 2, 25);
-
   private KinoCodec codec;
 
   @BeforeClass
@@ -35,7 +33,7 @@ public class KinoCodecTest {
     byte[] key; // actual value is not important as long it is the same for encode/decode
     key = hexFormat.parseHex("7b9e2a4f6c8d1e3b5a0f7d9c4e2b6a8f1d3c5e7b9a0f2d4c6e8b1a3f5c7d9e0b");
 
-    codec = new KinoCodec(clock, key);
+    codec = new KinoCodec(key);
   }
 
   @Test
@@ -47,7 +45,7 @@ public class KinoCodecTest {
     assertEquals(q.id(), 0L);
     assertEquals(q.aux(), 0);
 
-    assertEquals(codec.encode(q), "3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
+    assertEquals(codec.encode(q), "7d9e0b7b9e2a4f6c8d1e3b5a0f");
   }
 
   @Test
@@ -58,13 +56,13 @@ public class KinoCodecTest {
     String result;
     result = codec.encode(q);
 
-    assertEquals(result, "3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
+    assertEquals(result, "7d9e0b7b9e2a4f6c8d1e3b5a0f");
   }
 
   @Test
   public void testCase03() {
     Kino.Query q;
-    q = codec.decode("3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
+    q = codec.decode("7d9e0b7b9e2a4f6c8d1e3b5a0f");
 
     assertEquals(q.page(), Kino.Page.NOW_SHOWING);
     assertEquals(q.id(), 0L);
@@ -79,13 +77,13 @@ public class KinoCodecTest {
     String result;
     result = codec.encode(q);
 
-    assertEquals(result, "3c8c9095881ab06eca0fad2a4c2a4f6c8d");
+    assertEquals(result, "7e9e844929bbe93d5f1e3b5a0f");
   }
 
   @Test
   public void testCase05() {
     Kino.Query q;
-    q = codec.decode("3c8c9095881ab06eca0fad2a4c2a4f6c8d");
+    q = codec.decode("7e9e844929bbe93d5f1e3b5a0f");
 
     assertEquals(q.page(), Kino.Page.CONFIRM);
     assertEquals(q.id(), 40306685673624018L);
@@ -106,7 +104,7 @@ public class KinoCodecTest {
     final String result;
     result = codec.encode(q);
 
-    assertEquals(result, "3c8c9095891a3f5c7d9e0b51082a4f688a");
+    assertEquals(result, "7f9e0b7b9e2a4f461b1e3b5e08");
 
     final Kino.Query decode;
     decode = codec.decode(result);
