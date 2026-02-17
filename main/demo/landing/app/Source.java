@@ -1059,7 +1059,7 @@ public final class Kino implements LandingDemo {
     }
 
     final String href(Page page) {
-      return href(page, 0L);
+      return page == Page.NOW_SHOWING ? "/index.html" : href(page, 0L);
     }
 
     final String href(Page page, long id) {
