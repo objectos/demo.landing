@@ -40,8 +40,6 @@ final class NowShowing implements Kino.GET {
     items = NowShowingModel.query(trx);
 
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "now-showing";
-
       shell.app = new NowShowingView(ctx, items);
 
       shell.sources(

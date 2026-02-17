@@ -57,11 +57,7 @@ final class Ticket implements Kino.GET {
       model = maybe.get();
 
       return Shell.create(shell -> {
-        shell.appFrame = "ticket-" + ticketId;
-
         shell.app = new TicketView(model);
-
-        shell.sourceFrame = "ticket";
 
         shell.sources(
             Source.Ticket,

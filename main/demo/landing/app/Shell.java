@@ -32,11 +32,7 @@ final class Shell extends Kino.View {
 
   static final class Builder {
 
-    String appFrame;
-
     Html.Component app;
-
-    String sourceFrame;
 
     private final List<SourceModel> sources = new ArrayList<>();
 
@@ -49,9 +45,7 @@ final class Shell extends Kino.View {
     }
 
     private Shell build() {
-      Objects.requireNonNull(appFrame, "appFrame == null");
       Objects.requireNonNull(app, "app == null");
-      Objects.requireNonNull(sourceFrame, "sourceFrame == null");
 
       sources.add(Source.Kino);
       sources.add(Source.Shell);

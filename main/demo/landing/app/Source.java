@@ -465,8 +465,6 @@ final class Confirm implements Kino.GET, Kino.POST {
     details = maybe.get();
 
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "confirm-" + reservationId;
-
       shell.app = new ConfirmView(ctx, details);
 
       shell.sources(
@@ -700,8 +698,6 @@ final class NotFound implements Kino.GET, Kino.POST {
 
   public static Html.Component create() {
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "not-found";
-
       shell.app = new NotFoundView();
 
       shell.sources(
@@ -1675,11 +1671,7 @@ final class Shell extends Kino.View {
 
   static final class Builder {
 
-    String appFrame;
-
     Html.Component app;
-
-    String sourceFrame;
 
     private final List<SourceModel> sources = new ArrayList<>();
 
@@ -1692,9 +1684,7 @@ final class Shell extends Kino.View {
     }
 
     private Shell build() {
-      Objects.requireNonNull(appFrame, "appFrame == null");
       Objects.requireNonNull(app, "app == null");
-      Objects.requireNonNull(sourceFrame, "sourceFrame == null");
 
       sources.add(Source.Kino);
       sources.add(Source.Shell);
@@ -2087,8 +2077,6 @@ final class Movie implements Kino.GET {
     screenings = MovieScreening.query(trx, movieId, today);
 
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "movie-" + movieId;
-
       shell.app = new MovieView(ctx, details, screenings);
 
       shell.sources(
@@ -2348,8 +2336,6 @@ final class Seats implements Kino.GET, Kino.POST {
 
   private Html.Component view(int state, long reservationId, SeatsShow show, SeatsGrid grid) {
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "show-" + show.showId();
-
       shell.app = new SeatsView(ctx, state, reservationId, show, grid);
 
       shell.sources(
@@ -2408,8 +2394,6 @@ final class NowShowing implements Kino.GET {
     items = NowShowingModel.query(trx);
 
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "now-showing";
-
       shell.app = new NowShowingView(ctx, items);
 
       shell.sources(
@@ -3976,11 +3960,7 @@ final class Ticket implements Kino.GET {
       model = maybe.get();
 
       return Shell.create(shell -> {
-        shell.appFrame = "ticket-" + ticketId;
-
         shell.app = new TicketView(model);
-
-        shell.sourceFrame = "ticket";
 
         shell.sources(
             Source.Ticket,

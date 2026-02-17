@@ -22,8 +22,6 @@ final class NotFound implements Kino.GET, Kino.POST {
 
   public static Html.Component create() {
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "not-found";
-
       shell.app = new NotFoundView();
 
       shell.sources(

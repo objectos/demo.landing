@@ -58,8 +58,6 @@ final class Movie implements Kino.GET {
     screenings = MovieScreening.query(trx, movieId, today);
 
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "movie-" + movieId;
-
       shell.app = new MovieView(ctx, details, screenings);
 
       shell.sources(

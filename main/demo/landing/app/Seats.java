@@ -242,8 +242,6 @@ final class Seats implements Kino.GET, Kino.POST {
 
   private Html.Component view(int state, long reservationId, SeatsShow show, SeatsGrid grid) {
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "show-" + show.showId();
-
       shell.app = new SeatsView(ctx, state, reservationId, show, grid);
 
       shell.sources(

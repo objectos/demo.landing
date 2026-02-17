@@ -96,8 +96,6 @@ final class Confirm implements Kino.GET, Kino.POST {
     details = maybe.get();
 
     return Shell.create(shell -> {
-      shell.appFrame = shell.sourceFrame = "confirm-" + reservationId;
-
       shell.app = new ConfirmView(ctx, details);
 
       shell.sources(
