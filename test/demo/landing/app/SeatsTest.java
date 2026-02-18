@@ -91,7 +91,7 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: MOVIE:11
+          back-link: /index.html?page=M&id=11
 
           # Show details
 
@@ -777,7 +777,7 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: MOVIE:11
+          back-link: /index.html?page=M&id=11
 
           # Show details
 
@@ -839,7 +839,7 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: MOVIE:11
+          back-link: /index.html?page=M&id=11
 
           # Show details
 

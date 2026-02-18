@@ -35,11 +35,8 @@ final class Movie implements Kino.GET {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
     final int movieId;
-    movieId = query.idAsInt();
+    movieId = http.queryParamAsInt("id", Integer.MIN_VALUE);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);

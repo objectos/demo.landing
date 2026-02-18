@@ -802,7 +802,7 @@ public final class Kino implements LandingDemo {
 
       case MOVIE -> new Movie(ctx);
 
-      case NOW_SHOWING -> new NowShowing(ctx);
+      case NOW_SHOWING -> new NowShowing();
 
       case SEATS -> new Seats(ctx);
 
@@ -944,6 +944,38 @@ public final class Kino implements LandingDemo {
      * Renders the "Go Back" link.
      */
     final Html.Instruction.OfElement backLink(String href) {
+      return a(
+          css(\"""
+          border-radius:9999px
+          padding:6rx
+          margin:6rx_0_0_-6rx
+          position:absolute
+
+          active/background-color:var(--color-btn-ghost-active)
+          hover/background-color:var(--color-btn-ghost-hover)
+          \"""),
+
+          onclick(FOLLOW),
+
+          href(href),
+
+          rel("nofollow"),
+
+          icon(
+              Kino.Icon.ARROW_LEFT,
+
+              css(\"""
+              height:20rx
+              width:20rx
+              \""")
+          )
+      );
+    }
+
+    /// Renders the "Go Back" link.
+    final Html.Instruction.OfElement backLink2(String href) {
+      testableField("back-link", href);
+
       return a(
           css(\"""
           border-radius:9999px
@@ -2023,11 +2055,8 @@ final class Movie implements Kino.GET {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
     final int movieId;
-    movieId = query.idAsInt();
+    movieId = http.queryParamAsInt("id", Integer.MIN_VALUE);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
@@ -2348,12 +2377,6 @@ import objectos.way.Sql;
  */
 final class NowShowing implements Kino.GET {
 
-  private final Kino.Ctx ctx;
-
-  NowShowing(Kino.Ctx ctx) {
-    this.ctx = ctx;
-  }
-
   @Override
   public final Html.Component get(Http.Exchange http) {
     final Sql.Transaction trx;
@@ -2363,7 +2386,7 @@ final class NowShowing implements Kino.GET {
     items = NowShowingModel.query(trx);
 
     return Shell.create(shell -> {
-      shell.app = new NowShowingView(ctx, items);
+      shell.app = new NowShowingView(items);
 
       shell.sources(
           Source.NowShowing,
@@ -2994,13 +3017,9 @@ import java.util.List;
  */
 final class NowShowingView extends Kino.View {
 
-  private final Kino.Ctx ctx;
-
   private final List<NowShowingModel> items;
 
-  NowShowingView(Kino.Ctx ctx, List<NowShowingModel> items) {
-    this.ctx = ctx;
-
+  NowShowingView(List<NowShowingModel> items) {
     this.items = items;
   }
 
@@ -3046,7 +3065,7 @@ final class NowShowingView extends Kino.View {
 
               onclick(FOLLOW),
 
-              href(ctx.href(Page.MOVIE, item.id())),
+              href(Page.MOVIE.hrefId(item.id())),
 
               rel("nofollow"),
 
@@ -3154,7 +3173,7 @@ final class SeatsView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink(ctx, Page.MOVIE, show.movieId());
+    backLink2(Page.MOVIE.hrefId(show.movieId()));
 
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
@@ -3772,7 +3791,9 @@ enum Page {
   }
 
   final String href() {
-    return "/index.html?page=" + key;
+    return this == NOW_SHOWING
+        ? "/index.html"
+        : "/index.html?page=" + key;
   }
 
   final String hrefId(int value) {
@@ -4077,7 +4098,7 @@ final class MovieView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink(ctx, Page.NOW_SHOWING);
+    backLink2(Page.NOW_SHOWING.href());
 
     div(
         css(\"""

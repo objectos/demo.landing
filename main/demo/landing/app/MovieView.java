@@ -38,7 +38,7 @@ final class MovieView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink(ctx, Page.NOW_SHOWING);
+    backLink2(Page.NOW_SHOWING.href());
 
     div(
         css("""

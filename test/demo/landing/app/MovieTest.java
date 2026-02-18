@@ -84,7 +84,7 @@ public class MovieTest {
 
         config.queryParam("page", Page.MOVIE.key);
 
-        config.queryParam("demo", Testing.encode(Page.MOVIE, 11));
+        config.queryParam("id", 11);
       });
 
       assertEquals(
@@ -96,7 +96,7 @@ public class MovieTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: NOW_SHOWING
+          back-link: /index.html
 
           # Title 1
 

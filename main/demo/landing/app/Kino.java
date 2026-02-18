@@ -80,7 +80,7 @@ public final class Kino implements LandingDemo {
 
       case MOVIE -> new Movie(ctx);
 
-      case NOW_SHOWING -> new NowShowing(ctx);
+      case NOW_SHOWING -> new NowShowing();
 
       case SEATS -> new Seats(ctx);
 
@@ -222,6 +222,38 @@ public final class Kino implements LandingDemo {
      * Renders the "Go Back" link.
      */
     final Html.Instruction.OfElement backLink(String href) {
+      return a(
+          css("""
+          border-radius:9999px
+          padding:6rx
+          margin:6rx_0_0_-6rx
+          position:absolute
+
+          active/background-color:var(--color-btn-ghost-active)
+          hover/background-color:var(--color-btn-ghost-hover)
+          """),
+
+          onclick(FOLLOW),
+
+          href(href),
+
+          rel("nofollow"),
+
+          icon(
+              Kino.Icon.ARROW_LEFT,
+
+              css("""
+              height:20rx
+              width:20rx
+              """)
+          )
+      );
+    }
+
+    /// Renders the "Go Back" link.
+    final Html.Instruction.OfElement backLink2(String href) {
+      testableField("back-link", href);
+
       return a(
           css("""
           border-radius:9999px

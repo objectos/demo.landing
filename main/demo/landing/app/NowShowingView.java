@@ -22,13 +22,9 @@ import java.util.List;
  */
 final class NowShowingView extends Kino.View {
 
-  private final Kino.Ctx ctx;
-
   private final List<NowShowingModel> items;
 
-  NowShowingView(Kino.Ctx ctx, List<NowShowingModel> items) {
-    this.ctx = ctx;
-
+  NowShowingView(List<NowShowingModel> items) {
     this.items = items;
   }
 
@@ -74,7 +70,7 @@ final class NowShowingView extends Kino.View {
 
               onclick(FOLLOW),
 
-              href(ctx.href(Page.MOVIE, item.id())),
+              href(Page.MOVIE.hrefId(item.id())),
 
               rel("nofollow"),
 

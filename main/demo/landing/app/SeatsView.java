@@ -67,7 +67,7 @@ final class SeatsView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink(ctx, Page.MOVIE, show.movieId());
+    backLink2(Page.MOVIE.hrefId(show.movieId()));
 
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");

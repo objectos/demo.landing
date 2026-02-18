@@ -66,7 +66,9 @@ enum Page {
   }
 
   final String href() {
-    return "/index.html?page=" + key;
+    return this == NOW_SHOWING
+        ? "/index.html"
+        : "/index.html?page=" + key;
   }
 
   final String hrefId(int value) {

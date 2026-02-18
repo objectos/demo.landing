@@ -25,12 +25,6 @@ import objectos.way.Sql;
  */
 final class NowShowing implements Kino.GET {
 
-  private final Kino.Ctx ctx;
-
-  NowShowing(Kino.Ctx ctx) {
-    this.ctx = ctx;
-  }
-
   @Override
   public final Html.Component get(Http.Exchange http) {
     final Sql.Transaction trx;
@@ -40,7 +34,7 @@ final class NowShowing implements Kino.GET {
     items = NowShowingModel.query(trx);
 
     return Shell.create(shell -> {
-      shell.app = new NowShowingView(ctx, items);
+      shell.app = new NowShowingView(items);
 
       shell.sources(
           Source.NowShowing,
