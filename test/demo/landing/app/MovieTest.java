@@ -82,7 +82,9 @@ public class MovieTest {
 
         config.path("/index.html");
 
-        config.queryParam("demo", Testing.encode(Kino.Page.MOVIE, 11));
+        config.queryParam("page", Page.MOVIE.key);
+
+        config.queryParam("demo", Testing.encode(Page.MOVIE, 11));
       });
 
       assertEquals(
@@ -146,7 +148,10 @@ public class MovieTest {
 
         config.path("/index.html");
 
+        config.queryParam("page", Page.MOVIE.key);
+
         config.queryParam("demo", "movie");
+
         config.queryParam("movie", Integer.MAX_VALUE);
       });
 

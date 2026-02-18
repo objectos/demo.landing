@@ -68,12 +68,14 @@ public final class Kino implements LandingDemo {
    */
   @Override
   public final Html.Component get(Http.Exchange http) {
-    final Query query;
-    query = ctx.decode(http);
+    ctx.decode(http);
 
-    // based on the 'demo' value we create our controller
+    final Page page;
+    page = Page.parse(http);
+
+    // based on the 'page' value we create our controller
     final GET controller;
-    controller = switch (query.page) {
+    controller = switch (page) {
       case CONFIRM -> new Confirm(ctx);
 
       case MOVIE -> new Movie(ctx);
@@ -343,10 +345,13 @@ public final class Kino implements LandingDemo {
     }
 
     final String href(Query query) {
-      String demo;
+      final Page page;
+      page = query.page;
+
+      final String demo;
       demo = codec.encode(query);
 
-      return "/index.html?demo=" + demo;
+      return page.href() + "&demo=" + demo;
     }
 
     final long nextReservation() {
@@ -483,41 +488,6 @@ public final class Kino implements LandingDemo {
   interface POST {
 
     PostResult post(Http.Exchange http);
-
-  }
-
-  /**
-   * The pages of this application.
-   *
-   * <p>
-   * As a reminder, as this application will be embedded in another one, it does
-   * not have actual pages.
-   */
-  enum Page {
-
-    NOW_SHOWING,
-
-    MOVIE,
-
-    SEATS,
-
-    CONFIRM,
-
-    TICKET,
-
-    BAD_REQUEST;
-
-    final Query query() {
-      return new Query(this, 0L, 0);
-    }
-
-    final Query query(long id) {
-      return new Query(this, id, 0);
-    }
-
-    final Query query(long id, int aux) {
-      return new Query(this, id, aux);
-    }
 
   }
 

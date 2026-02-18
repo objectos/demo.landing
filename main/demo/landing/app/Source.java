@@ -38,7 +38,6 @@ final class Source {
  */
 package demo.landing.app;
 
-import demo.landing.app.Kino.Page;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import objectos.script.Js;
@@ -234,7 +233,7 @@ final class ConfirmView extends Kino.View {
     reservationId = details.reservationId();
 
     form(
-        formAction(ctx, Kino.Page.CONFIRM, reservationId),
+        formAction(ctx, Page.CONFIRM, reservationId),
 
         css(\"""
         display:flex
@@ -446,7 +445,7 @@ final class Confirm implements Kino.GET, Kino.POST {
         reservationId = data.reservationId();
 
         final String href;
-        href = ctx.href(Kino.Page.TICKET, reservationId);
+        href = ctx.href(Page.TICKET, reservationId);
 
         yield LandingDemo.redirect(href);
       }
@@ -791,12 +790,14 @@ public final class Kino implements LandingDemo {
    */
   @Override
   public final Html.Component get(Http.Exchange http) {
-    final Query query;
-    query = ctx.decode(http);
+    ctx.decode(http);
 
-    // based on the 'demo' value we create our controller
+    final Page page;
+    page = Page.parse(http);
+
+    // based on the 'page' value we create our controller
     final GET controller;
-    controller = switch (query.page) {
+    controller = switch (page) {
       case CONFIRM -> new Confirm(ctx);
 
       case MOVIE -> new Movie(ctx);
@@ -1066,10 +1067,13 @@ public final class Kino implements LandingDemo {
     }
 
     final String href(Query query) {
-      String demo;
+      final Page page;
+      page = query.page;
+
+      final String demo;
       demo = codec.encode(query);
 
-      return "/index.html?demo=" + demo;
+      return page.href() + "&demo=" + demo;
     }
 
     final long nextReservation() {
@@ -1210,41 +1214,6 @@ public final class Kino implements LandingDemo {
   }
 
   /**
-   * The pages of this application.
-   *
-   * <p>
-   * As a reminder, as this application will be embedded in another one, it does
-   * not have actual pages.
-   */
-  enum Page {
-
-    NOW_SHOWING,
-
-    MOVIE,
-
-    SEATS,
-
-    CONFIRM,
-
-    TICKET,
-
-    BAD_REQUEST;
-
-    final Query query() {
-      return new Query(this, 0L, 0);
-    }
-
-    final Query query(long id) {
-      return new Query(this, id, 0);
-    }
-
-    final Query query(long id, int aux) {
-      return new Query(this, id, aux);
-    }
-
-  }
-
-  /**
    * Represents the demo query parameter.
    */
   record Query(Page page, long id, int aux) {
@@ -1286,7 +1255,7 @@ final class KinoCodec {
 
   private static final int LENGTH = 13;
 
-  private final Kino.Query badRequest = Kino.Page.BAD_REQUEST.query();
+  private final Kino.Query badRequest = Page.BAD_REQUEST.query();
 
   private final HexFormat hexFormat = HexFormat.of();
 
@@ -1294,7 +1263,7 @@ final class KinoCodec {
 
   private final int offset;
 
-  private final Kino.Page[] views = Kino.Page.values();
+  private final Page[] views = Page.values();
 
   KinoCodec(byte[] key) {
     if (key.length < LENGTH) {
@@ -1331,7 +1300,7 @@ final class KinoCodec {
     if (raw == null) {
       // a null value means a request with no query parameters
       // => we should present the first view
-      return Kino.Page.NOW_SHOWING.query();
+      return Page.NOW_SHOWING.query();
     }
 
     final byte[] bytes;
@@ -1359,7 +1328,7 @@ final class KinoCodec {
       return badRequest;
     }
 
-    Kino.Page page;
+    Page page;
     page = views[pageOrdinal];
 
     // next 8 bytes = id (big endian)
@@ -1393,7 +1362,7 @@ final class KinoCodec {
     index = 0;
 
     // first byte = view
-    final Kino.Page view;
+    final Page view;
     view = query.page();
 
     bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
@@ -2296,7 +2265,7 @@ final class Seats implements Kino.GET, Kino.POST {
     reservationId = data.reservationId();
 
     final Kino.Query query;
-    query = Kino.Page.SEATS.query(reservationId, state);
+    query = Page.SEATS.query(reservationId, state);
 
     final String href;
     href = ctx.href(query);
@@ -2329,7 +2298,7 @@ final class Seats implements Kino.GET, Kino.POST {
     reservationId = data.reservationId();
 
     return LandingDemo.redirect(
-        ctx.href(Kino.Page.CONFIRM, reservationId)
+        ctx.href(Page.CONFIRM, reservationId)
     );
 
   }
@@ -3077,7 +3046,7 @@ final class NowShowingView extends Kino.View {
 
               onclick(FOLLOW),
 
-              href(ctx.href(Kino.Page.MOVIE, item.id())),
+              href(ctx.href(Page.MOVIE, item.id())),
 
               rel("nofollow"),
 
@@ -3185,7 +3154,7 @@ final class SeatsView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink(ctx, Kino.Page.MOVIE, show.movieId());
+    backLink(ctx, Page.MOVIE, show.movieId());
 
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
@@ -3371,7 +3340,7 @@ final class SeatsView extends Kino.View {
     form(
         id(FORM_ID),
 
-        formAction(ctx, Kino.Page.SEATS, reservationId, show.screenId()),
+        formAction(ctx, Page.SEATS, reservationId, show.screenId()),
 
         css(\"""
         aspect-ratio:1.15
@@ -3734,6 +3703,97 @@ record MovieDetails(
 }
 """);
 
+  static final SourceModel Page = SourceModel.create("Page.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import demo.landing.app.Kino.Query;
+import java.util.Map;
+import objectos.way.Http;
+
+/**
+ * The pages of this application.
+ *
+ * <p>
+ * As a reminder, as this application will be embedded in another one, it does
+ * not have actual pages.
+ */
+enum Page {
+
+  NOW_SHOWING,
+
+  MOVIE,
+
+  SEATS,
+
+  CONFIRM,
+
+  TICKET,
+
+  BAD_REQUEST;
+
+  private static final Map<String, Page> Q = Map.of(
+      "N", NOW_SHOWING,
+      "M", MOVIE,
+      "S", SEATS,
+      "C", CONFIRM,
+      "T", TICKET,
+      "B", BAD_REQUEST
+  );
+
+  final String key = name().substring(0, 1);
+
+  static Page parse(Http.Exchange http) {
+    Page res;
+    res = NOW_SHOWING;
+
+    final String q;
+    q = http.queryParam("page");
+
+    if (q != null) {
+      res = Q.getOrDefault(q, BAD_REQUEST);
+    }
+
+    return res;
+  }
+
+  final String href() {
+    return "/index.html?page=" + key;
+  }
+
+  final String hrefId(int value) {
+    return href() + "&id=" + value;
+  }
+
+  final Query query() {
+    return new Query(this, 0L, 0);
+  }
+
+  final Query query(long id) {
+    return new Query(this, id, 0);
+  }
+
+  final Query query(long id, int aux) {
+    return new Query(this, id, aux);
+  }
+
+}
+""");
+
   static final SourceModel SeatsData = SourceModel.create("SeatsData.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -4017,7 +4077,7 @@ final class MovieView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink(ctx, Kino.Page.NOW_SHOWING);
+    backLink(ctx, Page.NOW_SHOWING);
 
     div(
         css(\"""
@@ -4215,7 +4275,7 @@ final class MovieView extends Kino.View {
       showId = showtime.showId();
 
       final Kino.Query query;
-      query = Kino.Page.SEATS.query(showId);
+      query = Page.SEATS.query(showId);
 
       testableCell(query.toString(), 32);
 

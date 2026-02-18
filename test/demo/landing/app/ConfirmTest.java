@@ -77,7 +77,9 @@ public class ConfirmTest {
 
         config.path("/index.html");
 
-        config.queryParam("demo", Testing.encode(Kino.Page.CONFIRM, 901));
+        config.queryParam("page", Page.CONFIRM.key);
+
+        config.queryParam("demo", Testing.encode(Page.CONFIRM, 901));
       });
 
       assertEquals(
@@ -122,7 +124,7 @@ public class ConfirmTest {
 
         config.path("/demo/landing");
 
-        config.queryParam("demo", Testing.encode(Kino.Page.CONFIRM, 901));
+        config.queryParam("demo", Testing.encode(Page.CONFIRM, 901));
       });
 
       assertEquals(
@@ -132,7 +134,7 @@ public class ConfirmTest {
           HTTP/1.1 302 Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?demo=799e0b7b9e2a4f6f081e3b5a0f
+          Location: /index.html?page=T&demo=799e0b7b9e2a4f6f081e3b5a0f
 
           """
       );
@@ -144,6 +146,8 @@ public class ConfirmTest {
         config.method(Http.Method.GET);
 
         config.path("/index.html");
+
+        config.queryParam("page", Page.TICKET.key);
 
         config.queryParam("demo", "799e0b7b9e2a4f6f081e3b5a0f");
       });

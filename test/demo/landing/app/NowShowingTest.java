@@ -44,7 +44,7 @@ public class NowShowingTest {
 
         config.path("/index.html");
 
-        config.queryParam("demo", Testing.encode(Kino.Page.NOW_SHOWING));
+        config.queryParam("demo", Testing.encode(Page.NOW_SHOWING));
       });
 
       assertEquals(

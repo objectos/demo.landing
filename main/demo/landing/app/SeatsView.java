@@ -67,7 +67,7 @@ final class SeatsView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink(ctx, Kino.Page.MOVIE, show.movieId());
+    backLink(ctx, Page.MOVIE, show.movieId());
 
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
@@ -253,7 +253,7 @@ final class SeatsView extends Kino.View {
     form(
         id(FORM_ID),
 
-        formAction(ctx, Kino.Page.SEATS, reservationId, show.screenId()),
+        formAction(ctx, Page.SEATS, reservationId, show.screenId()),
 
         css("""
         aspect-ratio:1.15

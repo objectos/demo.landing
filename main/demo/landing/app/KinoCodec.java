@@ -25,7 +25,7 @@ final class KinoCodec {
 
   private static final int LENGTH = 13;
 
-  private final Kino.Query badRequest = Kino.Page.BAD_REQUEST.query();
+  private final Kino.Query badRequest = Page.BAD_REQUEST.query();
 
   private final HexFormat hexFormat = HexFormat.of();
 
@@ -33,7 +33,7 @@ final class KinoCodec {
 
   private final int offset;
 
-  private final Kino.Page[] views = Kino.Page.values();
+  private final Page[] views = Page.values();
 
   KinoCodec(byte[] key) {
     if (key.length < LENGTH) {
@@ -70,7 +70,7 @@ final class KinoCodec {
     if (raw == null) {
       // a null value means a request with no query parameters
       // => we should present the first view
-      return Kino.Page.NOW_SHOWING.query();
+      return Page.NOW_SHOWING.query();
     }
 
     final byte[] bytes;
@@ -98,7 +98,7 @@ final class KinoCodec {
       return badRequest;
     }
 
-    Kino.Page page;
+    Page page;
     page = views[pageOrdinal];
 
     // next 8 bytes = id (big endian)
@@ -132,7 +132,7 @@ final class KinoCodec {
     index = 0;
 
     // first byte = view
-    final Kino.Page view;
+    final Page view;
     view = query.page();
 
     bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);

@@ -62,15 +62,15 @@ public class Testing implements ISuiteListener {
     return CodecHolder.INSTANCE.decode(hex);
   }
 
-  public static String encode(Kino.Page page) {
+  public static String encode(Page page) {
     return encode(page, 0L);
   }
 
-  public static String encode(Kino.Page page, long id) {
+  public static String encode(Page page, long id) {
     return encode(page, id, 0);
   }
 
-  public static String encode(Kino.Page page, long id, int aux) {
+  public static String encode(Page page, long id, int aux) {
     final Kino.Query q;
     q = page.query(id, aux);
 

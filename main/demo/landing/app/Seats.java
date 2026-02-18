@@ -202,7 +202,7 @@ final class Seats implements Kino.GET, Kino.POST {
     reservationId = data.reservationId();
 
     final Kino.Query query;
-    query = Kino.Page.SEATS.query(reservationId, state);
+    query = Page.SEATS.query(reservationId, state);
 
     final String href;
     href = ctx.href(query);
@@ -235,7 +235,7 @@ final class Seats implements Kino.GET, Kino.POST {
     reservationId = data.reservationId();
 
     return LandingDemo.redirect(
-        ctx.href(Kino.Page.CONFIRM, reservationId)
+        ctx.href(Page.CONFIRM, reservationId)
     );
 
   }

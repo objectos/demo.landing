@@ -77,7 +77,7 @@ final class Confirm implements Kino.GET, Kino.POST {
         reservationId = data.reservationId();
 
         final String href;
-        href = ctx.href(Kino.Page.TICKET, reservationId);
+        href = ctx.href(Page.TICKET, reservationId);
 
         yield LandingDemo.redirect(href);
       }

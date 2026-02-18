@@ -74,7 +74,7 @@ final class NowShowingView extends Kino.View {
 
               onclick(FOLLOW),
 
-              href(ctx.href(Kino.Page.MOVIE, item.id())),
+              href(ctx.href(Page.MOVIE, item.id())),
 
               rel("nofollow"),
 

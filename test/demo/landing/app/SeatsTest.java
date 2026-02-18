@@ -71,11 +71,13 @@ public class SeatsTest {
 
         config.path("/index.html");
 
+        config.queryParam("page", Page.SEATS.key);
+
         final int showId;
         showId = 61;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, showId);
+        demo = Testing.encode(Page.SEATS, showId);
 
         config.queryParam("demo", demo);
       });
@@ -131,7 +133,7 @@ public class SeatsTest {
         screenId = 31;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -147,7 +149,7 @@ public class SeatsTest {
           HTTP/1.1 302 Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
 
           """
       );
@@ -159,6 +161,8 @@ public class SeatsTest {
         config.method(Http.Method.GET);
 
         config.path("/index.html");
+
+        config.queryParam("page", Page.CONFIRM.key);
 
         config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
       });
@@ -219,7 +223,7 @@ public class SeatsTest {
         screenId = 31;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -239,7 +243,7 @@ public class SeatsTest {
           HTTP/1.1 302 Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
 
           """
       );
@@ -251,6 +255,8 @@ public class SeatsTest {
         config.method(Http.Method.GET);
 
         config.path("/index.html");
+
+        config.queryParam("page", Page.CONFIRM.key);
 
         config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
       });
@@ -315,7 +321,7 @@ public class SeatsTest {
         screenId = 31;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -333,7 +339,7 @@ public class SeatsTest {
           HTTP/1.1 302 Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
 
           """
       );
@@ -345,6 +351,8 @@ public class SeatsTest {
         config.method(Http.Method.GET);
 
         config.path("/index.html");
+
+        config.queryParam("page", Page.CONFIRM.key);
 
         config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
       });
@@ -407,7 +415,7 @@ public class SeatsTest {
         screenId = 31;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -423,12 +431,12 @@ public class SeatsTest {
           HTTP/1.1 302 Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
 
           """
       );
 
-      assertEquals(Testing.decode("7e9e0b7b9e2a4f6f081e3b5a0f"), Kino.Page.CONFIRM.query(901));
+      assertEquals(Testing.decode("7e9e0b7b9e2a4f6f081e3b5a0f"), Page.CONFIRM.query(901));
     });
   }
 
@@ -445,11 +453,13 @@ public class SeatsTest {
 
         config.path("/index.html");
 
+        config.queryParam("page", Page.SEATS.key);
+
         final int showId;
         showId = Integer.MAX_VALUE;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, showId);
+        demo = Testing.encode(Page.SEATS, showId);
 
         config.queryParam("demo", demo);
       });
@@ -495,7 +505,7 @@ public class SeatsTest {
         screenId = 31; // valid screen id
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -545,7 +555,7 @@ public class SeatsTest {
         screenId = 31; // valid screen id
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -598,7 +608,7 @@ public class SeatsTest {
         screenId = 31;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -646,7 +656,7 @@ public class SeatsTest {
         screenId = 31;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -667,7 +677,7 @@ public class SeatsTest {
           HTTP/1.1 302 Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?demo=7e9e0b7b9e2a4f6f081e3b5a0f
+          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
 
           """
       );
@@ -679,6 +689,8 @@ public class SeatsTest {
         config.method(Http.Method.GET);
 
         config.path("/index.html");
+
+        config.queryParam("page", Page.CONFIRM.key);
 
         config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
       });
@@ -741,7 +753,7 @@ public class SeatsTest {
         screenId = 31;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -808,7 +820,7 @@ public class SeatsTest {
         screenId = 31;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 

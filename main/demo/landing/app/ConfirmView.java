@@ -15,7 +15,6 @@
  */
 package demo.landing.app;
 
-import demo.landing.app.Kino.Page;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import objectos.script.Js;
@@ -211,7 +210,7 @@ final class ConfirmView extends Kino.View {
     reservationId = details.reservationId();
 
     form(
-        formAction(ctx, Kino.Page.CONFIRM, reservationId),
+        formAction(ctx, Page.CONFIRM, reservationId),
 
         css("""
         display:flex

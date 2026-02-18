@@ -38,7 +38,7 @@ final class MovieView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink(ctx, Kino.Page.NOW_SHOWING);
+    backLink(ctx, Page.NOW_SHOWING);
 
     div(
         css("""
@@ -236,7 +236,7 @@ final class MovieView extends Kino.View {
       showId = showtime.showId();
 
       final Kino.Query query;
-      query = Kino.Page.SEATS.query(showId);
+      query = Page.SEATS.query(showId);
 
       testableCell(query.toString(), 32);
 

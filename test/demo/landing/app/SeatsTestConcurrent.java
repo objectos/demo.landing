@@ -100,7 +100,7 @@ public class SeatsTestConcurrent {
         screenId = 1031;
 
         final String demo;
-        demo = Testing.encode(Kino.Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(Page.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -114,7 +114,7 @@ public class SeatsTestConcurrent {
           HTTP/1.1 302 Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?demo=7f9e0b7b9e2a4f461b1e3b5a0e
+          Location: /index.html?page=S&demo=7f9e0b7b9e2a4f461b1e3b5a0e
 
           """
       );
@@ -126,6 +126,8 @@ public class SeatsTestConcurrent {
         config.method(Http.Method.GET);
 
         config.path("/index.html");
+
+        config.queryParam("page", Page.SEATS.key);
 
         config.queryParam("demo", "7f9e0b7b9e2a4f461b1e3b5a0e");
       });

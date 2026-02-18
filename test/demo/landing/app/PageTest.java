@@ -18,36 +18,33 @@ package demo.landing.app;
 import static org.testng.Assert.assertEquals;
 
 import objectos.way.Http;
-import org.testng.annotations.Listeners;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-@Listeners(Testing.class)
-public class KinoTest {
+public class PageTest {
 
-  @Test
-  public void testCase01() {
-    final Http.Exchange http;
-    http = Testing.http(config -> {
-      config.method(Http.Method.GET);
+  @DataProvider
+  public Object[][] parseProvider() {
+    return new Object[][] {
+        {"N", Page.NOW_SHOWING},
+        {"M", Page.MOVIE},
+        {"S", Page.SEATS},
+        {"C", Page.CONFIRM},
+        {"T", Page.TICKET},
+        {"B", Page.BAD_REQUEST},
+        {"x", Page.BAD_REQUEST},
+    };
+  }
 
-      config.path("/index.html");
-
-      config.queryParam("page", "i-do-not-exist");
+  @Test(dataProvider = "parseProvider")
+  public void parse(String q, Page expected) {
+    Http.Exchange http = Http.Exchange.create(opts -> {
+      opts.queryParam("page", q);
     });
 
-    assertEquals(
-        Testing.handle0(http),
+    Page res = Page.parse(http);
 
-        """
-        HTTP/1.1 200 OK
-        Date: Mon, 28 Apr 2025 13:01:00 GMT
-        Content-Type: text/html; charset=utf-8
-        Transfer-Encoding: chunked
-
-        # Something Went Wrong
-
-        """
-    );
+    assertEquals(res, expected);
   }
 
 }
