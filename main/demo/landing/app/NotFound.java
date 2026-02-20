@@ -15,10 +15,9 @@
  */
 package demo.landing.app;
 
-import objectos.way.Html;
-import objectos.way.Http;
+import module objectos.way;
 
-final class NotFound implements Kino.GET, Kino.POST {
+final class NotFound implements Kino.GET, Kino.POST, Http.Handler {
 
   public static Html.Component create() {
     return Shell.create(shell -> {
@@ -29,6 +28,18 @@ final class NotFound implements Kino.GET, Kino.POST {
           Source.NotFoundView
       );
     });
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    http.notFound(
+        new Shell(
+            new NotFoundView(),
+
+            Source.NotFound,
+            Source.NotFoundView
+        )
+    );
   }
 
   @Override

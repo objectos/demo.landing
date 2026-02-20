@@ -26,7 +26,6 @@ import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Note;
-import objectos.way.Sql;
 
 /**
  * Demo entry point.
@@ -441,62 +440,7 @@ public final class Kino implements LandingDemo {
   // SQL related classes
   //
 
-  private static final class Transactional {
-
-    private final Kino.Stage stage;
-
-    private final Sql.Database db;
-
-    Transactional(Kino.Stage stage, Sql.Database db) {
-      this.stage = stage;
-
-      this.db = db;
-    }
-
-    public final Html.Component get(Http.Exchange http, Kino.GET action) {
-      return execute(http, action::get);
-    }
-
-    public final Kino.PostResult post(Http.Exchange http, Kino.POST action) {
-      return execute(http, action::post);
-    }
-
-    private <T> T execute(Http.Exchange http, Action<T> action) {
-      return switch (stage) {
-        case DEFAULT -> {
-
-          final Sql.Transaction trx;
-          trx = db.beginTransaction(Sql.READ_COMMITED);
-
-          try {
-
-            trx.sql("set schema CINEMA");
-
-            trx.update();
-
-            http.set(Sql.Transaction.class, trx);
-
-            final T result;
-            result = action.execute(http);
-
-            trx.commit();
-
-            yield result;
-
-          } catch (Throwable e) {
-            throw trx.rollbackAndWrap(e);
-          } finally {
-            trx.close();
-          }
-
-        }
-
-        // this is a no-op during testing.
-        case TESTING -> action.execute(http);
-      };
-    }
-
-  }
+  
 
   //
   // Embedded related classes
@@ -508,8 +452,7 @@ public final class Kino implements LandingDemo {
   /**
    * Represents an HTTP action in the demo application.
    */
-  @FunctionalInterface
-  private interface Action<T> {
+  @FunctionalInterface interface Action<T> {
 
     T execute(Http.Exchange http);
 

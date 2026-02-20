@@ -693,10 +693,9 @@ final class SeatsGrid implements Iterable<SeatsGrid.Cell> {
  */
 package demo.landing.app;
 
-import objectos.way.Html;
-import objectos.way.Http;
+import module objectos.way;
 
-final class NotFound implements Kino.GET, Kino.POST {
+final class NotFound implements Kino.GET, Kino.POST, Http.Handler {
 
   public static Html.Component create() {
     return Shell.create(shell -> {
@@ -707,6 +706,18 @@ final class NotFound implements Kino.GET, Kino.POST {
           Source.NotFoundView
       );
     });
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    http.notFound(
+        new Shell(
+            new NotFoundView(),
+
+            Source.NotFound,
+            Source.NotFoundView
+        )
+    );
   }
 
   @Override
@@ -759,7 +770,7 @@ final class ShellSourceSelector extends Html.Template {
 
     // the source file selector
     div(
-        Shell.sourceFrame,
+        Shell.SRC,
 
         css(\"""
         border-left:1px_solid_var(--color-border)
@@ -779,10 +790,10 @@ final class ShellSourceSelector extends Html.Template {
         \"""),
 
         // stores the current selected button in the data-button attribute
-        attr(Shell.dataButton, first.button().attrValue()),
+        attr(Shell.BTN, first.button().attrValue()),
 
         // stores the current selected panel in the data-panel attribute
-        attr(Shell.dataPanel, first.panel().attrValue()),
+        attr(Shell.PNL, first.panel().attrValue()),
 
         f(this::renderSourceMenuItems)
     );
@@ -806,19 +817,19 @@ final class ShellSourceSelector extends Html.Template {
           hover/background-color:var(--color-btn-ghost-hover)
           \"""),
 
-          attr(Shell.dataSelected, Boolean.toString(idx == 0)),
+          attr(Shell.SEL, Boolean.toString(idx == 0)),
 
           onclick(Js.of(
-              Js.var("frame", Js.byId(Shell.sourceFrame)),
+              Js.var("frame", Js.byId(Shell.SRC)),
               // 'deselects' current
-              Js.byId(Js.var("frame").as(JsElement.type).attr(Shell.dataButton)).attr(Shell.dataSelected, "false"),
-              Js.byId(Js.var("frame").as(JsElement.type).attr(Shell.dataPanel)).attr(Shell.dataSelected, "false"),
+              Js.byId(Js.var("frame").as(JsElement.type).attr(Shell.BTN)).attr(Shell.SEL, "false"),
+              Js.byId(Js.var("frame").as(JsElement.type).attr(Shell.PNL)).attr(Shell.SEL, "false"),
               // 'selects' self
-              Js.byId(item.button()).attr(Shell.dataSelected, "true"),
-              Js.byId(item.panel()).attr(Shell.dataSelected, "true"),
+              Js.byId(item.button()).attr(Shell.SEL, "true"),
+              Js.byId(item.panel()).attr(Shell.SEL, "true"),
               // stores selected,
-              Js.var("frame").as(JsElement.type).attr(Shell.dataButton, item.button().attrValue()),
-              Js.var("frame").as(JsElement.type).attr(Shell.dataPanel, item.panel().attrValue())
+              Js.var("frame").as(JsElement.type).attr(Shell.BTN, item.button().attrValue()),
+              Js.var("frame").as(JsElement.type).attr(Shell.PNL, item.panel().attrValue())
           )),
 
           text(item.name())
@@ -859,7 +870,6 @@ import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Note;
-import objectos.way.Sql;
 
 /**
  * Demo entry point.
@@ -1274,62 +1284,7 @@ public final class Kino implements LandingDemo {
   // SQL related classes
   //
 
-  private static final class Transactional {
-
-    private final Kino.Stage stage;
-
-    private final Sql.Database db;
-
-    Transactional(Kino.Stage stage, Sql.Database db) {
-      this.stage = stage;
-
-      this.db = db;
-    }
-
-    public final Html.Component get(Http.Exchange http, Kino.GET action) {
-      return execute(http, action::get);
-    }
-
-    public final Kino.PostResult post(Http.Exchange http, Kino.POST action) {
-      return execute(http, action::post);
-    }
-
-    private <T> T execute(Http.Exchange http, Action<T> action) {
-      return switch (stage) {
-        case DEFAULT -> {
-
-          final Sql.Transaction trx;
-          trx = db.beginTransaction(Sql.READ_COMMITED);
-
-          try {
-
-            trx.sql("set schema CINEMA");
-
-            trx.update();
-
-            http.set(Sql.Transaction.class, trx);
-
-            final T result;
-            result = action.execute(http);
-
-            trx.commit();
-
-            yield result;
-
-          } catch (Throwable e) {
-            throw trx.rollbackAndWrap(e);
-          } finally {
-            trx.close();
-          }
-
-        }
-
-        // this is a no-op during testing.
-        case TESTING -> action.execute(http);
-      };
-    }
-
-  }
+  
 
   //
   // Embedded related classes
@@ -1341,8 +1296,7 @@ public final class Kino implements LandingDemo {
   /**
    * Represents an HTTP action in the demo application.
    */
-  @FunctionalInterface
-  private interface Action<T> {
+  @FunctionalInterface interface Action<T> {
 
     T execute(Http.Exchange http);
 
@@ -1801,17 +1755,13 @@ final class Shell extends Kino.View {
 
   }
 
-  static final Html.Id sourceFrame = Html.Id.of("source-frame");
+  static final Html.Id SRC = Html.Id.of("source-frame");
 
-  static final Html.AttributeName dataButton = Html.AttributeName.of("data-button");
+  static final Html.AttributeName BTN = Html.AttributeName.of("data-button");
 
-  static final Html.AttributeName dataPanel = Html.AttributeName.of("data-panel");
+  static final Html.AttributeName PNL = Html.AttributeName.of("data-panel");
 
-  static final Html.AttributeName dataSelected = Html.AttributeName.of("data-selected");
-
-  private Shell(Builder builder) {
-    this(builder.app, builder.sources);
-  }
+  static final Html.AttributeName SEL = Html.AttributeName.of("data-selected");
 
   private final Html.Component main;
 
@@ -1831,11 +1781,18 @@ final class Shell extends Kino.View {
 
     sources.add(Source.Kino);
     sources.add(Source.Shell);
+    sources.add(Source.ShellMain);
+    sources.add(Source.ShellSourceCode);
+    sources.add(Source.ShellSourceSelector);
     sources.add(Source.SourceModel_);
 
     sourceCode = new ShellSourceCode(sources);
 
     sourceSelector = new ShellSourceSelector(sources);
+  }
+
+  private Shell(Builder builder) {
+    this(builder.app, builder.sources);
   }
 
   public static Shell create(Consumer<Builder> config) {
@@ -2959,6 +2916,124 @@ final class NowShowingView extends Kino.View {
 }
 """);
 
+  static final SourceModel Transactional = SourceModel.create("Transactional.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import demo.landing.app.Kino.Action;
+import module java.base;
+import module objectos.way;
+
+/// Filters HTTP requests around a SQL transaction. It is a no-op in a
+/// testing environment.
+public final class Transactional implements Http.Filter {
+
+  private final Kino.Stage stage;
+
+  private final Sql.Database db;
+
+  Transactional(Kino.Stage stage, Sql.Database db) {
+    this.stage = stage;
+
+    this.db = db;
+  }
+
+  public static Transactional of(Kino.Stage stage, Sql.Database db) {
+    Objects.requireNonNull(stage, "stage == null");
+    Objects.requireNonNull(db, "db == null");
+
+    return new Transactional(stage, db);
+  }
+
+  public final Html.Component get(Http.Exchange http, Kino.GET action) {
+    return execute(http, action::get);
+  }
+
+  public final Kino.PostResult post(Http.Exchange http, Kino.POST action) {
+    return execute(http, action::post);
+  }
+
+  @Override
+  public final void filter(Http.Exchange http, Http.Handler handler) {
+    switch (stage) {
+      case DEFAULT -> {
+        final Sql.Transaction trx;
+        trx = db.beginTransaction(Sql.READ_COMMITED);
+
+        try {
+          trx.sql("set schema CINEMA");
+
+          trx.update();
+
+          http.set(Sql.Transaction.class, trx);
+
+          handler.handle(http);
+
+          trx.commit();
+        } catch (Throwable e) {
+          throw trx.rollbackAndWrap(e);
+        } finally {
+          trx.close();
+        }
+      }
+
+      // this is a no-op during testing.
+      case TESTING -> handler.handle(http);
+    }
+  }
+
+  private <T> T execute(Http.Exchange http, Action<T> action) {
+    return switch (stage) {
+      case DEFAULT -> {
+
+        final Sql.Transaction trx;
+        trx = db.beginTransaction(Sql.READ_COMMITED);
+
+        try {
+
+          trx.sql("set schema CINEMA");
+
+          trx.update();
+
+          http.set(Sql.Transaction.class, trx);
+
+          final T result;
+          result = action.execute(http);
+
+          trx.commit();
+
+          yield result;
+
+        } catch (Throwable e) {
+          throw trx.rollbackAndWrap(e);
+        } finally {
+          trx.close();
+        }
+
+      }
+
+      // this is a no-op during testing.
+      case TESTING -> action.execute(http);
+    };
+  }
+
+}
+""");
+
   static final SourceModel SeatsView = SourceModel.create("SeatsView.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -3990,6 +4065,54 @@ final class ShellMain extends Html.Template {
 
 """);
 
+  static final SourceModel Routes = SourceModel.create("Routes.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import demo.landing.LandingDemoConfig;
+import module objectos.way;
+
+/// Defines the application routes.
+public final class Routes implements Http.Routing.Module {
+
+  private final Transactional transactional;
+
+  public Routes(LandingDemoConfig config) {
+    transactional = Transactional.of(config.stage, config.database);
+  }
+
+  @Override
+  public final void configure(Http.Routing routing) {
+    routing.path("/demo.landing/{}", demo -> {
+      // we filter all requests, even though NotFound does not require DB access.
+      demo.filter(transactional, this::routes);
+
+      demo.handler(new NotFound());
+    });
+  }
+
+  private void routes(Http.RoutingPath routes) {
+
+  }
+
+}
+
+""");
+
   static final SourceModel Ticket = SourceModel.create("Ticket.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -4422,7 +4545,7 @@ final class ShellSourceCode extends Html.Template {
           &_span[data-high=string]/color:var(--color-high-string)
           \"""),
 
-          attr(Shell.dataSelected, Boolean.toString(idx == 0)),
+          attr(Shell.SEL, Boolean.toString(idx == 0)),
 
           code(
               css(\"""
