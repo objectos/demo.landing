@@ -255,7 +255,7 @@ final class MovieView extends Kino.View {
               hover/background-color:var(--color-btn-ghost-hover)
               """),
 
-              onclick(FOLLOW),
+              onclick(Kino.FOLLOW),
 
               href(ctx.href(query)),
 

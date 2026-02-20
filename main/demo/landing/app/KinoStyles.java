@@ -29,6 +29,9 @@ final class KinoStyles implements Css.Library {
         NowShowingView.class,
         SeatsView.class,
         Shell.class,
+        ShellMain.class,
+        ShellSourceCode.class,
+        ShellSourceSelector.class,
         TicketView.class
     );
 

@@ -33,6 +33,22 @@ import objectos.way.Sql;
  */
 public final class Kino implements LandingDemo {
 
+  public static final Html.Id SHELL = Html.Id.of("demo.landing");
+
+  /// The default `follow` action.
+  ///
+  /// As this demo will be embedded in another application, we:
+  ///
+  /// - disable history; so the browser location is not updated on navigation - -
+  /// - disable scroll; so the browse scroll position is not reset on navigation
+  static final JsAction FOLLOW = Js.follow(opts -> {
+    // disable history
+    opts.history(false);
+
+    // disable scroll
+    opts.scroll(false);
+  });
+
   private final Ctx ctx;
 
   private Kino(Ctx ctx) {
@@ -180,10 +196,6 @@ public final class Kino implements LandingDemo {
     active/background-color:var(--color-btn-primary-active)
     hover/background-color:var(--color-btn-primary-hover)
     """);
-
-    static final Html.Id CONTAINER = Html.Id.of("demo-container");
-
-    static final JsAction FOLLOW = Js.follow(opts -> opts.scrollIntoView(Js.byId(CONTAINER)));
 
     //
     // component methods

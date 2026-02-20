@@ -68,7 +68,7 @@ final class NowShowingView extends Kino.View {
               group
               """),
 
-              onclick(FOLLOW),
+              onclick(Kino.FOLLOW),
 
               href(Page.MOVIE.hrefId(item.id())),
 
