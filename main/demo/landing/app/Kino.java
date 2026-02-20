@@ -48,6 +48,8 @@ public final class Kino implements LandingDemo {
     opts.scroll(false);
   });
 
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/NowShowing");
+
   private final Ctx ctx;
 
   private Kino(Ctx ctx) {
@@ -440,8 +442,6 @@ public final class Kino implements LandingDemo {
   // SQL related classes
   //
 
-  
-
   //
   // Embedded related classes
   //
@@ -452,7 +452,8 @@ public final class Kino implements LandingDemo {
   /**
    * Represents an HTTP action in the demo application.
    */
-  @FunctionalInterface interface Action<T> {
+  @FunctionalInterface
+  interface Action<T> {
 
     T execute(Http.Exchange http);
 

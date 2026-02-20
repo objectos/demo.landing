@@ -15,15 +15,13 @@
  */
 package demo.landing.app;
 
-import java.util.List;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /**
  * The "Now Showing" controller.
  */
-final class NowShowing implements Kino.GET {
+final class NowShowing implements Kino.GET, Http.Handler {
 
   @Override
   public final Html.Component get(Http.Exchange http) {
@@ -42,6 +40,25 @@ final class NowShowing implements Kino.GET {
           Source.NowShowingView
       );
     });
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final List<NowShowingModel> items;
+    items = NowShowingModel.query(trx);
+
+    http.ok(
+        new Shell(
+            new NowShowingView(items),
+
+            Source.NowShowing,
+            Source.NowShowingModel,
+            Source.NowShowingView
+        )
+    );
   }
 
 }

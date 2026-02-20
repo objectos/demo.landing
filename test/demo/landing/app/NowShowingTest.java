@@ -42,9 +42,7 @@ public class NowShowingTest {
 
         config.method(Http.Method.GET);
 
-        config.path("/index.html");
-
-        config.queryParam("demo", Testing.encode(Page.NOW_SHOWING));
+        config.path("/demo.landing/NowShowing");
       });
 
       assertEquals(

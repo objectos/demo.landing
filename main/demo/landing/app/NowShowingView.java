@@ -15,12 +15,13 @@
  */
 package demo.landing.app;
 
-import java.util.List;
+import module java.base;
+import module objectos.way;
 
 /**
  * Renders the "Now Showing" view.
  */
-final class NowShowingView extends Kino.View {
+final class NowShowingView extends Html.Template {
 
   private final List<NowShowingModel> items;
 
@@ -70,7 +71,7 @@ final class NowShowingView extends Kino.View {
 
               onclick(Kino.FOLLOW),
 
-              href(Page.MOVIE.hrefId(item.id())),
+              href("/demo.landing/movie/" + item.id()),
 
               rel("nofollow"),
 

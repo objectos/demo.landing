@@ -892,6 +892,8 @@ public final class Kino implements LandingDemo {
     opts.scroll(false);
   });
 
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/NowShowing");
+
   private final Ctx ctx;
 
   private Kino(Ctx ctx) {
@@ -1284,8 +1286,6 @@ public final class Kino implements LandingDemo {
   // SQL related classes
   //
 
-  
-
   //
   // Embedded related classes
   //
@@ -1296,7 +1296,8 @@ public final class Kino implements LandingDemo {
   /**
    * Represents an HTTP action in the demo application.
    */
-  @FunctionalInterface interface Action<T> {
+  @FunctionalInterface
+  interface Action<T> {
 
     T execute(Http.Exchange http);
 
@@ -2180,15 +2181,13 @@ final class Seats implements Kino.GET, Kino.POST {
  */
 package demo.landing.app;
 
-import java.util.List;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /**
  * The "Now Showing" controller.
  */
-final class NowShowing implements Kino.GET {
+final class NowShowing implements Kino.GET, Http.Handler {
 
   @Override
   public final Html.Component get(Http.Exchange http) {
@@ -2207,6 +2206,25 @@ final class NowShowing implements Kino.GET {
           Source.NowShowingView
       );
     });
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final List<NowShowingModel> items;
+    items = NowShowingModel.query(trx);
+
+    http.ok(
+        new Shell(
+            new NowShowingView(items),
+
+            Source.NowShowing,
+            Source.NowShowingModel,
+            Source.NowShowingView
+        )
+    );
   }
 
 }
@@ -2823,12 +2841,13 @@ final record ConfirmDetails(
  */
 package demo.landing.app;
 
-import java.util.List;
+import module java.base;
+import module objectos.way;
 
 /**
  * Renders the "Now Showing" view.
  */
-final class NowShowingView extends Kino.View {
+final class NowShowingView extends Html.Template {
 
   private final List<NowShowingModel> items;
 
@@ -2878,7 +2897,7 @@ final class NowShowingView extends Kino.View {
 
               onclick(Kino.FOLLOW),
 
-              href(Page.MOVIE.hrefId(item.id())),
+              href("/demo.landing/movie/" + item.id()),
 
               rel("nofollow"),
 
@@ -4083,6 +4102,8 @@ final class ShellMain extends Html.Template {
  */
 package demo.landing.app;
 
+import static objectos.way.Http.Method.GET;
+
 import demo.landing.LandingDemoConfig;
 import module objectos.way;
 
@@ -4106,7 +4127,7 @@ public final class Routes implements Http.Routing.Module {
   }
 
   private void routes(Http.RoutingPath routes) {
-
+    routes.subpath("NowShowing", GET, new NowShowing());
   }
 
 }

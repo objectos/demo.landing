@@ -15,6 +15,7 @@
  */
 package demo.landing.dev;
 
+import demo.landing.app.Kino;
 import objectos.way.Css;
 import objectos.way.Html;
 
@@ -23,6 +24,7 @@ final class DevView extends Html.Template {
 
   private final Html.Component head;
 
+  @SuppressWarnings("unused")
   private final Html.Component demo;
 
   public DevView(Html.Component head, Html.Component demo) {
@@ -66,6 +68,8 @@ final class DevView extends Html.Template {
         min-height:100vh
         width:100%
         """),
+
+        onload(Kino.ONLOAD),
 
         hero(),
 
@@ -167,7 +171,11 @@ final class DevView extends Html.Template {
                 """)
             ),
 
-            c(demo)
+            div(
+                Kino.SHELL,
+
+                text("Loading")
+            )
         )
     );
   }

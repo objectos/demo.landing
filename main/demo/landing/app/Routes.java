@@ -15,6 +15,8 @@
  */
 package demo.landing.app;
 
+import static objectos.way.Http.Method.GET;
+
 import demo.landing.LandingDemoConfig;
 import module objectos.way;
 
@@ -38,7 +40,7 @@ public final class Routes implements Http.Routing.Module {
   }
 
   private void routes(Http.RoutingPath routes) {
-
+    routes.subpath("NowShowing", GET, new NowShowing());
   }
 
 }
