@@ -15,22 +15,19 @@
  */
 package demo.landing.app;
 
-import java.util.List;
+import module java.base;
+import module objectos.way;
 
 /**
  * Movie details and screening selection view.
  */
-final class MovieView extends Kino.View {
-
-  private final Kino.Ctx ctx;
+final class MovieView extends Html.Template {
 
   private final MovieDetails details;
 
   private final List<MovieScreening> screenings;
 
-  MovieView(Kino.Ctx ctx, MovieDetails details, List<MovieScreening> screenings) {
-    this.ctx = ctx;
-
+  MovieView(MovieDetails details, List<MovieScreening> screenings) {
     this.details = details;
 
     this.screenings = screenings;
@@ -38,7 +35,9 @@ final class MovieView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink2(Page.NOW_SHOWING.href());
+    c(
+        UiBackLink.of("/demo.landing/home")
+    );
 
     div(
         css("""
@@ -173,10 +172,8 @@ final class MovieView extends Kino.View {
               justify-content:center
               """),
 
-              icon(
-                  Kino.Icon.CALENDAR_CHECK,
-
-                  css("""
+              c(
+                  UiIcon.CALENDAR_CHECK.css("""
                   stroke:icon
                   """)
               ),
@@ -235,16 +232,13 @@ final class MovieView extends Kino.View {
       final int showId;
       showId = showtime.showId();
 
-      final Kino.Query query;
-      query = Page.SEATS.query(showId);
-
-      testableCell(query.toString(), 32);
+      testableCell(Integer.toString(showId), 32);
 
       final String time;
       time = showtime.time();
 
       li(
-          a(
+          div(
               css("""
               border:1px_solid_var(--color-border)
               border-radius:9999px
@@ -253,11 +247,10 @@ final class MovieView extends Kino.View {
 
               active/background-color:var(--color-btn-ghost-active)
               hover/background-color:var(--color-btn-ghost-hover)
+              hover/cursor:pointer
               """),
 
-              onclick(Kino.FOLLOW),
-
-              href(ctx.href(query)),
+              onclick(Kino.link("/demo.landing/show/" + showId)),
 
               rel("nofollow"),
 

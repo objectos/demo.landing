@@ -15,55 +15,58 @@
  */
 package demo.landing.app;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Sql;
 
-final class Movie implements Kino.GET {
+final class Movie implements Http.Handler {
 
-  private final Kino.Ctx ctx;
+  private final Clock clock;
 
-  Movie(Kino.Ctx ctx) {
-    this.ctx = ctx;
+  Movie(Clock clock) {
+    this.clock = clock;
   }
 
   @Override
-  public final Html.Component get(Http.Exchange http) {
+  public final void handle(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
+    final String id;
+    id = http.pathParam("id");
+
     final int movieId;
-    movieId = http.queryParamAsInt("id", Integer.MIN_VALUE);
+    movieId = Integer.parseInt(id);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
     if (maybeDetails.isEmpty()) {
-      return NotFound.create();
+      return;
     }
 
     final MovieDetails details;
     details = maybeDetails.get();
 
     final LocalDateTime today;
-    today = ctx.today();
+    today = LocalDateTime.now(clock);
 
     final List<MovieScreening> screenings;
     screenings = MovieScreening.query(trx, movieId, today);
 
-    return Shell.create(shell -> {
-      shell.app = new MovieView(ctx, details, screenings);
+    http.ok(
+        new Shell(
+            new MovieView(details, screenings),
 
-      shell.sources(
-          Source.Movie,
-          Source.MovieDetails,
-          Source.MovieScreening,
-          Source.MovieView
-      );
-    });
+            Source.Movie,
+            Source.MovieDetails,
+            Source.MovieScreening,
+            Source.MovieView
+        )
+    );
   }
 
 }

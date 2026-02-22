@@ -64,16 +64,13 @@ final class NowShowingView extends Html.Template {
           flex:0_0_128rx
           """),
 
-          a(
+          div(
               css("""
               group
+              hover/cursor:pointer
               """),
 
-              onclick(Kino.FOLLOW),
-
-              href("/demo.landing/movie/" + item.id()),
-
-              rel("nofollow"),
+              onclick(Kino.link("/demo.landing/movie/" + item.id())),
 
               img(
                   css("""

@@ -18,21 +18,26 @@ package demo.landing.app;
 import static objectos.way.Http.Method.GET;
 
 import demo.landing.LandingDemoConfig;
+import java.time.Clock;
 import module objectos.way;
 
 /// Defines the application routes.
 public final class Routes implements Http.Routing.Module {
 
+  private final Clock clock;
+
   private final Transactional transactional;
 
   public Routes(LandingDemoConfig config) {
+    clock = config.clock;
+
     transactional = Transactional.of(config.stage, config.database);
   }
 
   @Override
   public final void configure(Http.Routing routing) {
     routing.path("/demo.landing/{}", demo -> {
-      // we filter all requests, even though NotFound does not require DB access.
+      // we filter these requests with transactionl
       demo.filter(transactional, this::routes);
 
       demo.handler(new NotFound());
@@ -40,7 +45,9 @@ public final class Routes implements Http.Routing.Module {
   }
 
   private void routes(Http.RoutingPath routes) {
-    routes.subpath("NowShowing", GET, new NowShowing());
+    routes.subpath("home", GET, new NowShowing());
+
+    routes.subpath("movie/{id}", GET, new Movie(clock));
   }
 
 }

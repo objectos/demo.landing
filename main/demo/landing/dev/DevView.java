@@ -24,13 +24,8 @@ final class DevView extends Html.Template {
 
   private final Html.Component head;
 
-  @SuppressWarnings("unused")
-  private final Html.Component demo;
-
-  public DevView(Html.Component head, Html.Component demo) {
+  public DevView(Html.Component head) {
     this.head = head;
-
-    this.demo = demo;
   }
 
   @Override

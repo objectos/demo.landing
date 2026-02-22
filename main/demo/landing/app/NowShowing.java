@@ -21,26 +21,7 @@ import module objectos.way;
 /**
  * The "Now Showing" controller.
  */
-final class NowShowing implements Kino.GET, Http.Handler {
-
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
-
-    return Shell.create(shell -> {
-      shell.app = new NowShowingView(items);
-
-      shell.sources(
-          Source.NowShowing,
-          Source.NowShowingModel,
-          Source.NowShowingView
-      );
-    });
-  }
+final class NowShowing implements Http.Handler {
 
   @Override
   public final void handle(Http.Exchange http) {

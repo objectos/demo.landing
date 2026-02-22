@@ -46,9 +46,12 @@ public final class Kino implements LandingDemo {
 
     // disable scroll
     opts.scroll(false);
+
+    // update only the demo shell
+    opts.update(SHELL);
   });
 
-  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/NowShowing");
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home");
 
   private final Ctx ctx;
 
@@ -66,6 +69,11 @@ public final class Kino implements LandingDemo {
     ctx = Ctx.of(config);
 
     return new Kino(ctx);
+  }
+
+  /// The default 'link' action.
+  public static JsAction link(String url) {
+    return Js.byId(SHELL).render(url);
   }
 
   /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
@@ -95,15 +103,13 @@ public final class Kino implements LandingDemo {
     controller = switch (page) {
       case CONFIRM -> new Confirm(ctx);
 
-      case MOVIE -> new Movie(ctx);
-
-      case NOW_SHOWING -> new NowShowing();
-
       case SEATS -> new Seats(ctx);
 
       case TICKET -> new Ticket();
 
       case BAD_REQUEST -> new NotFound();
+
+      default -> throw new UnsupportedOperationException();
     };
 
     // we intercept all controllers even though

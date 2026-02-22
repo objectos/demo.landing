@@ -368,6 +368,75 @@ final class KinoStyles implements Css.Library {
 
 """);
 
+  static final SourceModel UiBackLink = SourceModel.create("UiBackLink.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.util.Objects;
+import module objectos.way;
+
+final class UiBackLink extends Html.Template {
+
+  private final String url;
+
+  private UiBackLink(String url) {
+    this.url = url;
+  }
+
+  public static Html.Component of(String url) {
+    return new UiBackLink(
+        Objects.requireNonNull(url, "url == null")
+    );
+  }
+
+  @Override
+  protected final void render() {
+    testableField("back-link", url);
+
+    a(
+        css(\"""
+        border-radius:9999px
+        padding:6rx
+        margin:6rx_0_0_-6rx
+        position:absolute
+
+        active/background-color:var(--color-btn-ghost-active)
+        hover/background-color:var(--color-btn-ghost-hover)
+        \"""),
+
+        onclick(Kino.FOLLOW),
+
+        href(url),
+
+        rel("nofollow"),
+
+        c(
+            UiIcon.ARROW_LEFT.css(\"""
+            height:20rx
+            width:20rx
+            \""")
+        )
+    );
+  }
+
+}
+
+""");
+
   static final SourceModel Confirm = SourceModel.create("Confirm.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -890,9 +959,12 @@ public final class Kino implements LandingDemo {
 
     // disable scroll
     opts.scroll(false);
+
+    // update only the demo shell
+    opts.update(SHELL);
   });
 
-  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/NowShowing");
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home");
 
   private final Ctx ctx;
 
@@ -910,6 +982,11 @@ public final class Kino implements LandingDemo {
     ctx = Ctx.of(config);
 
     return new Kino(ctx);
+  }
+
+  /// The default 'link' action.
+  public static JsAction link(String url) {
+    return Js.byId(SHELL).render(url);
   }
 
   /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
@@ -939,15 +1016,13 @@ public final class Kino implements LandingDemo {
     controller = switch (page) {
       case CONFIRM -> new Confirm(ctx);
 
-      case MOVIE -> new Movie(ctx);
-
-      case NOW_SHOWING -> new NowShowing();
-
       case SEATS -> new Seats(ctx);
 
       case TICKET -> new Ticket();
 
       case BAD_REQUEST -> new NotFound();
+
+      default -> throw new UnsupportedOperationException();
     };
 
     // we intercept all controllers even though
@@ -1849,55 +1924,58 @@ final class Shell extends Kino.View {
  */
 package demo.landing.app;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Sql;
 
-final class Movie implements Kino.GET {
+final class Movie implements Http.Handler {
 
-  private final Kino.Ctx ctx;
+  private final Clock clock;
 
-  Movie(Kino.Ctx ctx) {
-    this.ctx = ctx;
+  Movie(Clock clock) {
+    this.clock = clock;
   }
 
   @Override
-  public final Html.Component get(Http.Exchange http) {
+  public final void handle(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
+    final String id;
+    id = http.pathParam("id");
+
     final int movieId;
-    movieId = http.queryParamAsInt("id", Integer.MIN_VALUE);
+    movieId = Integer.parseInt(id);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
     if (maybeDetails.isEmpty()) {
-      return NotFound.create();
+      return;
     }
 
     final MovieDetails details;
     details = maybeDetails.get();
 
     final LocalDateTime today;
-    today = ctx.today();
+    today = LocalDateTime.now(clock);
 
     final List<MovieScreening> screenings;
     screenings = MovieScreening.query(trx, movieId, today);
 
-    return Shell.create(shell -> {
-      shell.app = new MovieView(ctx, details, screenings);
+    http.ok(
+        new Shell(
+            new MovieView(details, screenings),
 
-      shell.sources(
-          Source.Movie,
-          Source.MovieDetails,
-          Source.MovieScreening,
-          Source.MovieView
-      );
-    });
+            Source.Movie,
+            Source.MovieDetails,
+            Source.MovieScreening,
+            Source.MovieView
+        )
+    );
   }
 
 }
@@ -2163,6 +2241,87 @@ final class Seats implements Kino.GET, Kino.POST {
 }
 """);
 
+  static final SourceModel UiIcon = SourceModel.create("UiIcon.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module objectos.way;
+
+enum UiIcon {
+
+  ARROW_LEFT(\"""
+  <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>\"""),
+
+  CALENDAR_CHECK(\"""
+  <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>\"""),
+
+  CLOCK(\"""
+  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>\"""),
+
+  CREDIT_CARD(\"""
+  <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>\"""),
+
+  FILM(\"""
+  <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>\"""),
+
+  FROWN(\"""
+  <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>\"""),
+
+  INFO(\"""
+  <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>\"""),
+
+  PROJECTOR(
+      \"""
+  <path d="M5 7 3 5"/><path d="M9 6V3"/><path d="m13 7 2-2"/><circle cx="9" cy="13" r="3"/><path d="M11.83 12H20a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h2.17"/><path d="M16 16h2"/>\"""),
+
+  RECEIPT(\"""
+  <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>\"""),
+
+  TICKET(\"""
+  <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>\""");
+
+  private final String contents;
+
+  UiIcon(String contents) {
+    this.contents = contents;
+  }
+
+  public final Html.Component css(String css) {
+    return m -> m.svg(
+        m.xmlns("http://www.w3.org/2000/svg"),
+        m.width("24"),
+        m.height("24"),
+        m.viewBox("0 0 24 24"),
+        m.fill("none"),
+        m.stroke("currentColor"),
+        m.strokeWidth("2"),
+        m.strokeLinecap("round"),
+        m.strokeLinejoin("round"),
+
+        m.css(css),
+
+        m.raw(contents)
+    );
+  }
+
+}
+
+""");
+
   static final SourceModel NowShowing = SourceModel.create("NowShowing.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2187,26 +2346,7 @@ import module objectos.way;
 /**
  * The "Now Showing" controller.
  */
-final class NowShowing implements Kino.GET, Http.Handler {
-
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
-
-    return Shell.create(shell -> {
-      shell.app = new NowShowingView(items);
-
-      shell.sources(
-          Source.NowShowing,
-          Source.NowShowingModel,
-          Source.NowShowingView
-      );
-    });
-  }
+final class NowShowing implements Http.Handler {
 
   @Override
   public final void handle(Http.Exchange http) {
@@ -2890,14 +3030,12 @@ final class NowShowingView extends Html.Template {
           flex:0_0_128rx
           \"""),
 
-          a(
+          div(
               css(\"""
               group
               \"""),
 
-              onclick(Kino.FOLLOW),
-
-              href("/demo.landing/movie/" + item.id()),
+              onclick(Kino.link("/demo.landing/movie/" + item.id())),
 
               rel("nofollow"),
 
@@ -4105,21 +4243,26 @@ package demo.landing.app;
 import static objectos.way.Http.Method.GET;
 
 import demo.landing.LandingDemoConfig;
+import java.time.Clock;
 import module objectos.way;
 
 /// Defines the application routes.
 public final class Routes implements Http.Routing.Module {
 
+  private final Clock clock;
+
   private final Transactional transactional;
 
   public Routes(LandingDemoConfig config) {
+    clock = config.clock;
+
     transactional = Transactional.of(config.stage, config.database);
   }
 
   @Override
   public final void configure(Http.Routing routing) {
     routing.path("/demo.landing/{}", demo -> {
-      // we filter all requests, even though NotFound does not require DB access.
+      // we filter these requests with transactionl
       demo.filter(transactional, this::routes);
 
       demo.handler(new NotFound());
@@ -4127,7 +4270,9 @@ public final class Routes implements Http.Routing.Module {
   }
 
   private void routes(Http.RoutingPath routes) {
-    routes.subpath("NowShowing", GET, new NowShowing());
+    routes.subpath("home", GET, new NowShowing());
+
+    routes.subpath("movie/{id}", GET, new Movie(clock));
   }
 
 }
@@ -4228,22 +4373,19 @@ final class Ticket implements Kino.GET {
  */
 package demo.landing.app;
 
-import java.util.List;
+import module java.base;
+import module objectos.way;
 
 /**
  * Movie details and screening selection view.
  */
-final class MovieView extends Kino.View {
-
-  private final Kino.Ctx ctx;
+final class MovieView extends Html.Template {
 
   private final MovieDetails details;
 
   private final List<MovieScreening> screenings;
 
-  MovieView(Kino.Ctx ctx, MovieDetails details, List<MovieScreening> screenings) {
-    this.ctx = ctx;
-
+  MovieView(MovieDetails details, List<MovieScreening> screenings) {
     this.details = details;
 
     this.screenings = screenings;
@@ -4251,7 +4393,9 @@ final class MovieView extends Kino.View {
 
   @Override
   protected final void render() {
-    backLink2(Page.NOW_SHOWING.href());
+    c(
+        UiBackLink.of("/demo.landing/home")
+    );
 
     div(
         css(\"""
@@ -4386,10 +4530,8 @@ final class MovieView extends Kino.View {
               justify-content:center
               \"""),
 
-              icon(
-                  Kino.Icon.CALENDAR_CHECK,
-
-                  css(\"""
+              c(
+                  UiIcon.CALENDAR_CHECK.css(\"""
                   stroke:icon
                   \""")
               ),
@@ -4448,10 +4590,7 @@ final class MovieView extends Kino.View {
       final int showId;
       showId = showtime.showId();
 
-      final Kino.Query query;
-      query = Page.SEATS.query(showId);
-
-      testableCell(query.toString(), 32);
+      testableCell(Integer.toString(showId), 32);
 
       final String time;
       time = showtime.time();
@@ -4470,7 +4609,7 @@ final class MovieView extends Kino.View {
 
               onclick(Kino.FOLLOW),
 
-              href(ctx.href(query)),
+              href("/demo.landing/show/" + showId),
 
               rel("nofollow"),
 

@@ -17,7 +17,6 @@ package demo.landing.dev;
 
 import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
-import demo.landing.app.Kino;
 import demo.landing.app.Routes;
 import java.nio.file.Path;
 import objectos.way.App;
@@ -31,8 +30,6 @@ public final class DevModule implements Http.Routing.Module {
 
   private final App.Injector injector;
 
-  private final Kino demo;
-
   private final Routes routes;
 
   public DevModule(App.Injector injector) {
@@ -40,8 +37,6 @@ public final class DevModule implements Http.Routing.Module {
 
     final LandingDemoConfig config;
     config = injector.getInstance(LandingDemoConfig.class);
-
-    demo = Kino.create(config);
 
     routes = new Routes(config);
   }
@@ -58,10 +53,6 @@ public final class DevModule implements Http.Routing.Module {
       path.allow(Http.Method.GET, this::index);
     });
 
-    routing.path("/demo/landing", path -> {
-      path.allow(Http.Method.POST, this::endpoint);
-    });
-
     routing.path("/ui/styles.css", path -> {
       path.allow(Http.Method.GET, this::styles);
     });
@@ -73,23 +64,13 @@ public final class DevModule implements Http.Routing.Module {
   }
 
   private void index(Http.Exchange http) {
-    respond(http, Http.Status.OK, demo.get(http));
-  }
+    final Html.Component head;
+    head = injector.getInstance(Html.Component.class);
 
-  private void endpoint(Http.Exchange http) {
-    final Kino.PostResult result;
-    result = demo.post(http);
+    final DevView object;
+    object = new DevView(head);
 
-    switch (result) {
-      case Kino.Embed embed -> respond(http, embed.status(), embed.get());
-
-      case Kino.Redirect redirect -> {
-        final String location;
-        location = redirect.get();
-
-        http.found(location);
-      }
-    }
+    http.ok(object);
   }
 
   private void styles(Http.Exchange http) {
@@ -103,20 +84,6 @@ public final class DevModule implements Http.Routing.Module {
 
       opts.scanDirectory(Path.of("work", "main"));
     }));
-  }
-
-  private void respond(Http.Exchange http, Http.Status status, Html.Component view) {
-    final Html.Component head;
-    head = injector.getInstance(Html.Component.class);
-
-    final DevView object;
-    object = new DevView(head, view);
-
-    switch (status.code()) {
-      case 200 -> http.ok(object);
-      case 400 -> http.badRequest(object);
-      default -> throw new AssertionError("Unexpected status=" + status);
-    }
   }
 
 }
