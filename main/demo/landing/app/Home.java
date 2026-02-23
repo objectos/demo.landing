@@ -13,26 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.home;
+package demo.landing.app;
 
+import module java.base;
 import module objectos.way;
 
-/// Renders the "Now Showing" header.
-final class Header extends Html.Template {
+/// The "/home" controller.
+public final class Home implements Http.Handler {
+
+  private final UiSources sources = UiSources.of(
+      Source.Home,
+      Source.HomeModel,
+      Source.HomeHeader,
+      Source.HomeList
+  );
 
   @Override
-  protected final void render() {
-    div(
-        css("""
-        margin-bottom:32rx
-        """),
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
-        h2(
-            text("Now Showing")
-        ),
+    final List<HomeModel> movies;
+    movies = HomeModel.query(trx);
 
-        p(
-            text("Please choose a movie")
+    http.ok(
+        UiShell.of(
+            UiContent.of(
+                new HomeHeader(),
+
+                new HomeList(movies)
+            ),
+
+            sources
         )
     );
   }

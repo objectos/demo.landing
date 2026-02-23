@@ -17,7 +17,7 @@ package demo.landing.dev;
 
 import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
-import demo.landing.www.Routes;
+import demo.landing.app.AppRoutes;
 import java.nio.file.Path;
 import objectos.way.App;
 import objectos.way.Css;
@@ -30,7 +30,7 @@ public final class DevModule implements Http.Routing.Module {
 
   private final App.Injector injector;
 
-  private final Routes routes;
+  private final AppRoutes routes;
 
   public DevModule(App.Injector injector) {
     this.injector = injector;
@@ -38,7 +38,7 @@ public final class DevModule implements Http.Routing.Module {
     final LandingDemoConfig config;
     config = injector.getInstance(LandingDemoConfig.class);
 
-    routes = new Routes(config);
+    routes = new AppRoutes(config);
   }
 
   @Override

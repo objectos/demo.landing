@@ -15,40 +15,26 @@
  */
 package demo.landing.app;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-import objectos.way.Sql;
+import module objectos.way;
 
-/**
- * Represents a movie in the "Now Showing" view.
- */
-record NowShowingModel(
-    int id,
-    String title
-) {
+/// The Home Page header.
+final class HomeHeader extends Html.Template {
 
-  private NowShowingModel(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++)
+  @Override
+  protected final void render() {
+    div(
+        css("""
+        margin-bottom:32rx
+        """),
+
+        h2(
+            text("Now Showing")
+        ),
+
+        p(
+            text("Please choose a movie")
+        )
     );
-  }
-
-  public static List<NowShowingModel> query(Sql.Transaction trx) {
-    trx.sql("""
-    select
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-
-    from
-      MOVIE
-
-    order by
-      MOVIE_ID
-    """);
-
-    return trx.query(NowShowingModel::new);
   }
 
 }

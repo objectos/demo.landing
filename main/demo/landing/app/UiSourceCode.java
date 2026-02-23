@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.ui;
+package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
 
 /// Renders the source code of the selected file.
-final class SourceCode extends Html.Template {
+final class UiSourceCode extends Html.Template {
 
   private final List<SourceModel> sources;
 
-  SourceCode(List<SourceModel> sources) {
+  UiSourceCode(List<SourceModel> sources) {
     this.sources = sources;
   }
 
@@ -78,7 +78,7 @@ final class SourceCode extends Html.Template {
           &_span[data-high=string]/color:var(--color-high-string)
           """),
 
-          attr(Shell.SEL, Boolean.toString(idx == 0)),
+          attr(UiShell.SEL, Boolean.toString(idx == 0)),
 
           code(
               css("""

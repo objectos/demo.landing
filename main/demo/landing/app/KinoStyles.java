@@ -22,17 +22,15 @@ final class KinoStyles implements Css.Library {
   @Override
   public final void configure(Css.Library.Options opts) {
     opts.scanClasses(
-        ConfirmView.class,
-        Kino.View.class,
-        MovieView.class,
-        NotFoundView.class,
-        NowShowingView.class,
-        SeatsView.class,
-        Shell.class,
-        ShellMain.class,
-        ShellSourceCode.class,
-        ShellSourceSelector.class,
-        TicketView.class
+        HomeHeader.class,
+        HomeList.class,
+        UiBackLink.class,
+        UiContent.class,
+        UiIcon.class,
+        UiShell.class,
+        UiSourceCode.class,
+        UiSources.class,
+        UiSourceSelector.class
     );
 
     opts.theme("""

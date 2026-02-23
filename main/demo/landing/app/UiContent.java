@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.ui;
+package demo.landing.app;
 
 import java.util.List;
 import module objectos.way;
 import objectos.way.Html.Component;
 
 /// Renders the main application content.
-public final class Content extends Html.Template {
+public final class UiContent extends Html.Template {
 
   private final List<Html.Component> components;
 
-  private Content(List<Component> components) {
+  private UiContent(List<Component> components) {
     this.components = components;
   }
 
-  public static Content of(Html.Component... components) {
-    return new Content(
+  public static UiContent of(Html.Component... components) {
+    return new UiContent(
         List.of(components)
     );
   }
@@ -67,9 +67,11 @@ public final class Content extends Html.Template {
                 display:flex
                 gap:6rx
                 height:100%
+
+                hover/cursor:pointer
                 """),
 
-                onclick(Shell.link("/demo.landing/home")),
+                onclick(UiShell.link("/demo.landing/home")),
 
                 objectosLogo(),
 

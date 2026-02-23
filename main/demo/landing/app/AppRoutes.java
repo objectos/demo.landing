@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.www;
+package demo.landing.app;
 
 import static objectos.way.Http.Method.GET;
 
 import demo.landing.LandingDemoConfig;
-import demo.landing.app.Transactional;
-import demo.landing.home.Home;
 import module objectos.way;
 
 /// Declares the application routes.
-public final class Routes implements Http.Routing.Module {
+public final class AppRoutes implements Http.Routing.Module {
 
-  private final Transactional transactional;
+  private final AppTransactional transactional;
 
-  public Routes(LandingDemoConfig config) {
-    transactional = Transactional.of(config.stage, config.database);
+  public AppRoutes(LandingDemoConfig config) {
+    transactional = AppTransactional.of(config.stage, config.database);
   }
 
   @Override
@@ -42,7 +40,7 @@ public final class Routes implements Http.Routing.Module {
   }
 
   private void routes(Http.RoutingPath routes) {
-    routes.subpath("home", GET, Home.create());
+    routes.subpath("home", GET, new Home());
 
     //routes.subpath("movie/{id}", GET, new Movie(clock));
   }

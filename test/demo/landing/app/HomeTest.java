@@ -17,12 +17,13 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import java.util.List;
+import objectos.way.Http;
+import objectos.way.Sql;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class NowShowingModelTest {
+public class HomeTest {
 
   private final String data = """
   insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
@@ -35,22 +36,28 @@ public class NowShowingModelTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final List<NowShowingModel> items;
-      items = NowShowingModel.query(trx);
+      final Http.Exchange http;
+      http = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
 
-      assertEquals(items.size(), 2);
+        config.method(Http.Method.GET);
 
-      final NowShowingModel item0;
-      item0 = items.get(0);
+        config.path("/demo.landing/home");
+      });
 
-      assertEquals(item0.id(), 11);
-      assertEquals(item0.title(), "Title 1");
+      assertEquals(
+          Testing.handle0(http),
 
-      final NowShowingModel item1;
-      item1 = items.get(1);
+          """
+          HTTP/1.1 200 OK
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Type: text/html; charset=utf-8
+          Transfer-Encoding: chunked
 
-      assertEquals(item1.id(), 12);
-      assertEquals(item1.title(), "Title 2");
+          movie.title: Title 1
+          movie.title: Title 2
+          """
+      );
     });
   }
 

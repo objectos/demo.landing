@@ -18,28 +18,33 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-/**
- * The "Now Showing" controller.
- */
-final class NowShowing implements Http.Handler {
+/// A movie that is now showing at the theater.
+record HomeModel(
+    int id,
+    String title
+) {
 
-  @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
-
-    http.ok(
-        new Shell(
-            new NowShowingView(items)
-        //
-        //            Source.NowShowing,
-        //            Source.NowShowingModel,
-        //            Source.NowShowingView
-        )
+  private HomeModel(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++)
     );
+  }
+
+  public static List<HomeModel> query(Sql.Transaction trx) {
+    trx.sql("""
+    select
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+
+    from
+      MOVIE
+
+    order by
+      MOVIE_ID
+    """);
+
+    return trx.query(HomeModel::new);
   }
 
 }

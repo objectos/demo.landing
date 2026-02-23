@@ -17,6 +17,7 @@ package demo.landing.app;
 
 import module objectos.way;
 
+/// Renders a SVG icon.
 enum UiIcon {
 
   ARROW_LEFT("""

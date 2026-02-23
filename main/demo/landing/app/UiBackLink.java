@@ -18,6 +18,7 @@ package demo.landing.app;
 import java.util.Objects;
 import module objectos.way;
 
+/// Renders the back button of the application.
 final class UiBackLink extends Html.Template {
 
   private final String url;
@@ -48,7 +49,7 @@ final class UiBackLink extends Html.Template {
         hover/cursor:pointer
         """),
 
-        onclick(Kino.link(url)),
+        onclick(UiShell.link(url)),
 
         c(
             UiIcon.ARROW_LEFT.css("""

@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.ui;
+package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
 
 /// The demo UI shell responsible for displaying the application on the
 /// top/right and the source code on the bottom/left.
-public final class Shell extends Html.Template {
+public final class UiShell extends Html.Template {
 
   public static final Html.Id ID = Html.Id.of("demo.landing");
 
@@ -32,25 +32,29 @@ public final class Shell extends Html.Template {
 
   static final Html.AttributeName SEL = Html.AttributeName.of("data-selected");
 
-  private final Content app;
+  private final UiContent app;
 
-  private final Sources sources;
+  private final UiSources sources;
 
-  private Shell(Content app, Sources sources) {
+  private UiShell(UiContent app, UiSources sources) {
     this.app = app;
 
     this.sources = sources;
   }
 
-  public static Shell of(Content app, Sources sources) {
+  public static UiShell of(UiContent app, UiSources sources) {
     Objects.requireNonNull(app, "app == null");
     Objects.requireNonNull(sources, "sources == null");
 
-    return new Shell(app, sources);
+    return new UiShell(app, sources);
   }
 
   public static JsAction link(String url) {
     return Js.byId(ID).render(url);
+  }
+
+  public static final JsAction onload() {
+    return Js.byId(ID).render("/demo.landing/home");
   }
 
   @Override

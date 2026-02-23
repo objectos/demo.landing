@@ -16,6 +16,7 @@
 package demo.landing.dev;
 
 import demo.landing.app.Kino;
+import demo.landing.app.UiShell;
 import objectos.way.Css;
 import objectos.way.Html;
 
@@ -64,7 +65,7 @@ final class DevView extends Html.Template {
         width:100%
         """),
 
-        onload(Kino.ONLOAD),
+        onload(UiShell.onload()),
 
         hero(),
 

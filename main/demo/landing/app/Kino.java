@@ -345,7 +345,7 @@ public final class Kino implements LandingDemo {
 
       Reservation reservation,
 
-      Transactional transactional
+      AppTransactional transactional
   ) {
 
     static Ctx of(LandingDemoConfig config) {
@@ -364,8 +364,8 @@ public final class Kino implements LandingDemo {
       final Reservation reservation;
       reservation = new Reservation(clock, config.reservationEpoch, config.reservationRandom);
 
-      final Transactional transactional;
-      transactional = new Transactional(config.stage, config.database);
+      final AppTransactional transactional;
+      transactional = new AppTransactional(config.stage, config.database);
 
       return new Ctx(clock, codec, noteSink, reservation, transactional);
     }

@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.home;
+package demo.landing.app;
 
-import demo.landing.ui.Shell;
 import module java.base;
 import module objectos.way;
 
-/// Renders the "Now Showing" movie selector.
-final class MovieSelector extends Html.Template {
+/// The Home Page movie selection.
+final class HomeList extends Html.Template {
 
-  private final List<NowShowing> movies;
+  private final List<HomeModel> movies;
 
-  MovieSelector(List<NowShowing> movies) {
+  HomeList(List<HomeModel> movies) {
     this.movies = movies;
   }
 
@@ -43,12 +42,12 @@ final class MovieSelector extends Html.Template {
   }
 
   private void renderMovies() {
-    for (NowShowing item : movies) {
+    for (HomeModel item : movies) {
       renderItem(item);
     }
   }
 
-  private void renderItem(NowShowing movie) {
+  private void renderItem(HomeModel movie) {
     li(
         css("""
         flex:0_0_128rx
@@ -60,7 +59,7 @@ final class MovieSelector extends Html.Template {
             hover/cursor:pointer
             """),
 
-            onclick(Shell.link("/demo.landing/movie/" + movie.id())),
+            onclick(UiShell.link("/demo.landing/movie/" + movie.id())),
 
             img(
                 css("""

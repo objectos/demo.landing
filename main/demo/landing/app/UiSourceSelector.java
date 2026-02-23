@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.ui;
+package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
 
 /// Renders the source file selector.
-final class SourceSelector extends Html.Template {
+final class UiSourceSelector extends Html.Template {
 
   private final List<SourceModel> sources;
 
-  SourceSelector(List<SourceModel> sources) {
+  UiSourceSelector(List<SourceModel> sources) {
     this.sources = sources;
   }
 
@@ -34,7 +34,7 @@ final class SourceSelector extends Html.Template {
 
     // the source file selector
     div(
-        Shell.SRC,
+        UiShell.SRC,
 
         css("""
         border-left:1px_solid_var(--color-border)
@@ -54,10 +54,10 @@ final class SourceSelector extends Html.Template {
         """),
 
         // stores the current selected button in the data-button attribute
-        attr(Shell.BTN, first.button().attrValue()),
+        attr(UiShell.BTN, first.button().attrValue()),
 
         // stores the current selected panel in the data-panel attribute
-        attr(Shell.PNL, first.panel().attrValue()),
+        attr(UiShell.PNL, first.panel().attrValue()),
 
         f(this::renderSourceMenuItems)
     );
@@ -81,20 +81,20 @@ final class SourceSelector extends Html.Template {
           hover/background-color:var(--color-btn-ghost-hover)
           """),
 
-          attr(Shell.SEL, Boolean.toString(idx == 0)),
+          attr(UiShell.SEL, Boolean.toString(idx == 0)),
 
           onclick(Js.of(
               // 'stores' the Shell.SRC element at the 'frame' variable
-              Js.var("frame", Js.byId(Shell.SRC)),
+              Js.var("frame", Js.byId(UiShell.SRC)),
               // 'deselects' current
-              Js.byId(Js.var("frame").as(JsElement.type).attr(Shell.BTN)).attr(Shell.SEL, "false"),
-              Js.byId(Js.var("frame").as(JsElement.type).attr(Shell.PNL)).attr(Shell.SEL, "false"),
+              Js.byId(Js.var("frame").as(JsElement.type).attr(UiShell.BTN)).attr(UiShell.SEL, "false"),
+              Js.byId(Js.var("frame").as(JsElement.type).attr(UiShell.PNL)).attr(UiShell.SEL, "false"),
               // 'selects' self
-              Js.byId(item.button()).attr(Shell.SEL, "true"),
-              Js.byId(item.panel()).attr(Shell.SEL, "true"),
+              Js.byId(item.button()).attr(UiShell.SEL, "true"),
+              Js.byId(item.panel()).attr(UiShell.SEL, "true"),
               // stores selected,
-              Js.var("frame").as(JsElement.type).attr(Shell.BTN, item.button().attrValue()),
-              Js.var("frame").as(JsElement.type).attr(Shell.PNL, item.panel().attrValue())
+              Js.var("frame").as(JsElement.type).attr(UiShell.BTN, item.button().attrValue()),
+              Js.var("frame").as(JsElement.type).attr(UiShell.PNL, item.panel().attrValue())
           )),
 
           text(item.name())

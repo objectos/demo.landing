@@ -19,25 +19,25 @@ import demo.landing.app.Kino.Action;
 import module java.base;
 import module objectos.way;
 
-/// Filters HTTP requests around a SQL transaction. It is a no-op in a
-/// testing environment.
-public final class Transactional implements Http.Filter {
+/// Filters HTTP requests around a SQL transaction and performs a no-op in
+/// testing environments.
+final class AppTransactional implements Http.Filter {
 
   private final Kino.Stage stage;
 
   private final Sql.Database db;
 
-  Transactional(Kino.Stage stage, Sql.Database db) {
+  AppTransactional(Kino.Stage stage, Sql.Database db) {
     this.stage = stage;
 
     this.db = db;
   }
 
-  public static Transactional of(Kino.Stage stage, Sql.Database db) {
+  public static AppTransactional of(Kino.Stage stage, Sql.Database db) {
     Objects.requireNonNull(stage, "stage == null");
     Objects.requireNonNull(db, "db == null");
 
-    return new Transactional(stage, db);
+    return new AppTransactional(stage, db);
   }
 
   public final Html.Component get(Http.Exchange http, Kino.GET action) {

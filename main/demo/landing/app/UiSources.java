@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.ui;
+package demo.landing.app;
 
-import java.util.ArrayList;
-import java.util.List;
+import module java.base;
 import module objectos.way;
 
 /// UI component for selecting and displaying the source code of a Java file.
-public final class Sources extends Html.Template {
+public final class UiSources extends Html.Template {
 
-  private final SourceCode code;
+  private final UiSourceCode code;
 
-  private final SourceSelector selector;
+  private final UiSourceSelector selector;
 
-  private Sources(SourceCode code, SourceSelector selector) {
+  private UiSources(UiSourceCode code, UiSourceSelector selector) {
     this.code = code;
 
     this.selector = selector;
   }
 
-  public static Sources of(SourceModel... more) {
+  public static UiSources of(SourceModel... more) {
     final List<SourceModel> sources;
     sources = new ArrayList<>();
 
@@ -40,18 +39,18 @@ public final class Sources extends Html.Template {
       sources.add(item);
     }
 
-    sources.add(Source.BackLinkUi);
-    sources.add(Source.IconUi);
-    sources.add(Source.MainUi);
-    sources.add(Source.ShellUi);
-    sources.add(Source.SourceCode);
-    sources.add(Source.SourceModel_);
-    sources.add(Source.SourceSelector);
+    sources.add(Source.UiBackLink);
+    sources.add(Source.UiContent);
+    sources.add(Source.UiIcon);
+    sources.add(Source.UiShell);
+    sources.add(Source.UiSourceCode);
+    sources.add(Source.UiSources);
+    sources.add(Source.UiSourceSelector);
 
-    return new Sources(
-        new SourceCode(sources),
+    return new UiSources(
+        new UiSourceCode(sources),
 
-        new SourceSelector(sources)
+        new UiSourceSelector(sources)
     );
   }
 
