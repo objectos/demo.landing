@@ -245,11 +245,11 @@ final class Seats implements Kino.GET, Kino.POST {
       shell.app = new SeatsView(ctx, state, reservationId, show, grid);
 
       shell.sources(
-          Source.Seats,
-          Source.SeatsData,
-          Source.SeatsGrid,
-          Source.SeatsShow,
-          Source.SeatsView
+        //          Source.Seats,
+      //          Source.SeatsData,
+      //          Source.SeatsGrid,
+      //          Source.SeatsShow,
+      //          Source.SeatsView
       );
     });
   }

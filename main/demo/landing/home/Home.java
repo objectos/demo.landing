@@ -13,31 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.app;
+package demo.landing.home;
 
+import demo.landing.ui.Content;
+import demo.landing.ui.Shell;
+import demo.landing.ui.Source;
+import demo.landing.ui.Sources;
 import module java.base;
 import module objectos.way;
 
-/**
- * The "Now Showing" controller.
- */
-final class NowShowing implements Http.Handler {
+/// The "/home" controller.
+public final class Home implements Http.Handler {
+
+  private final Sources sources = Sources.of(
+      Source.Home,
+      Source.NowShowing
+  );
+
+  private Home() {}
+
+  public static Home create() {
+    return new Home();
+  }
 
   @Override
   public final void handle(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
+    final List<NowShowing> movies;
+    movies = NowShowing.query(trx);
 
     http.ok(
-        new Shell(
-            new NowShowingView(items)
-        //
-        //            Source.NowShowing,
-        //            Source.NowShowingModel,
-        //            Source.NowShowingView
+        Shell.of(
+            Content.of(
+                new Header(),
+
+                new MovieSelector(movies)
+            ),
+
+            sources
         )
     );
   }

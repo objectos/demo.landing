@@ -60,9 +60,9 @@ final class Ticket implements Kino.GET {
         shell.app = new TicketView(model);
 
         shell.sources(
-            Source.Ticket,
-            Source.TicketModel,
-            Source.TicketView
+          //            Source.Ticket,
+        //            Source.TicketModel,
+        //            Source.TicketView
         );
       });
     } else {

@@ -13,33 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.app;
+package demo.landing.home;
 
 import module java.base;
 import module objectos.way;
 
-/**
- * The "Now Showing" controller.
- */
-final class NowShowing implements Http.Handler {
+/// A movie that is now showing at the theater.
+record NowShowing(
+    int id,
+    String title
+) {
 
-  @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
-
-    http.ok(
-        new Shell(
-            new NowShowingView(items)
-        //
-        //            Source.NowShowing,
-        //            Source.NowShowingModel,
-        //            Source.NowShowingView
-        )
+  private NowShowing(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++)
     );
+  }
+
+  public static List<NowShowing> query(Sql.Transaction trx) {
+    trx.sql("""
+    select
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+
+    from
+      MOVIE
+
+    order by
+      MOVIE_ID
+    """);
+
+    return trx.query(NowShowing::new);
   }
 
 }

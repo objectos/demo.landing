@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.app;
+package demo.landing.www;
 
 import static objectos.way.Http.Method.GET;
 
 import demo.landing.LandingDemoConfig;
-import java.time.Clock;
+import demo.landing.app.Transactional;
+import demo.landing.home.Home;
 import module objectos.way;
 
-/// Defines the application routes.
+/// Declares the application routes.
 public final class Routes implements Http.Routing.Module {
-
-  private final Clock clock;
 
   private final Transactional transactional;
 
   public Routes(LandingDemoConfig config) {
-    clock = config.clock;
-
     transactional = Transactional.of(config.stage, config.database);
   }
 
@@ -40,14 +37,14 @@ public final class Routes implements Http.Routing.Module {
       // we filter these requests with transactionl
       demo.filter(transactional, this::routes);
 
-      demo.handler(new NotFound());
+      demo.handler(Http.Handler.notFound());
     });
   }
 
   private void routes(Http.RoutingPath routes) {
-    routes.subpath("home", GET, new NowShowing());
+    routes.subpath("home", GET, Home.create());
 
-    routes.subpath("movie/{id}", GET, new Movie(clock));
+    //routes.subpath("movie/{id}", GET, new Movie(clock));
   }
 
 }

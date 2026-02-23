@@ -99,10 +99,10 @@ final class Confirm implements Kino.GET, Kino.POST {
       shell.app = new ConfirmView(ctx, details);
 
       shell.sources(
-          Source.Confirm,
-          Source.ConfirmData,
-          Source.ConfirmDetails,
-          Source.ConfirmView
+        //          Source.Confirm,
+      //          Source.ConfirmData,
+      //          Source.ConfirmDetails,
+      //          Source.ConfirmView
       );
     });
   }

@@ -13,32 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.app;
+package demo.landing.ui;
 
-import module java.base;
-import module objectos.way;
+import objectos.way.Html;
 
-/**
- * The "Now Showing" controller.
- */
-final class NowShowing implements Http.Handler {
+public record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 
-  @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+  private static int INDEX = 0;
 
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
+  public static SourceModel create(String name, String value) {
+    final int index;
+    index = INDEX++;
 
-    http.ok(
-        new Shell(
-            new NowShowingView(items)
-        //
-        //            Source.NowShowing,
-        //            Source.NowShowingModel,
-        //            Source.NowShowingView
-        )
+    return new SourceModel(
+        name,
+
+        value,
+
+        Html.Id.of("src-btn-" + index),
+
+        Html.Id.of("src-panel-" + index)
     );
   }
 

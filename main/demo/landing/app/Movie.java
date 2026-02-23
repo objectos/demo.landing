@@ -59,12 +59,12 @@ final class Movie implements Http.Handler {
 
     http.ok(
         new Shell(
-            new MovieView(details, screenings),
+            new MovieView(details, screenings)
 
-            Source.Movie,
-            Source.MovieDetails,
-            Source.MovieScreening,
-            Source.MovieView
+        //            Source.Movie,
+        //            Source.MovieDetails,
+        //            Source.MovieScreening,
+        //            Source.MovieView
         )
     );
   }

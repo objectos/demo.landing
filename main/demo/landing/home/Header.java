@@ -13,31 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.app;
+package demo.landing.home;
 
-import module java.base;
 import module objectos.way;
 
-/**
- * The "Now Showing" controller.
- */
-final class NowShowing implements Http.Handler {
+/// Renders the "Now Showing" header.
+final class Header extends Html.Template {
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+  protected final void render() {
+    div(
+        css("""
+        margin-bottom:32rx
+        """),
 
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
+        h2(
+            text("Now Showing")
+        ),
 
-    http.ok(
-        new Shell(
-            new NowShowingView(items)
-        //
-        //            Source.NowShowing,
-        //            Source.NowShowingModel,
-        //            Source.NowShowingView
+        p(
+            text("Please choose a movie")
         )
     );
   }

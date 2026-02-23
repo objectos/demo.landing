@@ -62,12 +62,12 @@ final class Shell extends Kino.View {
       sources.add(item);
     }
 
-    sources.add(Source.Kino);
-    sources.add(Source.Shell);
-    sources.add(Source.ShellMain);
-    sources.add(Source.ShellSourceCode);
-    sources.add(Source.ShellSourceSelector);
-    sources.add(Source.SourceModel_);
+    //    sources.add(Source.Kino);
+    //    sources.add(Source.Shell);
+    //    sources.add(Source.ShellMain);
+    //    sources.add(Source.ShellSourceCode);
+    //    sources.add(Source.ShellSourceSelector);
+    //    sources.add(Source.SourceModel_);
 
     sourceCode = new ShellSourceCode(sources);
 

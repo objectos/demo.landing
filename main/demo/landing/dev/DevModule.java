@@ -17,7 +17,7 @@ package demo.landing.dev;
 
 import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
-import demo.landing.app.Routes;
+import demo.landing.www.Routes;
 import java.nio.file.Path;
 import objectos.way.App;
 import objectos.way.Css;

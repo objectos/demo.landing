@@ -24,8 +24,8 @@ final class NotFound implements Kino.GET, Kino.POST, Http.Handler {
       shell.app = new NotFoundView();
 
       shell.sources(
-          Source.NotFound,
-          Source.NotFoundView
+        //          Source.NotFound,
+      //          Source.NotFoundView
       );
     });
   }
@@ -34,10 +34,10 @@ final class NotFound implements Kino.GET, Kino.POST, Http.Handler {
   public final void handle(Http.Exchange http) {
     http.notFound(
         new Shell(
-            new NotFoundView(),
+            new NotFoundView()
 
-            Source.NotFound,
-            Source.NotFoundView
+        //            Source.NotFound,
+        //            Source.NotFoundView
         )
     );
   }
