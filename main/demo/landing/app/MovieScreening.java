@@ -15,57 +15,22 @@
  */
 package demo.landing.app;
 
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import objectos.way.Sql;
 
+/// The showing of a movie in this theater.
 record MovieScreening(
     int screenId,
     String screenName,
     String features,
     String date,
-    List<Showtime> showtimes
+    List<MovieShowtime> showtimes
 ) {
-
-  record Showtime(int showId, String time) {
-
-    Showtime(Object[] row) {
-      this(
-          Integer.parseInt(row[0].toString()),
-          row[1].toString()
-      );
-    }
-
-    static List<Showtime> of(Array array) throws SQLException {
-      Object[] values;
-      values = (Object[]) array.getArray();
-
-      List<Showtime> list;
-      list = new ArrayList<>(values.length);
-
-      for (Object value : values) {
-        Array inner;
-        inner = (Array) value;
-
-        Object[] row;
-        row = (Object[]) inner.getArray();
-
-        Showtime showtime;
-        showtime = new Showtime(row);
-
-        list.add(showtime);
-      }
-
-      return List.copyOf(list);
-    }
-
-  }
 
   MovieScreening(ResultSet rs, int idx) throws SQLException {
     this(
@@ -73,7 +38,7 @@ record MovieScreening(
         rs.getString(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
-        Showtime.of(rs.getArray(idx++))
+        MovieShowtime.of(rs.getArray(idx++))
     );
   }
 

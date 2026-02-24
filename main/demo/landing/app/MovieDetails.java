@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 import objectos.way.Sql;
 
+/// The details of a particular movie.
 record MovieDetails(
     int movieId,
     String title,

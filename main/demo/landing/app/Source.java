@@ -294,17 +294,17 @@ final class KinoStyles implements Css.Library {
   @Override
   public final void configure(Css.Library.Options opts) {
     opts.scanClasses(
-        ConfirmView.class,
-        Kino.View.class,
-        MovieView.class,
-        NotFoundView.class,
-        NowShowingView.class,
-        SeatsView.class,
-        Shell.class,
-        ShellMain.class,
-        ShellSourceCode.class,
-        ShellSourceSelector.class,
-        TicketView.class
+        HomeHeader.class,
+        HomeList.class,
+        MovieDetailsUi.class,
+        MovieScreeningUi.class,
+        UiBackLink.class,
+        UiContent.class,
+        UiIcon.class,
+        UiShell.class,
+        UiSourceCode.class,
+        UiSources.class,
+        UiSourceSelector.class
     );
 
     opts.theme(\"""
@@ -432,6 +432,7 @@ package demo.landing.app;
 import java.util.Objects;
 import module objectos.way;
 
+/// Renders the back button of the application.
 final class UiBackLink extends Html.Template {
 
   private final String url;
@@ -1298,7 +1299,7 @@ public final class Kino implements LandingDemo {
 
       Reservation reservation,
 
-      Transactional transactional
+      AppTransactional transactional
   ) {
 
     static Ctx of(LandingDemoConfig config) {
@@ -1317,8 +1318,8 @@ public final class Kino implements LandingDemo {
       final Reservation reservation;
       reservation = new Reservation(clock, config.reservationEpoch, config.reservationRandom);
 
-      final Transactional transactional;
-      transactional = new Transactional(config.stage, config.database);
+      final AppTransactional transactional;
+      transactional = new AppTransactional(config.stage, config.database);
 
       return new Ctx(clock, codec, noteSink, reservation, transactional);
     }
@@ -1474,7 +1475,7 @@ import module java.base;
 import module objectos.way;
 
 /// The "/home" controller.
-public final class Home implements Http.Handler {
+final class Home implements Http.Handler {
 
   private final UiSources sources = UiSources.of(
       Source.Home,
@@ -1856,6 +1857,124 @@ record HomeModel(
 }
 """);
 
+  static final SourceModel AppTransactional = SourceModel.create("AppTransactional.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import demo.landing.app.Kino.Action;
+import module java.base;
+import module objectos.way;
+
+/// Filters HTTP requests around a SQL transaction and performs a no-op in
+/// testing environments.
+final class AppTransactional implements Http.Filter {
+
+  private final Kino.Stage stage;
+
+  private final Sql.Database db;
+
+  AppTransactional(Kino.Stage stage, Sql.Database db) {
+    this.stage = stage;
+
+    this.db = db;
+  }
+
+  public static AppTransactional of(Kino.Stage stage, Sql.Database db) {
+    Objects.requireNonNull(stage, "stage == null");
+    Objects.requireNonNull(db, "db == null");
+
+    return new AppTransactional(stage, db);
+  }
+
+  public final Html.Component get(Http.Exchange http, Kino.GET action) {
+    return execute(http, action::get);
+  }
+
+  public final Kino.PostResult post(Http.Exchange http, Kino.POST action) {
+    return execute(http, action::post);
+  }
+
+  @Override
+  public final void filter(Http.Exchange http, Http.Handler handler) {
+    switch (stage) {
+      case DEFAULT -> {
+        final Sql.Transaction trx;
+        trx = db.beginTransaction(Sql.READ_COMMITED);
+
+        try {
+          trx.sql("set schema CINEMA");
+
+          trx.update();
+
+          http.set(Sql.Transaction.class, trx);
+
+          handler.handle(http);
+
+          trx.commit();
+        } catch (Throwable e) {
+          throw trx.rollbackAndWrap(e);
+        } finally {
+          trx.close();
+        }
+      }
+
+      // this is a no-op during testing.
+      case TESTING -> handler.handle(http);
+    }
+  }
+
+  private <T> T execute(Http.Exchange http, Action<T> action) {
+    return switch (stage) {
+      case DEFAULT -> {
+
+        final Sql.Transaction trx;
+        trx = db.beginTransaction(Sql.READ_COMMITED);
+
+        try {
+
+          trx.sql("set schema CINEMA");
+
+          trx.update();
+
+          http.set(Sql.Transaction.class, trx);
+
+          final T result;
+          result = action.execute(http);
+
+          trx.commit();
+
+          yield result;
+
+        } catch (Throwable e) {
+          throw trx.rollbackAndWrap(e);
+        } finally {
+          trx.close();
+        }
+
+      }
+
+      // this is a no-op during testing.
+      case TESTING -> action.execute(http);
+    };
+  }
+
+}
+""");
+
   static final SourceModel TicketModel = SourceModel.create("TicketModel.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2188,9 +2307,12 @@ import java.util.Optional;
 import objectos.way.Http;
 import objectos.way.Sql;
 
+/// The "/movie/{id}" controller.
 final class Movie implements Http.Handler {
 
   private final Clock clock;
+
+  private final UiSources sources = UiSources.of();
 
   Movie(Clock clock) {
     this.clock = clock;
@@ -2217,20 +2339,23 @@ final class Movie implements Http.Handler {
     final MovieDetails details;
     details = maybeDetails.get();
 
-    final LocalDateTime today;
-    today = LocalDateTime.now(clock);
+    final LocalDateTime now;
+    now = LocalDateTime.now(clock);
 
     final List<MovieScreening> screenings;
-    screenings = MovieScreening.query(trx, movieId, today);
+    screenings = MovieScreening.query(trx, movieId, now);
 
     http.ok(
-        new Shell(
-            new MovieView(details, screenings)
+        UiShell.of(
+            UiContent.of(
+                UiBackLink.of("/demo.landing/home"),
 
-        //            Source.Movie,
-        //            Source.MovieDetails,
-        //            Source.MovieScreening,
-        //            Source.MovieView
+                new MovieDetailsUi(details),
+
+                new MovieScreeningUi(screenings)
+            ),
+
+            sources
         )
     );
   }
@@ -2518,7 +2643,8 @@ package demo.landing.app;
 
 import module objectos.way;
 
-public enum UiIcon {
+/// Renders a SVG icon.
+enum UiIcon {
 
   ARROW_LEFT(\"""
   <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>\"""),
@@ -2740,9 +2866,9 @@ public final class UiContent extends Html.Template {
 
 """);
 
-  static final SourceModel NowShowing = SourceModel.create("NowShowing.java", """
+  static final SourceModel MovieShowtime = SourceModel.create("MovieShowtime.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2758,31 +2884,42 @@ public final class UiContent extends Html.Template {
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
+import java.sql.Array;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
-/**
- * The "Now Showing" controller.
- */
-final class NowShowing implements Http.Handler {
+/// The time of a particular movie screening.
+record MovieShowtime(int showId, String time) {
 
-  @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final List<NowShowingModel> items;
-    items = NowShowingModel.query(trx);
-
-    http.ok(
-        new Shell(
-            new NowShowingView(items)
-        //
-        //            Source.NowShowing,
-        //            Source.NowShowingModel,
-        //            Source.NowShowingView
-        )
+  private MovieShowtime(Object[] row) {
+    this(
+        Integer.parseInt(row[0].toString()),
+        row[1].toString()
     );
+  }
+
+  static List<MovieShowtime> of(Array array) throws SQLException {
+    Object[] values;
+    values = (Object[]) array.getArray();
+
+    List<MovieShowtime> list;
+    list = new ArrayList<>(values.length);
+
+    for (Object value : values) {
+      Array inner;
+      inner = (Array) value;
+
+      Object[] row;
+      row = (Object[]) inner.getArray();
+
+      MovieShowtime showtime;
+      showtime = new MovieShowtime(row);
+
+      list.add(showtime);
+    }
+
+    return List.copyOf(list);
   }
 
 }
@@ -3148,8 +3285,8 @@ final class HomeList extends Html.Template {
   }
 
   private void renderMovies() {
-    for (HomeModel item : movies) {
-      renderItem(item);
+    for (HomeModel movie : movies) {
+      renderItem(movie);
     }
   }
 
@@ -3356,6 +3493,107 @@ record SeatsShow(
     \""");
 
     trx.param(reservationId);
+  }
+
+}
+""");
+
+  static final SourceModel MovieDetailsUi = SourceModel.create("MovieDetailsUi.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module objectos.way;
+
+/// Renders the movie details.
+final class MovieDetailsUi extends Html.Template {
+
+  private final MovieDetails details;
+
+  MovieDetailsUi(MovieDetails details) {
+    this.details = details;
+  }
+
+  @Override
+  protected final void render() {
+    div(
+        css(\"""
+        display:grid
+        gap:16rx
+        grid-template-columns:1fr_160rx
+        \"""),
+
+        f(this::renderMovieDetails)
+    );
+  }
+
+  private void renderMovieDetails() {
+    div(
+        h2(testableH1(details.title())),
+
+        p(testableField("synopsys", details.synopsys())),
+
+        dl(
+            css(\"""
+            display:grid
+            font-size:14rx
+            grid-template-columns:repeat(2,1fr)
+
+            &_dt/font-weight:600
+            &_dt/padding-top:12rx
+            \"""),
+
+            div(
+                dt("Rating"),
+                dd("N/A")
+            ),
+
+            div(
+                dt("Runtime"),
+                dd(testableField("runtime", details.runtime()))
+            ),
+
+            div(
+                dt("Release date"),
+                dd(testableField("release-date", details.releaseDate()))
+            ),
+
+            div(
+                dt("Genres"),
+                dd(testableField("genres", details.genres()))
+            )
+        )
+    );
+
+    div(
+        css(\"""
+        padding-top:16rx
+        \"""),
+
+        img(
+            css(\"""
+            border-radius:6rx
+            width:100%
+            \"""),
+
+            alt(details.title()),
+
+            src("/demo/landing/poster" + details.movieId() + ".jpg")
+        )
+    );
   }
 
 }
@@ -3578,7 +3816,7 @@ final record ConfirmDetails(
 }
 """);
 
-  static final SourceModel NowShowingView = SourceModel.create("NowShowingView.java", """
+  static final SourceModel AppRoutes = SourceModel.create("AppRoutes.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
  *
@@ -3596,213 +3834,43 @@ final record ConfirmDetails(
  */
 package demo.landing.app;
 
-import module java.base;
+import static objectos.way.Http.Method.GET;
+
+import demo.landing.LandingDemoConfig;
+import java.time.Clock;
 import module objectos.way;
 
-/**
- * Renders the "Now Showing" view.
- */
-final class NowShowingView extends Html.Template {
+/// Declares the application routes.
+public final class AppRoutes implements Http.Routing.Module {
 
-  private final List<NowShowingModel> items;
+  private final Clock clock;
 
-  NowShowingView(List<NowShowingModel> items) {
-    this.items = items;
+  private final AppTransactional transactional;
+
+  public AppRoutes(LandingDemoConfig config) {
+    clock = config.clock;
+
+    transactional = AppTransactional.of(config.stage, config.database);
   }
 
   @Override
-  protected final void render() {
-    div(
-        css(\"""
-        margin-bottom:32rx
-        \"""),
+  public final void configure(Http.Routing routing) {
+    routing.path("/demo.landing/{}", demo -> {
+      // we filter these requests with transactionl
+      demo.filter(transactional, this::routes);
 
-        h2(
-            text("Now Showing")
-        ),
-
-        p(
-            text("Please choose a movie")
-        )
-    );
-
-    ul(
-        css(\"""
-        display:flex
-        flex-wrap:wrap
-        gap:16rx
-        justify-content:space-evenly
-        \"""),
-
-        f(this::renderItems)
-    );
+      demo.handler(Http.Handler.notFound());
+    });
   }
 
-  private void renderItems() {
-    for (NowShowingModel item : items) {
-      li(
-          css(\"""
-          flex:0_0_128rx
-          \"""),
+  private void routes(Http.RoutingPath routes) {
+    routes.subpath("home", GET, new Home());
 
-          div(
-              css(\"""
-              group
-              hover/cursor:pointer
-              \"""),
-
-              onclick(Kino.link("/demo.landing/movie/" + item.id())),
-
-              img(
-                  css(\"""
-                  aspect-ratio:2/3
-                  background-color:var(--color-neutral-400)
-                  border-radius:6rx
-
-                  &:is(:where(.group):hover_*)/outline:2px_solid_var(--color-gray-500)
-                  \"""),
-
-                  src("/demo/landing/poster" + item.id() + ".jpg")
-              ),
-
-              h3(
-                  css(\"""
-                  font-size:14rx
-                  line-height:18rx
-                  text-align:center
-                  padding-top:8rx
-
-                  &:is(:where(.group):hover_*)/text-decoration:underline
-                  \"""),
-
-                  text(
-                      testableField("movie.title", item.title())
-                  )
-              )
-          )
-      );
-    }
+    routes.subpath("movie/{id}", GET, new Movie(clock));
   }
 
 }
-""");
 
-  static final SourceModel Transactional = SourceModel.create("Transactional.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import demo.landing.app.Kino.Action;
-import module java.base;
-import module objectos.way;
-
-/// Filters HTTP requests around a SQL transaction. It is a no-op in a
-/// testing environment.
-public final class Transactional implements Http.Filter {
-
-  private final Kino.Stage stage;
-
-  private final Sql.Database db;
-
-  Transactional(Kino.Stage stage, Sql.Database db) {
-    this.stage = stage;
-
-    this.db = db;
-  }
-
-  public static Transactional of(Kino.Stage stage, Sql.Database db) {
-    Objects.requireNonNull(stage, "stage == null");
-    Objects.requireNonNull(db, "db == null");
-
-    return new Transactional(stage, db);
-  }
-
-  public final Html.Component get(Http.Exchange http, Kino.GET action) {
-    return execute(http, action::get);
-  }
-
-  public final Kino.PostResult post(Http.Exchange http, Kino.POST action) {
-    return execute(http, action::post);
-  }
-
-  @Override
-  public final void filter(Http.Exchange http, Http.Handler handler) {
-    switch (stage) {
-      case DEFAULT -> {
-        final Sql.Transaction trx;
-        trx = db.beginTransaction(Sql.READ_COMMITED);
-
-        try {
-          trx.sql("set schema CINEMA");
-
-          trx.update();
-
-          http.set(Sql.Transaction.class, trx);
-
-          handler.handle(http);
-
-          trx.commit();
-        } catch (Throwable e) {
-          throw trx.rollbackAndWrap(e);
-        } finally {
-          trx.close();
-        }
-      }
-
-      // this is a no-op during testing.
-      case TESTING -> handler.handle(http);
-    }
-  }
-
-  private <T> T execute(Http.Exchange http, Action<T> action) {
-    return switch (stage) {
-      case DEFAULT -> {
-
-        final Sql.Transaction trx;
-        trx = db.beginTransaction(Sql.READ_COMMITED);
-
-        try {
-
-          trx.sql("set schema CINEMA");
-
-          trx.update();
-
-          http.set(Sql.Transaction.class, trx);
-
-          final T result;
-          result = action.execute(http);
-
-          trx.commit();
-
-          yield result;
-
-        } catch (Throwable e) {
-          throw trx.rollbackAndWrap(e);
-        } finally {
-          trx.close();
-        }
-
-      }
-
-      // this is a no-op during testing.
-      case TESTING -> action.execute(http);
-    };
-  }
-
-}
 """);
 
   static final SourceModel SeatsView = SourceModel.create("SeatsView.java", """
@@ -4152,6 +4220,177 @@ final class SeatsView extends Kino.View {
 }
 """);
 
+  static final SourceModel MovieScreeningUi = SourceModel.create("MovieScreeningUi.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module java.base;
+import module objectos.way;
+
+/**
+ * Movie details and screening selection view.
+ */
+final class MovieScreeningUi extends Html.Template {
+
+  private final List<MovieScreening> screenings;
+
+  MovieScreeningUi(List<MovieScreening> screenings) {
+    this.screenings = screenings;
+  }
+
+  @Override
+  protected final void render() {
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        gap:16rx
+        padding:64rx_0_0
+        \"""),
+
+        h3(
+            css(\"""
+            font-size:24rx
+            font-weight:300
+            line-height:1
+            \"""),
+
+            text(testableH1("Showtimes"))
+        ),
+
+        f(this::renderList)
+    );
+  }
+
+  private void renderList() {
+    for (MovieScreening screening : screenings) {
+      renderItem(screening);
+    }
+  }
+
+  private void renderItem(MovieScreening screening) {
+    div(
+        css(\"""
+        border:1px_solid_var(--color-border)
+        display:flex
+        gap:32rx
+        padding:16rx
+        position:relative
+        \"""),
+
+        div(
+            css(\"""
+            align-items:center
+            display:flex
+            flex-direction:column
+            gap:8rx
+            justify-content:center
+            \"""),
+
+            c(
+                UiIcon.CALENDAR_CHECK.css(\"""
+                stroke:icon
+                \""")
+            ),
+
+            span(
+                css(\"""
+                text-align:center
+                width:6rch
+                \"""),
+
+                text(testableH2(screening.date()))
+            )
+        ),
+
+        div(
+            h4(
+                css(\"""
+                font-weight:500
+                line-height:1
+                padding-top:8rx
+                \"""),
+
+                text(testableField("screen", screening.screenName()))
+            ),
+
+            div(
+                css(\"""
+                font-size:14rx
+                font-weight:300
+                padding:8rx_0
+                \"""),
+
+                text(testableField("features", screening.features()))
+            ),
+
+            ul(
+                css(\"""
+                display:flex
+                flex-wrap:wrap
+                gap:12rx
+                \"""),
+
+                testableNewLine(),
+
+                f(this::renderShowtimes, screening.showtimes())
+            )
+        )
+    );
+  }
+
+  private void renderShowtimes(List<MovieShowtime> showtimes) {
+    for (MovieShowtime showtime : showtimes) {
+      final int showId;
+      showId = showtime.showId();
+
+      testableCell(Integer.toString(showId), 32);
+
+      final String time;
+      time = showtime.time();
+
+      li(
+          div(
+              css(\"""
+              border:1px_solid_var(--color-border)
+              border-radius:9999px
+              display:flex
+              padding:8rx_16rx
+
+              active/background-color:var(--color-btn-ghost-active)
+              hover/background-color:var(--color-btn-ghost-hover)
+              hover/cursor:pointer
+              \"""),
+
+              onclick(Kino.link("/demo.landing/show/" + showId)),
+
+              rel("nofollow"),
+
+              span(testableCell(time, 5))
+          ),
+
+          testableNewLine()
+      );
+    }
+  }
+
+}
+""");
+
   static final SourceModel UiSources = SourceModel.create("UiSources.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -4220,63 +4459,6 @@ public final class UiSources extends Html.Template {
 
 """);
 
-  static final SourceModel NowShowingModel = SourceModel.create("NowShowingModel.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.List;
-import objectos.way.Sql;
-
-/**
- * Represents a movie in the "Now Showing" view.
- */
-record NowShowingModel(
-    int id,
-    String title
-) {
-
-  private NowShowingModel(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++)
-    );
-  }
-
-  public static List<NowShowingModel> query(Sql.Transaction trx) {
-    trx.sql(\"""
-    select
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-
-    from
-      MOVIE
-
-    order by
-      MOVIE_ID
-    \""");
-
-    return trx.query(NowShowingModel::new);
-  }
-
-}
-""");
-
   static final SourceModel MovieScreening = SourceModel.create("MovieScreening.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -4295,57 +4477,22 @@ record NowShowingModel(
  */
 package demo.landing.app;
 
-import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
 import java.util.List;
 import objectos.way.Sql;
 
+/// The showing of a movie in this theater.
 record MovieScreening(
     int screenId,
     String screenName,
     String features,
     String date,
-    List<Showtime> showtimes
+    List<MovieShowtime> showtimes
 ) {
-
-  record Showtime(int showId, String time) {
-
-    Showtime(Object[] row) {
-      this(
-          Integer.parseInt(row[0].toString()),
-          row[1].toString()
-      );
-    }
-
-    static List<Showtime> of(Array array) throws SQLException {
-      Object[] values;
-      values = (Object[]) array.getArray();
-
-      List<Showtime> list;
-      list = new ArrayList<>(values.length);
-
-      for (Object value : values) {
-        Array inner;
-        inner = (Array) value;
-
-        Object[] row;
-        row = (Object[]) inner.getArray();
-
-        Showtime showtime;
-        showtime = new Showtime(row);
-
-        list.add(showtime);
-      }
-
-      return List.copyOf(list);
-    }
-
-  }
 
   MovieScreening(ResultSet rs, int idx) throws SQLException {
     this(
@@ -4353,7 +4500,7 @@ record MovieScreening(
         rs.getString(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
-        Showtime.of(rs.getArray(idx++))
+        MovieShowtime.of(rs.getArray(idx++))
     );
   }
 
@@ -4442,6 +4589,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 import objectos.way.Sql;
 
+/// The details of a particular movie.
 record MovieDetails(
     int movieId,
     String title,
@@ -4904,58 +5052,6 @@ final class ShellMain extends Html.Template {
 
 """);
 
-  static final SourceModel Routes = SourceModel.create("Routes.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import static objectos.way.Http.Method.GET;
-
-import demo.landing.LandingDemoConfig;
-import module objectos.way;
-
-/// Declares the application routes.
-public final class Routes implements Http.Routing.Module {
-
-  private final Transactional transactional;
-
-  public Routes(LandingDemoConfig config) {
-    transactional = Transactional.of(config.stage, config.database);
-  }
-
-  @Override
-  public final void configure(Http.Routing routing) {
-    routing.path("/demo.landing/{}", demo -> {
-      // we filter these requests with transactionl
-      demo.filter(transactional, this::routes);
-
-      demo.handler(Http.Handler.notFound());
-    });
-  }
-
-  private void routes(Http.RoutingPath routes) {
-    routes.subpath("home", GET, new Home());
-
-    //routes.subpath("movie/{id}", GET, new Movie(clock));
-  }
-
-}
-
-""");
-
   static final SourceModel Ticket = SourceModel.create("Ticket.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -5026,274 +5122,6 @@ final class Ticket implements Kino.GET {
       });
     } else {
       return NotFound.create();
-    }
-  }
-
-}
-""");
-
-  static final SourceModel MovieView = SourceModel.create("MovieView.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import module java.base;
-import module objectos.way;
-
-/**
- * Movie details and screening selection view.
- */
-final class MovieView extends Html.Template {
-
-  private final MovieDetails details;
-
-  private final List<MovieScreening> screenings;
-
-  MovieView(MovieDetails details, List<MovieScreening> screenings) {
-    this.details = details;
-
-    this.screenings = screenings;
-  }
-
-  @Override
-  protected final void render() {
-    c(
-        UiBackLink.of("/demo.landing/home")
-    );
-
-    div(
-        css(\"""
-        display:grid
-        gap:16rx
-        grid-template-columns:1fr_160rx
-        \"""),
-
-        f(this::renderMovieDetails)
-    );
-
-    div(
-        css(\"""
-        display:flex
-        flex-direction:column
-        gap:16rx
-        padding:64rx_0_0
-        \"""),
-
-        f(this::renderMovieScreenings)
-    );
-  }
-
-  private void renderMovieDetails() {
-    div(
-        h2(
-            text(testableH1(details.title()))
-        ),
-
-        p(
-            text(testableField("synopsys", details.synopsys()))
-        ),
-
-        dl(
-            css(\"""
-            display:grid
-            font-size:14rx
-            grid-template-columns:repeat(2,1fr)
-
-            &_dt/font-weight:600
-            &_dt/padding-top:12rx
-            \"""),
-
-            div(
-                dt(
-                    text("Rating")
-                ),
-
-                dd(
-                    text("N/A")
-                )
-            ),
-
-            div(
-                dt(
-                    text("Runtime")
-                ),
-
-                dd(
-                    text(testableField("runtime", details.runtime()))
-                )
-            ),
-
-            div(
-                dt(
-                    text("Release date")
-                ),
-
-                dd(
-                    text(testableField("release-date", details.releaseDate()))
-                )
-            ),
-
-            div(
-                dt(
-                    text("Genres")
-                ),
-
-                dd(
-                    text(testableField("genres", details.genres()))
-                )
-            )
-        )
-
-    );
-
-    div(
-        css(\"""
-        padding-top:16rx
-        \"""),
-
-        img(
-            css(\"""
-            border-radius:6rx
-            width:100%
-            \"""),
-
-            alt(details.title()),
-
-            src("/demo/landing/poster" + details.movieId() + ".jpg")
-        )
-    );
-  }
-
-  private void renderMovieScreenings() {
-    h3(
-        css(\"""
-        font-size:24rx
-        font-weight:300
-        line-height:1
-        \"""),
-
-        text(testableH1("Showtimes"))
-    );
-
-    for (MovieScreening screening : screenings) {
-      div(
-          css(\"""
-          border:1px_solid_var(--color-border)
-          display:flex
-          gap:32rx
-          padding:16rx
-          position:relative
-          \"""),
-
-          div(
-              css(\"""
-              align-items:center
-              display:flex
-              flex-direction:column
-              gap:8rx
-              justify-content:center
-              \"""),
-
-              c(
-                  UiIcon.CALENDAR_CHECK.css(\"""
-                  stroke:icon
-                  \""")
-              ),
-
-              span(
-                  css(\"""
-                  text-align:center
-                  width:6rch
-                  \"""),
-
-                  text(testableH2(screening.date()))
-              )
-          ),
-
-          div(
-
-              h4(
-                  css(\"""
-                  font-weight:500
-                  line-height:1
-                  padding-top:8rx
-                  \"""),
-
-                  text(testableField("screen", screening.screenName()))
-              ),
-
-              div(
-                  css(\"""
-                  font-size:14rx
-                  font-weight:300
-                  padding:8rx_0
-                  \"""),
-
-                  text(testableField("features", screening.features()))
-              ),
-
-              ul(
-                  css(\"""
-                  display:flex
-                  flex-wrap:wrap
-                  gap:12rx
-                  \"""),
-
-                  testableNewLine(),
-
-                  f(this::renderShowtimes, screening.showtimes())
-              )
-
-          )
-      );
-    }
-  }
-
-  private void renderShowtimes(List<MovieScreening.Showtime> showtimes) {
-    for (MovieScreening.Showtime showtime : showtimes) {
-      final int showId;
-      showId = showtime.showId();
-
-      testableCell(Integer.toString(showId), 32);
-
-      final String time;
-      time = showtime.time();
-
-      li(
-          div(
-              css(\"""
-              border:1px_solid_var(--color-border)
-              border-radius:9999px
-              display:flex
-              padding:8rx_16rx
-
-              active/background-color:var(--color-btn-ghost-active)
-              hover/background-color:var(--color-btn-ghost-hover)
-              hover/cursor:pointer
-              \"""),
-
-              onclick(Kino.link("/demo.landing/show/" + showId)),
-
-              rel("nofollow"),
-
-              span(testableCell(time, 5))
-          ),
-
-          testableNewLine()
-      );
     }
   }
 

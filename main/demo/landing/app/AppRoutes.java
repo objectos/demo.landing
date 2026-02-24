@@ -18,14 +18,19 @@ package demo.landing.app;
 import static objectos.way.Http.Method.GET;
 
 import demo.landing.LandingDemoConfig;
+import java.time.Clock;
 import module objectos.way;
 
 /// Declares the application routes.
 public final class AppRoutes implements Http.Routing.Module {
 
+  private final Clock clock;
+
   private final AppTransactional transactional;
 
   public AppRoutes(LandingDemoConfig config) {
+    clock = config.clock;
+
     transactional = AppTransactional.of(config.stage, config.database);
   }
 
@@ -42,7 +47,7 @@ public final class AppRoutes implements Http.Routing.Module {
   private void routes(Http.RoutingPath routes) {
     routes.subpath("home", GET, new Home());
 
-    //routes.subpath("movie/{id}", GET, new Movie(clock));
+    routes.subpath("movie/{id}", GET, new Movie(clock));
   }
 
 }

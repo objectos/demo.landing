@@ -24,6 +24,8 @@ final class KinoStyles implements Css.Library {
     opts.scanClasses(
         HomeHeader.class,
         HomeList.class,
+        MovieDetailsUi.class,
+        MovieScreeningUi.class,
         UiBackLink.class,
         UiContent.class,
         UiIcon.class,

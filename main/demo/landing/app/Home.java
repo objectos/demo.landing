@@ -19,7 +19,7 @@ import module java.base;
 import module objectos.way;
 
 /// The "/home" controller.
-public final class Home implements Http.Handler {
+final class Home implements Http.Handler {
 
   private final UiSources sources = UiSources.of(
       Source.Home,

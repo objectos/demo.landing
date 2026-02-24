@@ -22,9 +22,12 @@ import java.util.Optional;
 import objectos.way.Http;
 import objectos.way.Sql;
 
+/// The "/movie/{id}" controller.
 final class Movie implements Http.Handler {
 
   private final Clock clock;
+
+  private final UiSources sources = UiSources.of();
 
   Movie(Clock clock) {
     this.clock = clock;
@@ -51,20 +54,23 @@ final class Movie implements Http.Handler {
     final MovieDetails details;
     details = maybeDetails.get();
 
-    final LocalDateTime today;
-    today = LocalDateTime.now(clock);
+    final LocalDateTime now;
+    now = LocalDateTime.now(clock);
 
     final List<MovieScreening> screenings;
-    screenings = MovieScreening.query(trx, movieId, today);
+    screenings = MovieScreening.query(trx, movieId, now);
 
     http.ok(
-        new Shell(
-            new MovieView(details, screenings)
+        UiShell.of(
+            UiContent.of(
+                UiBackLink.of("/demo.landing/home"),
 
-        //            Source.Movie,
-        //            Source.MovieDetails,
-        //            Source.MovieScreening,
-        //            Source.MovieView
+                new MovieDetailsUi(details),
+
+                new MovieScreeningUi(screenings)
+            ),
+
+            sources
         )
     );
   }

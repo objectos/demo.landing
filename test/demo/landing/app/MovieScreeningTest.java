@@ -93,9 +93,9 @@ public class MovieScreeningTest {
           s0.showtimes(),
 
           List.of(
-              new MovieScreening.Showtime(61, "13:00"),
-              new MovieScreening.Showtime(62, "17:00"),
-              new MovieScreening.Showtime(63, "21:00")
+              new MovieShowtime(61, "13:00"),
+              new MovieShowtime(62, "17:00"),
+              new MovieShowtime(63, "21:00")
           )
       );
 
@@ -110,8 +110,8 @@ public class MovieScreeningTest {
           s1.showtimes(),
 
           List.of(
-              new MovieScreening.Showtime(64, "14:00"),
-              new MovieScreening.Showtime(65, "18:00")
+              new MovieShowtime(64, "14:00"),
+              new MovieShowtime(65, "18:00")
           )
       );
 
@@ -126,7 +126,7 @@ public class MovieScreeningTest {
           s2.showtimes(),
 
           List.of(
-              new MovieScreening.Showtime(66, "13:00")
+              new MovieShowtime(66, "13:00")
           )
       );
     });
@@ -156,8 +156,8 @@ public class MovieScreeningTest {
           s0.showtimes(),
 
           List.of(
-              new MovieScreening.Showtime(62, "17:00"),
-              new MovieScreening.Showtime(63, "21:00")
+              new MovieShowtime(62, "17:00"),
+              new MovieShowtime(63, "21:00")
           )
       );
 
@@ -172,8 +172,8 @@ public class MovieScreeningTest {
           s1.showtimes(),
 
           List.of(
-              new MovieScreening.Showtime(64, "14:00"),
-              new MovieScreening.Showtime(65, "18:00")
+              new MovieShowtime(64, "14:00"),
+              new MovieShowtime(65, "18:00")
           )
       );
 
@@ -188,7 +188,7 @@ public class MovieScreeningTest {
           s2.showtimes(),
 
           List.of(
-              new MovieScreening.Showtime(66, "13:00")
+              new MovieShowtime(66, "13:00")
           )
       );
     });
@@ -218,7 +218,7 @@ public class MovieScreeningTest {
           s0.showtimes(),
 
           List.of(
-              new MovieScreening.Showtime(63, "21:00")
+              new MovieShowtime(63, "21:00")
           )
       );
 
@@ -233,7 +233,7 @@ public class MovieScreeningTest {
           s2.showtimes(),
 
           List.of(
-              new MovieScreening.Showtime(66, "13:00")
+              new MovieShowtime(66, "13:00")
           )
       );
     });

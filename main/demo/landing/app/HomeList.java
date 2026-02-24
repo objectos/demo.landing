@@ -42,8 +42,8 @@ final class HomeList extends Html.Template {
   }
 
   private void renderMovies() {
-    for (HomeModel item : movies) {
-      renderItem(item);
+    for (HomeModel movie : movies) {
+      renderItem(movie);
     }
   }
 
