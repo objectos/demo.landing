@@ -107,8 +107,6 @@ public final class Kino implements LandingDemo {
 
       case TICKET -> new Ticket();
 
-      case BAD_REQUEST -> new NotFound();
-
       default -> throw new UnsupportedOperationException();
     };
 
@@ -131,7 +129,7 @@ public final class Kino implements LandingDemo {
 
       case SEATS -> new Seats(ctx);
 
-      default -> new NotFound();
+      default -> throw new UnsupportedOperationException();
     };
 
     return ctx.transactional(http, controller);

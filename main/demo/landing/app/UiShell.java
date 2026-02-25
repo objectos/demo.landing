@@ -22,12 +22,22 @@ import module objectos.way;
 /// top/right and the source code on the bottom/left.
 abstract class UiShell extends Html.Template {
 
+  static final Html.ClassName PRIMARY = Html.ClassName.ofText("""
+    appearance:none
+    background-color:var(--color-btn-primary)
+    color:var(--color-btn-primary-text)
+    cursor:pointer
+    display:flex
+    font-size:14rx
+    min-height:48rx
+    padding:14rx_63rx_14rx_15rx
+
+    active/background-color:var(--color-btn-primary-active)
+    hover/background-color:var(--color-btn-primary-hover)
+    """);
+
   protected final JsAction follow(String url) {
     return Js.byId(AppRoutes.ID).render(url);
-  }
-
-  public static final JsAction onload() {
-    return Js.byId(AppRoutes.ID).render("/demo.landing/home");
   }
 
   @Override

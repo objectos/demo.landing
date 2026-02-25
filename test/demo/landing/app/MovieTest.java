@@ -149,7 +149,7 @@ public class MovieTest {
           Testing.handle0(http),
 
           """
-          HTTP/1.1 200 OK
+          HTTP/1.1 404 Not Found
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked

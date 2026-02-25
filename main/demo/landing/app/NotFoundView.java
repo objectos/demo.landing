@@ -15,13 +15,21 @@
  */
 package demo.landing.app;
 
-final class NotFoundView extends Kino.View {
+import java.util.List;
+
+final class NotFoundView extends UiShell {
 
   @Override
-  protected final void render() {
-    h2(
-        testableH1("Something Went Wrong")
+  final List<SourceModel> viewSources() {
+    return List.of(
+        Source.NotFound,
+        Source.NotFoundView
     );
+  }
+
+  @Override
+  final void renderMain() {
+    h2(testableH1("Something Went Wrong"));
 
     p("Sorry, we could not find the page you're looking for.");
 
@@ -32,10 +40,8 @@ final class NotFoundView extends Kino.View {
         padding:48rx_0
         """),
 
-        icon(
-            Kino.Icon.FROWN,
-
-            css("""
+        c(
+            UiIcon.FROWN.css("""
             height:auto
             stroke-width:0.5rx
             width:120rx
@@ -49,12 +55,12 @@ final class NotFoundView extends Kino.View {
         justify-content:center
         """),
 
-        a(
+        button(
             PRIMARY,
 
-            onclick(Kino.FOLLOW),
+            onclick(follow("/demo.landing/home")),
 
-            href("/index.html"),
+            type("button"),
 
             text("Get Tickets")
         )

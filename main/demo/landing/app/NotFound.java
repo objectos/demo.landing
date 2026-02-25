@@ -17,39 +17,18 @@ package demo.landing.app;
 
 import module objectos.way;
 
-final class NotFound implements Kino.GET, Kino.POST, Http.Handler {
+final class NotFound implements Http.Handler {
 
   public static Html.Component create() {
-    return Shell.create(shell -> {
-      shell.app = new NotFoundView();
-
-      shell.sources(
-        //          Source.NotFound,
-      //          Source.NotFoundView
-      );
-    });
+    throw new UnsupportedOperationException("Implement me");
   }
 
   @Override
   public final void handle(Http.Exchange http) {
-    http.notFound(
-        new Shell(
-            new NotFoundView()
+    final NotFoundView view;
+    view = new NotFoundView();
 
-        //            Source.NotFound,
-        //            Source.NotFoundView
-        )
-    );
-  }
-
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    return create();
-  }
-
-  @Override
-  public final Kino.PostResult post(Http.Exchange http) {
-    throw new UnsupportedOperationException("Implement me");
+    http.notFound(view);
   }
 
 }

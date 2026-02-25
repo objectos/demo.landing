@@ -45,23 +45,26 @@ final class Movie implements Http.Handler {
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
-    if (maybeDetails.isEmpty()) {
-      return;
+    if (maybeDetails.isPresent()) {
+      final MovieDetails details;
+      details = maybeDetails.get();
+
+      final LocalDateTime now;
+      now = LocalDateTime.now(clock);
+
+      final List<MovieScreening> screenings;
+      screenings = MovieScreening.query(trx, movieId, now);
+
+      final MovieView view;
+      view = new MovieView(details, screenings);
+
+      http.ok(view);
+    } else {
+      final NotFoundView view;
+      view = new NotFoundView();
+
+      http.notFound(view);
     }
-
-    final MovieDetails details;
-    details = maybeDetails.get();
-
-    final LocalDateTime now;
-    now = LocalDateTime.now(clock);
-
-    final List<MovieScreening> screenings;
-    screenings = MovieScreening.query(trx, movieId, now);
-
-    final MovieView view;
-    view = new MovieView(details, screenings);
-
-    http.ok(view);
   }
 
 }

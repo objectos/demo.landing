@@ -44,7 +44,7 @@ public final class AppRoutes implements Http.Routing.Module {
       // we filter these requests with transactionl
       demo.filter(transactional, this::routes);
 
-      demo.handler(Http.Handler.notFound());
+      demo.handler(new NotFound());
     });
   }
 

@@ -66,7 +66,8 @@ final class Ticket implements Kino.GET {
         );
       });
     } else {
-      return NotFound.create();
+      throw new UnsupportedOperationException("Implement me");
+      //return NotFound.create();
     }
   }
 
