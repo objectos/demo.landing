@@ -15,16 +15,12 @@
  */
 package demo.landing.app;
 
-import java.time.Clock;
+import module java.base;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.random.RandomGenerator;
 
-/**
- * Generates a 64-bit Snowflake ID to uniquely identify an user making seat
- * reservations.
- */
-final class Reservation {
+/// Generates a 64-bit Snowflake ID to uniquely identify an user making
+/// seat reservations.
+final class AppReservation {
 
   private static final long TIMESTAMP_BITS = 41;
 
@@ -39,7 +35,7 @@ final class Reservation {
 
   private final RandomGenerator randomGenerator;
 
-  Reservation(Clock clock, Instant epoch, RandomGenerator randomGenerator) {
+  AppReservation(Clock clock, Instant epoch, RandomGenerator randomGenerator) {
     this.clock = clock;
 
     this.epoch = epoch;
@@ -54,7 +50,7 @@ final class Reservation {
     final Duration duration;
     duration = Duration.between(epoch, now);
 
-    long epochTime;
+    final long epochTime;
     epochTime = duration.toMillis();
 
     final long timestamp;

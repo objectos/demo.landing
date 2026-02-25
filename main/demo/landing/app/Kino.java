@@ -103,8 +103,6 @@ public final class Kino implements LandingDemo {
     controller = switch (page) {
       case CONFIRM -> new Confirm(ctx);
 
-      case SEATS -> new Seats(ctx);
-
       case TICKET -> new Ticket();
 
       default -> throw new UnsupportedOperationException();
@@ -126,8 +124,6 @@ public final class Kino implements LandingDemo {
     final POST controller;
     controller = switch (query.page) {
       case CONFIRM -> new Confirm(ctx);
-
-      case SEATS -> new Seats(ctx);
 
       default -> throw new UnsupportedOperationException();
     };
@@ -341,7 +337,7 @@ public final class Kino implements LandingDemo {
 
       Note.Sink noteSink,
 
-      Reservation reservation,
+      AppReservation reservation,
 
       AppTransactional transactional
   ) {
@@ -359,8 +355,8 @@ public final class Kino implements LandingDemo {
       final Note.Sink noteSink;
       noteSink = config.noteSink;
 
-      final Reservation reservation;
-      reservation = new Reservation(clock, config.reservationEpoch, config.reservationRandom);
+      final AppReservation reservation;
+      reservation = new AppReservation(clock, config.reservationEpoch, config.reservationRandom);
 
       final AppTransactional transactional;
       transactional = new AppTransactional(config.stage, config.database);

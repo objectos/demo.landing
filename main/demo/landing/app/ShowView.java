@@ -15,72 +15,43 @@
  */
 package demo.landing.app;
 
-import objectos.script.Js;
-import objectos.way.Html;
+import java.util.List;
+import module objectos.way;
 
-final class SeatsView extends Kino.View {
-
-  static final int BACK = 999;
-
-  static final int DEFAULT = 0;
-
-  static final int BOOKED = 1;
-
-  static final int EMPTY = 2;
-
-  static final int LIMIT = 3;
-
-  private static final String BOOKED_MSG = """
-  We regret to inform you that another customer has already reserved one or more of the selected seats. \
-  Kindly choose alternative seats.""";
-
-  private static final String EMPTY_MSG = """
-  Kindly choose at least 1 seat.""";
-
-  private static final String LIMIT_MSG = """
-  We regret to inform you that we limit purchases to 6 tickets per person. \
-  Kindly choose at most 6 seats.""";
+final class ShowView extends UiShell {
 
   private static final String FORM_ID = "seats-form";
 
-  private final Kino.Ctx ctx;
+  private final ShowDetails details;
 
-  private final int state;
+  private final ShowGrid grid;
 
   private final long reservationId;
 
-  private final ShowDetails show;
-
-  private final SeatsGrid grid;
-
-  SeatsView(Kino.Ctx ctx, int state, long reservationId, ShowDetails show, SeatsGrid grid) {
-    this.ctx = ctx;
-
-    this.state = state;
-
-    this.reservationId = reservationId;
-
-    this.show = show;
+  ShowView(ShowDetails details, ShowGrid grid, long reservationId) {
+    this.details = details;
 
     this.grid = grid;
+
+    this.reservationId = reservationId;
   }
 
   @Override
-  protected final void render() {
-    backLink2(Page.MOVIE.hrefId(show.movieId()));
+  final List<SourceModel> viewSources() {
+    return List.of(
+    );
+  }
+
+  @Override
+  final void renderMain() {
+    backLink("/demo.landing/movie/" + details.movieId());
 
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
 
-    h2(
-        testableField("title", show.title())
-    );
+    h2(testableField("title", details.title()));
 
     p("Please choose your seats");
-
-    div(
-        f(this::renderAlert)
-    );
 
     div(
         css("""
@@ -98,61 +69,6 @@ final class SeatsView extends Kino.View {
     );
   }
 
-  private void renderAlert() {
-    switch (state) {
-      case BOOKED -> {
-        testableField("alert", "BOOKED");
-
-        renderAlert(BOOKED_MSG);
-      }
-
-      case EMPTY -> {
-        testableField("alert", "EMPTY");
-
-        renderAlert(EMPTY_MSG);
-      }
-
-      case LIMIT -> {
-        testableField("alert", "LIMIT");
-
-        renderAlert(LIMIT_MSG);
-      }
-    }
-  }
-
-  private void renderAlert(String msg) {
-    div(
-        css("""
-        align-items:center
-        background-color:var(--color-blue-100)
-        border-left:3px_solid_var(--color-blue-800)
-        display:flex
-        font-size:14rx
-        line-height:16rx
-        margin:16rx_0
-        padding:16rx
-        """),
-
-        icon(
-            Kino.Icon.INFO,
-
-            css("""
-            height:20rx
-            width:auto
-            padding-right:16rx
-            """)
-        ),
-
-        div(
-            css("""
-            flex:1
-            """),
-
-            text(msg)
-        )
-    );
-  }
-
   private void renderDetails() {
     div(
         css("""
@@ -162,15 +78,15 @@ final class SeatsView extends Kino.View {
         gap:16rx
         """),
 
-        renderDetailsItem(Kino.Icon.CALENDAR_CHECK, "date", show.date()),
+        renderDetailsItem(UiIcon.CALENDAR_CHECK, "date", details.date()),
 
-        renderDetailsItem(Kino.Icon.CLOCK, "time", show.time()),
+        renderDetailsItem(UiIcon.CLOCK, "time", details.time()),
 
-        renderDetailsItem(Kino.Icon.PROJECTOR, "screen", show.screen())
+        renderDetailsItem(UiIcon.PROJECTOR, "screen", details.screen())
     );
   }
 
-  private Html.Instruction.OfElement renderDetailsItem(Kino.Icon icon, String name, String value) {
+  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
     return div(
         css("""
         align-items:center
@@ -179,10 +95,8 @@ final class SeatsView extends Kino.View {
         gap:4rx
         """),
 
-        icon(
-            icon,
-
-            css("""
+        c(
+            icon.css("""
             height:auto
             stroke:icon
             width:20rx
@@ -253,7 +167,7 @@ final class SeatsView extends Kino.View {
     form(
         id(FORM_ID),
 
-        formAction(ctx, Page.SEATS, reservationId, show.screenId()),
+        action("/demo.landing/seats"),
 
         css("""
         aspect-ratio:1.15
@@ -269,23 +183,26 @@ final class SeatsView extends Kino.View {
 
         method("post"),
 
-        onsubmit(Js.submit()),
+        onsubmit(submit()),
 
-        //        dataOnSuccess(script -> {
-        //          final String successUrl;
-        //          successUrl = ctx.href(Kino.Page.CONFIRM, reservationId);
-        //
-        //          script.replaceState(successUrl);
-        //        }),
+        input(
+            type("hidden"),
+            name("reservationId"),
+            value(testableField("reservationId", Long.toString(reservationId)))),
+
+        input(
+            type("hidden"),
+            name("screenId"),
+            value(testableField("screenId", Integer.toString(details.screenId())))),
 
         f(this::renderSeatsFormGrid)
     );
   }
 
   private void renderSeatsFormGrid() {
-    for (SeatsGrid.Cell cell : grid) {
+    for (ShowGrid.Seat seat : grid) {
       final int seatId;
-      seatId = cell.seatId();
+      seatId = seat.seatId();
 
       if (seatId < 0) {
         div();
@@ -304,14 +221,14 @@ final class SeatsView extends Kino.View {
 
             type("checkbox"),
 
-            cell.checked() ? checked : noop(),
+            seat.checked() ? checked : noop(),
 
-            cell.reserved() ? disabled : noop(),
+            seat.reserved() ? disabled : noop(),
 
             value(seatIdValue)
         );
 
-        if (cell.checked()) {
+        if (seat.checked()) {
           testableField("checked", seatIdValue);
         }
       }

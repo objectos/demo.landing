@@ -21,7 +21,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class SeatsGridTest {
+public class ShowGridTest {
 
   private final String data = """
   insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
@@ -64,8 +64,8 @@ public class SeatsGridTest {
       values (901, 61)
       """);
 
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, 901);
+      final ShowGrid grid;
+      grid = ShowGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),
@@ -104,8 +104,8 @@ public class SeatsGridTest {
       values (901, 103, 61);
       """);
 
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, 901);
+      final ShowGrid grid;
+      grid = ShowGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),
@@ -145,8 +145,8 @@ public class SeatsGridTest {
       ,      (901, 104, 61);
       """);
 
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, 901);
+      final ShowGrid grid;
+      grid = ShowGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),
@@ -187,8 +187,8 @@ public class SeatsGridTest {
       ,      (902, 104, 61);
       """);
 
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, 901);
+      final ShowGrid grid;
+      grid = ShowGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),
@@ -229,8 +229,8 @@ public class SeatsGridTest {
       ,      (902, 104, 61);
       """);
 
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, 901);
+      final ShowGrid grid;
+      grid = ShowGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),

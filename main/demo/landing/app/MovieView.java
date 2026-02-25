@@ -252,9 +252,7 @@ final class MovieView extends UiShell {
               hover/cursor:pointer
               """),
 
-              onclick(Kino.link("/demo.landing/show/" + showId)),
-
-              rel("nofollow"),
+              onclick(follow("/demo.landing/show/" + showId)),
 
               span(testableCell(time, 5))
           ),

@@ -296,6 +296,7 @@ final class KinoStyles implements Css.Library {
     opts.scanClasses(
         HomeView.class,
         MovieView.class,
+        ShowView.class,
         UiIcon.class,
         UiShell.class
     );
@@ -429,11 +430,11 @@ final class HomeView extends UiShell {
 
   private void renderMovies() {
     for (HomeModel movie : movies) {
-      renderItem(movie);
+      renderMovie(movie);
     }
   }
 
-  private void renderItem(HomeModel movie) {
+  private void renderMovie(HomeModel movie) {
     li(
         css(\"""
         flex:0_0_128rx
@@ -807,39 +808,18 @@ package demo.landing.app;
 
 import module objectos.way;
 
-final class NotFound implements Kino.GET, Kino.POST, Http.Handler {
+final class NotFound implements Http.Handler {
 
   public static Html.Component create() {
-    return Shell.create(shell -> {
-      shell.app = new NotFoundView();
-
-      shell.sources(
-        //          Source.NotFound,
-      //          Source.NotFoundView
-      );
-    });
+    throw new UnsupportedOperationException("Implement me");
   }
 
   @Override
   public final void handle(Http.Exchange http) {
-    http.notFound(
-        new Shell(
-            new NotFoundView()
+    final NotFoundView view;
+    view = new NotFoundView();
 
-        //            Source.NotFound,
-        //            Source.NotFoundView
-        )
-    );
-  }
-
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    return create();
-  }
-
-  @Override
-  public final Kino.PostResult post(Http.Exchange http) {
-    throw new UnsupportedOperationException("Implement me");
+    http.notFound(view);
   }
 
 }
@@ -1059,11 +1039,7 @@ public final class Kino implements LandingDemo {
     controller = switch (page) {
       case CONFIRM -> new Confirm(ctx);
 
-      case SEATS -> new Seats(ctx);
-
       case TICKET -> new Ticket();
-
-      case BAD_REQUEST -> new NotFound();
 
       default -> throw new UnsupportedOperationException();
     };
@@ -1085,9 +1061,7 @@ public final class Kino implements LandingDemo {
     controller = switch (query.page) {
       case CONFIRM -> new Confirm(ctx);
 
-      case SEATS -> new Seats(ctx);
-
-      default -> new NotFound();
+      default -> throw new UnsupportedOperationException();
     };
 
     return ctx.transactional(http, controller);
@@ -2200,16 +2174,18 @@ final class Movie implements Http.Handler {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final String id;
-    id = http.pathParam("id");
-
     final int movieId;
-    movieId = Integer.parseInt(id);
+    movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
     if (maybeDetails.isEmpty()) {
+      final NotFoundView view;
+      view = new NotFoundView();
+
+      http.notFound(view);
+
       return;
     }
 
@@ -2251,13 +2227,10 @@ package demo.landing.app;
 
 import demo.landing.LandingDemo;
 import demo.landing.app.Kino.Query;
-import java.util.Optional;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Note;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
-final class Seats implements Kino.GET, Kino.POST {
+final class Seats implements Http.Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(Seats.class, "Read", Note.DEBUG);
 
@@ -2268,6 +2241,10 @@ final class Seats implements Kino.GET, Kino.POST {
   }
 
   @Override
+  public final void handle(Http.Exchange http) {
+
+  }
+
   public final Html.Component get(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
@@ -2283,8 +2260,8 @@ final class Seats implements Kino.GET, Kino.POST {
         final int showId;
         showId = query.idAsInt();
 
-        final Optional<SeatsShow> maybeShow;
-        maybeShow = SeatsShow.queryOptional(trx, showId);
+        final Optional<ShowDetails> maybeShow;
+        maybeShow = ShowDetails.queryOptional(trx, showId);
 
         if (maybeShow.isEmpty()) {
           yield NotFound.create();
@@ -2306,7 +2283,7 @@ final class Seats implements Kino.GET, Kino.POST {
 
         trx.update();
 
-        final SeatsShow show;
+        final ShowDetails show;
         show = maybeShow.get();
 
         final SeatsGrid grid;
@@ -2321,8 +2298,8 @@ final class Seats implements Kino.GET, Kino.POST {
         final long reservationId;
         reservationId = query.id();
 
-        final SeatsShow show;
-        show = SeatsShow.queryReservation(trx, reservationId);
+        final ShowDetails show;
+        show = ShowDetails.queryReservation(trx, reservationId);
 
         final SeatsGrid grid;
         grid = SeatsGrid.query(trx, reservationId);
@@ -2338,14 +2315,14 @@ final class Seats implements Kino.GET, Kino.POST {
     final long reservationId;
     reservationId = query.id();
 
-    final Optional<SeatsShow> maybeShow;
-    maybeShow = SeatsShow.queryBackButton(trx, reservationId);
+    final Optional<ShowDetails> maybeShow;
+    maybeShow = ShowDetails.queryBackButton(trx, reservationId);
 
     if (maybeShow.isEmpty()) {
       return NotFound.create();
     }
 
-    final SeatsShow show;
+    final ShowDetails show;
     show = maybeShow.get();
 
     final SeatsGrid grid;
@@ -2354,7 +2331,6 @@ final class Seats implements Kino.GET, Kino.POST {
     return view(SeatsView.DEFAULT, reservationId, show, grid);
   }
 
-  @Override
   public final Kino.PostResult post(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
@@ -2395,8 +2371,8 @@ final class Seats implements Kino.GET, Kino.POST {
   }
 
   private Kino.PostResult embedView(Sql.Transaction trx, int state, long reservationId) {
-    final SeatsShow show;
-    show = SeatsShow.queryReservation(trx, reservationId);
+    final ShowDetails show;
+    show = ShowDetails.queryReservation(trx, reservationId);
 
     final SeatsGrid grid;
     grid = SeatsGrid.query(trx, reservationId);
@@ -2474,7 +2450,7 @@ final class Seats implements Kino.GET, Kino.POST {
 
   }
 
-  private Html.Component view(int state, long reservationId, SeatsShow show, SeatsGrid grid) {
+  private Html.Component view(int state, long reservationId, ShowDetails show, SeatsGrid grid) {
     return Shell.create(shell -> {
       shell.app = new SeatsView(ctx, state, reservationId, show, grid);
 
@@ -2631,6 +2607,260 @@ record MovieShowtime(int showId, String time) {
 }
 """);
 
+  static final SourceModel ShowView = SourceModel.create("ShowView.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.util.List;
+import module objectos.way;
+
+final class ShowView extends UiShell {
+
+  private static final String FORM_ID = "seats-form";
+
+  private final ShowDetails details;
+
+  private final ShowGrid grid;
+
+  private final long reservationId;
+
+  ShowView(ShowDetails details, ShowGrid grid, long reservationId) {
+    this.details = details;
+
+    this.grid = grid;
+
+    this.reservationId = reservationId;
+  }
+
+  @Override
+  final List<SourceModel> viewSources() {
+    return List.of(
+    );
+  }
+
+  @Override
+  final void renderMain() {
+    backLink(Page.MOVIE.hrefId(details.movieId()));
+
+    // this node is for testing only, it is not rendered in the final HTML
+    testableH1("Show details");
+
+    h2(testableField("title", details.title()));
+
+    p("Please choose your seats");
+
+    div(
+        css(\"""
+        border:1px_solid_var(--color-border)
+        display:flex
+        gap:24rx
+        margin:32rx_0
+        overflow-x:auto
+        padding:32rx_24rx
+        \"""),
+
+        f(this::renderDetails),
+
+        f(this::renderSeats)
+    );
+  }
+
+  private void renderDetails() {
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        font-size:14rx
+        gap:16rx
+        \"""),
+
+        renderDetailsItem(UiIcon.CALENDAR_CHECK, "date", details.date()),
+
+        renderDetailsItem(UiIcon.CLOCK, "time", details.time()),
+
+        renderDetailsItem(UiIcon.PROJECTOR, "screen", details.screen())
+    );
+  }
+
+  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
+    return div(
+        css(\"""
+        align-items:center
+        display:flex
+        flex-direction:column
+        gap:4rx
+        \"""),
+
+        c(
+            icon.css(\"""
+            height:auto
+            stroke:icon
+            width:20rx
+            \""")
+        ),
+
+        span(
+            css(\"""
+            text-align:center
+            width:6rch
+            \"""),
+
+            text(testableField(name, value))
+        )
+    );
+  }
+
+  private void renderSeats() {
+    // this node is for testing only, it is not rendered in the final HTML
+    testableH1("Seats");
+
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        flex-grow:1
+        justify-content:start
+        \"""),
+
+        f(this::renderSeatsScreen),
+
+        f(this::renderSeatsForm),
+
+        f(this::renderSeatsAction)
+    );
+  }
+
+  private void renderSeatsScreen() {
+    svg(
+        css(\"""
+        display:block
+        margin:0_auto
+        max-height:60rx
+        max-width:400rx
+        min-height:0
+        min-width:0
+        stroke:icon
+        width:100%
+        \"""),
+
+        width("400"), height("60"), viewBox("0 0 400 60"), xmlns("http://www.w3.org/2000/svg"),
+        path(d("M 0 50 Q 200 0 400 50")), fill("none"), strokeWidth("1.25")
+    );
+
+    p(
+        css(\"""
+        font-size:14rx
+        inset:-32rx_0_auto
+        position:relative
+        text-align:center
+        \"""),
+
+        text("Screen")
+    );
+  }
+
+  private void renderSeatsForm() {
+    form(
+        id(FORM_ID),
+
+        //formAction(ctx, Page.SEATS, reservationId, show.screenId()),
+
+        css(\"""
+        aspect-ratio:1.15
+        display:grid
+        flex-grow:1
+        gap:8rx
+        grid-template-columns:repeat(10,1fr)
+        grid-template-rows:repeat(10,minmax(20rx,1fr))
+        margin:0_auto
+        max-width:400rx
+        width:100%
+        \"""),
+
+        method("post"),
+
+        onsubmit(Js.submit()),
+
+        f(this::renderSeatsFormGrid)
+    );
+  }
+
+  private void renderSeatsFormGrid() {
+    for (ShowGrid.Seat seat : grid) {
+      final int seatId;
+      seatId = seat.seatId();
+
+      if (seatId < 0) {
+        div();
+      } else {
+        final String seatIdValue;
+        seatIdValue = Integer.toString(seatId);
+
+        input(
+            css(\"""
+            cursor:pointer
+
+            disabled:cursor:default
+            \"""),
+
+            name("seat"),
+
+            type("checkbox"),
+
+            seat.checked() ? checked : noop(),
+
+            seat.reserved() ? disabled : noop(),
+
+            value(seatIdValue)
+        );
+
+        if (seat.checked()) {
+          testableField("checked", seatIdValue);
+        }
+      }
+    }
+  }
+
+  private void renderSeatsAction() {
+    div(
+        css(\"""
+        display:flex
+        justify-content:end
+        padding-top:64rx
+        margin:0_auto
+        max-width:400rx
+        width:100%
+        \"""),
+
+        button(
+            PRIMARY,
+
+            form(FORM_ID),
+
+            type("submit"),
+
+            text("Book seats")
+        )
+    );
+  }
+
+}
+""");
+
   static final SourceModel Reservation = SourceModel.create("Reservation.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2721,13 +2951,21 @@ final class Reservation {
  */
 package demo.landing.app;
 
-final class NotFoundView extends Kino.View {
+import java.util.List;
+
+final class NotFoundView extends UiShell {
 
   @Override
-  protected final void render() {
-    h2(
-        testableH1("Something Went Wrong")
+  final List<SourceModel> viewSources() {
+    return List.of(
+        Source.NotFound,
+        Source.NotFoundView
     );
+  }
+
+  @Override
+  final void renderMain() {
+    h2(testableH1("Something Went Wrong"));
 
     p("Sorry, we could not find the page you're looking for.");
 
@@ -2738,10 +2976,8 @@ final class NotFoundView extends Kino.View {
         padding:48rx_0
         \"""),
 
-        icon(
-            Kino.Icon.FROWN,
-
-            css(\"""
+        c(
+            UiIcon.FROWN.css(\"""
             height:auto
             stroke-width:0.5rx
             width:120rx
@@ -2755,16 +2991,96 @@ final class NotFoundView extends Kino.View {
         justify-content:center
         \"""),
 
-        a(
+        button(
             PRIMARY,
 
-            onclick(Kino.FOLLOW),
+            onclick(follow("/demo.landing/home")),
 
-            href("/index.html"),
+            type("button"),
 
             text("Get Tickets")
         )
     );
+  }
+
+}
+""");
+
+  static final SourceModel Show = SourceModel.create("Show.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module java.base;
+import module objectos.way;
+
+final class Show implements Http.Handler {
+
+  private final Reservation reservation;
+
+  Show(Reservation reservation) {
+    this.reservation = reservation;
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final int showId;
+    showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+
+    final Optional<ShowDetails> maybeDetails;
+    maybeDetails = ShowDetails.queryOptional(trx, showId);
+
+    if (maybeDetails.isEmpty()) {
+      final NotFoundView view;
+      view = new NotFoundView();
+
+      http.notFound(view);
+
+      return;
+    }
+
+    final long reservationId;
+    reservationId = reservation.next();
+
+    trx.sql(\"""
+        insert into
+          RESERVATION (RESERVATION_ID, SHOW_ID)
+        values
+          (?, ?)
+        \""");
+
+    trx.param(reservationId);
+
+    trx.param(showId);
+
+    trx.update();
+
+    final ShowDetails details;
+    details = maybeDetails.get();
+
+    final ShowGrid grid;
+    grid = ShowGrid.query(trx, reservationId);
+
+    final ShowView view;
+    view = new ShowView(details, grid, reservationId);
+
+    http.ok(view);
   }
 
 }
@@ -2988,125 +3304,6 @@ record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 }
 """);
 
-  static final SourceModel SeatsShow = SourceModel.create("SeatsShow.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
-
-record SeatsShow(
-    int showId,
-    String date,
-    String time,
-
-    int screenId,
-    String screen,
-    int capacity,
-
-    int movieId,
-    String title
-) {
-
-  private SeatsShow(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getInt(idx++),
-
-        rs.getInt(idx++),
-        rs.getString(idx++)
-    );
-  }
-
-  public static Optional<SeatsShow> queryOptional(Sql.Transaction trx, int id) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      SHOW.SHOW_ID = ?
-    \""");
-
-    trx.param(id);
-
-    return trx.queryOptional(SeatsShow::new);
-  }
-
-  public static Optional<SeatsShow> queryBackButton(Sql.Transaction trx, long reservationId) {
-    reservation(trx, reservationId);
-
-    return trx.queryOptional(SeatsShow::new);
-  }
-
-  public static SeatsShow queryReservation(Sql.Transaction trx, long reservationId) {
-    reservation(trx, reservationId);
-
-    return trx.querySingle(SeatsShow::new);
-  }
-
-  private static void reservation(Sql.Transaction trx, long reservationId) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      RESERVATION
-      natural join SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-    \""");
-
-    trx.param(reservationId);
-  }
-
-}
-""");
-
   static final SourceModel ConfirmDetails = SourceModel.create("ConfirmDetails.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -3224,6 +3421,125 @@ final record ConfirmDetails(
 }
 """);
 
+  static final SourceModel ShowDetails = SourceModel.create("ShowDetails.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Optional;
+import objectos.way.Sql;
+
+record ShowDetails(
+    int showId,
+    String date,
+    String time,
+
+    int screenId,
+    String screen,
+    int capacity,
+
+    int movieId,
+    String title
+) {
+
+  private ShowDetails(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getInt(idx++),
+
+        rs.getInt(idx++),
+        rs.getString(idx++)
+    );
+  }
+
+  public static Optional<ShowDetails> queryOptional(Sql.Transaction trx, int id) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      SHOW.SHOW_ID = ?
+    \""");
+
+    trx.param(id);
+
+    return trx.queryOptional(ShowDetails::new);
+  }
+
+  public static Optional<ShowDetails> queryBackButton(Sql.Transaction trx, long reservationId) {
+    reservation(trx, reservationId);
+
+    return trx.queryOptional(ShowDetails::new);
+  }
+
+  public static ShowDetails queryReservation(Sql.Transaction trx, long reservationId) {
+    reservation(trx, reservationId);
+
+    return trx.querySingle(ShowDetails::new);
+  }
+
+  private static void reservation(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      RESERVATION
+      natural join SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+    \""");
+
+    trx.param(reservationId);
+  }
+
+}
+""");
+
   static final SourceModel AppRoutes = SourceModel.create("AppRoutes.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -3257,10 +3573,14 @@ public final class AppRoutes implements Http.Routing.Module {
 
   private final Clock clock;
 
+  private final Reservation reservation;
+
   private final AppTransactional transactional;
 
   public AppRoutes(LandingDemoConfig config) {
     clock = config.clock;
+
+    reservation = new Reservation(clock, config.reservationEpoch, config.reservationRandom);
 
     transactional = AppTransactional.of(config.stage, config.database);
   }
@@ -3271,7 +3591,7 @@ public final class AppRoutes implements Http.Routing.Module {
       // we filter these requests with transactionl
       demo.filter(transactional, this::routes);
 
-      demo.handler(Http.Handler.notFound());
+      demo.handler(new NotFound());
     });
   }
 
@@ -3279,6 +3599,8 @@ public final class AppRoutes implements Http.Routing.Module {
     routes.subpath("home", GET, new Home());
 
     routes.subpath("movie/{id}", GET, new Movie(clock));
+
+    routes.subpath("show/{id}", GET, new Show(reservation));
   }
 
 }
@@ -3337,11 +3659,11 @@ final class SeatsView extends Kino.View {
 
   private final long reservationId;
 
-  private final SeatsShow show;
+  private final ShowDetails show;
 
   private final SeatsGrid grid;
 
-  SeatsView(Kino.Ctx ctx, int state, long reservationId, SeatsShow show, SeatsGrid grid) {
+  SeatsView(Kino.Ctx ctx, int state, long reservationId, ShowDetails show, SeatsGrid grid) {
     this.ctx = ctx;
 
     this.state = state;
@@ -3627,6 +3949,197 @@ final class SeatsView extends Kino.View {
             text("Book seats")
         )
     );
+  }
+
+}
+""");
+
+  static final SourceModel ShowGrid = SourceModel.create("ShowGrid.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module java.base;
+import module objectos.way;
+
+final class ShowGrid implements Iterable<ShowGrid.Seat> {
+
+  record Seat(
+      int gridY,
+      int gridX,
+      int seatId,
+      String name,
+      int state
+  ) {
+
+    Seat(ResultSet rs, int idx) throws SQLException {
+      this(
+          rs.getInt(idx++),
+          rs.getInt(idx++),
+          rs.getInt(idx++),
+          rs.getString(idx++),
+          rs.getInt(idx++)
+      );
+    }
+
+    public final boolean checked() {
+      return state == 1;
+    }
+
+    public final boolean reserved() {
+      return state == 2;
+    }
+
+  }
+
+  private final List<Seat> seats;
+
+  private ShowGrid(List<Seat> seats) {
+    this.seats = seats;
+  }
+
+  public static ShowGrid query(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    with
+      MAIN as (
+        select
+          RESERVATION.RESERVATION_ID,
+          SHOW.SHOW_ID,
+          SCREENING.SCREEN_ID
+        from
+          RESERVATION
+          join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
+          join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
+        where
+          RESERVATION.RESERVATION_ID = ?
+      ),
+      GRID as (
+        select
+          X as GRID_Y,
+          gx.GRID_X
+        from
+          system_range (0, 9)
+          cross join (
+            select
+              X as GRID_X
+            from
+              system_range (0, 9)
+          ) gx
+      ),
+      SELF as (
+        select
+          SEAT_ID
+        from
+          SELECTION
+        where
+          RESERVATION_ID = ( select RESERVATION_ID from MAIN )
+      ),
+      OTHERS as (
+        select
+          SELECTION.SEAT_ID
+        from
+          MAIN
+          join RESERVATION on MAIN.RESERVATION_ID <> RESERVATION.RESERVATION_ID
+          and MAIN.SHOW_ID = RESERVATION.SHOW_ID
+          join SELECTION on RESERVATION.RESERVATION_ID = SELECTION.RESERVATION_ID
+      )
+    select
+      GRID.GRID_Y,
+      GRID.GRID_X,
+      coalesce(SEAT.SEAT_ID, -1) as SEAT_ID,
+      concat (SEAT_ROW, SEAT_COL) as SEAT_NAME,
+      case SELF.SEAT_ID
+        when is not null then 1
+        else case OTHERS.SEAT_ID
+          when is not null then 2
+          else 0
+        end
+      end
+    from
+      MAIN
+      cross join GRID
+
+      left join SEAT on MAIN.SCREEN_ID = SEAT.SCREEN_ID
+      and GRID.GRID_Y = SEAT.GRID_Y
+      and GRID.GRID_X = SEAT.GRID_X
+
+      left join SELF
+      on SEAT.SEAT_ID = SELF.SEAT_ID
+
+      left join OTHERS
+      on SEAT.SEAT_ID = OTHERS.SEAT_ID
+    order by
+      GRID.GRID_Y,
+      GRID.GRID_X
+    \""");
+
+    trx.param(reservationId);
+
+    final List<Seat> seats;
+    seats = trx.query(Seat::new);
+
+    return new ShowGrid(seats);
+  }
+
+  @Override
+  public final Iterator<ShowGrid.Seat> iterator() {
+    return seats.iterator();
+  }
+
+  @Override
+  public final String toString() {
+    final StringBuilder sb;
+    sb = new StringBuilder();
+
+    sb.append(". = empty space\\n");
+    sb.append("# = reserved\\n");
+    sb.append("o = selectable\\n");
+    sb.append("x = checked\\n");
+
+    int lastY = -1;
+
+    for (Seat cell : seats) {
+      int gridY;
+      gridY = cell.gridY();
+
+      if (gridY != lastY) {
+        sb.append('\\n');
+
+        lastY = gridY;
+      } else {
+        sb.append(' ');
+      }
+
+      int seatId;
+      seatId = cell.seatId();
+
+      if (seatId < 0) {
+        sb.append('.');
+      } else if (cell.checked()) {
+        sb.append('x');
+      } else if (cell.reserved()) {
+        sb.append('#');
+      } else {
+        sb.append('o');
+      }
+    }
+
+    sb.append('\\n');
+
+    return sb.toString();
   }
 
 }
@@ -4294,7 +4807,8 @@ final class Ticket implements Kino.GET {
         );
       });
     } else {
-      return NotFound.create();
+      throw new UnsupportedOperationException("Implement me");
+      //return NotFound.create();
     }
   }
 
@@ -4321,7 +4835,7 @@ package demo.landing.app;
 
 import java.util.List;
 
-/// Renders the movie details.
+/// Renders the details of a movie and lists its available screenings.
 final class MovieView extends UiShell {
 
   private final MovieDetails details;
@@ -4380,6 +4894,10 @@ final class MovieView extends UiShell {
     );
   }
 
+  // ##################################################################
+  // # BEGIN: Movie Details
+  // ##################################################################
+
   private void renderMovieDetails() {
     div(
         h2(testableH1(details.title())),
@@ -4435,6 +4953,14 @@ final class MovieView extends UiShell {
         )
     );
   }
+
+  // ##################################################################
+  // # END: Movie Details
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Movie Screening
+  // ##################################################################
 
   private void renderMovieScreenings() {
     for (MovieScreening screening : screenings) {
@@ -4513,12 +5039,20 @@ final class MovieView extends UiShell {
     );
   }
 
+  // ##################################################################
+  // # END: Movie Screening
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Movie Showtime
+  // ##################################################################
+
   private void renderMovieShowtimes(List<MovieShowtime> showtimes) {
     for (MovieShowtime showtime : showtimes) {
       final int showId;
       showId = showtime.showId();
 
-      testableCell(Integer.toString(showId), 32);
+      testableCell(Integer.toString(showId), 2);
 
       final String time;
       time = showtime.time();
@@ -4536,9 +5070,7 @@ final class MovieView extends UiShell {
               hover/cursor:pointer
               \"""),
 
-              onclick(Kino.link("/demo.landing/show/" + showId)),
-
-              rel("nofollow"),
+              onclick(follow("/demo.landing/show/" + showId)),
 
               span(testableCell(time, 5))
           ),
@@ -4547,6 +5079,10 @@ final class MovieView extends UiShell {
       );
     }
   }
+
+  // ##################################################################
+  // # END: Movie Showtime
+  // ##################################################################
 
 }
 """);
@@ -4576,12 +5112,22 @@ import module objectos.way;
 /// top/right and the source code on the bottom/left.
 abstract class UiShell extends Html.Template {
 
+  static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""
+    appearance:none
+    background-color:var(--color-btn-primary)
+    color:var(--color-btn-primary-text)
+    cursor:pointer
+    display:flex
+    font-size:14rx
+    min-height:48rx
+    padding:14rx_63rx_14rx_15rx
+
+    active/background-color:var(--color-btn-primary-active)
+    hover/background-color:var(--color-btn-primary-hover)
+    \""");
+
   protected final JsAction follow(String url) {
     return Js.byId(AppRoutes.ID).render(url);
-  }
-
-  public static final JsAction onload() {
-    return Js.byId(AppRoutes.ID).render("/demo.landing/home");
   }
 
   @Override

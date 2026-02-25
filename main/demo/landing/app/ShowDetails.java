@@ -20,7 +20,7 @@ import java.sql.SQLException;
 import java.util.Optional;
 import objectos.way.Sql;
 
-record SeatsShow(
+record ShowDetails(
     int showId,
     String date,
     String time,
@@ -33,7 +33,7 @@ record SeatsShow(
     String title
 ) {
 
-  private SeatsShow(ResultSet rs, int idx) throws SQLException {
+  private ShowDetails(ResultSet rs, int idx) throws SQLException {
     this(
         rs.getInt(idx++),
         rs.getString(idx++),
@@ -48,7 +48,7 @@ record SeatsShow(
     );
   }
 
-  public static Optional<SeatsShow> queryOptional(Sql.Transaction trx, int id) {
+  public static Optional<ShowDetails> queryOptional(Sql.Transaction trx, int id) {
     trx.sql("""
     select
       SHOW.SHOW_ID,
@@ -72,19 +72,19 @@ record SeatsShow(
 
     trx.param(id);
 
-    return trx.queryOptional(SeatsShow::new);
+    return trx.queryOptional(ShowDetails::new);
   }
 
-  public static Optional<SeatsShow> queryBackButton(Sql.Transaction trx, long reservationId) {
+  public static Optional<ShowDetails> queryBackButton(Sql.Transaction trx, long reservationId) {
     reservation(trx, reservationId);
 
-    return trx.queryOptional(SeatsShow::new);
+    return trx.queryOptional(ShowDetails::new);
   }
 
-  public static SeatsShow queryReservation(Sql.Transaction trx, long reservationId) {
+  public static ShowDetails queryReservation(Sql.Transaction trx, long reservationId) {
     reservation(trx, reservationId);
 
-    return trx.querySingle(SeatsShow::new);
+    return trx.querySingle(ShowDetails::new);
   }
 
   private static void reservation(Sql.Transaction trx, long reservationId) {

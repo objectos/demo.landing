@@ -23,7 +23,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import org.testng.annotations.Test;
 
-public class ReservationTest {
+public class AppReservationTest {
 
   @Test
   public void testCase01() {
@@ -42,8 +42,8 @@ public class ReservationTest {
     final FixedGenerator generator;
     generator = new FixedGenerator(12345L);
 
-    final Reservation r;
-    r = new Reservation(clock, epoch, generator);
+    final AppReservation r;
+    r = new AppReservation(clock, epoch, generator);
 
     test(r, "11111111110001101000010000000000000000011000000111001");
 
@@ -60,7 +60,7 @@ public class ReservationTest {
     test(r, "11111111110001101000010000001100000000011000000111001");
   }
 
-  private void test(Reservation r, String expected) {
+  private void test(AppReservation r, String expected) {
     final long value;
     value = r.next();
 

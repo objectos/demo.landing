@@ -30,10 +30,14 @@ public final class AppRoutes implements Http.Routing.Module {
 
   private final Clock clock;
 
+  private final AppReservation reservation;
+
   private final AppTransactional transactional;
 
   public AppRoutes(LandingDemoConfig config) {
     clock = config.clock;
+
+    reservation = new AppReservation(clock, config.reservationEpoch, config.reservationRandom);
 
     transactional = AppTransactional.of(config.stage, config.database);
   }
@@ -52,6 +56,8 @@ public final class AppRoutes implements Http.Routing.Module {
     routes.subpath("home", GET, new Home());
 
     routes.subpath("movie/{id}", GET, new Movie(clock));
+
+    routes.subpath("show/{id}", GET, new Show(reservation));
   }
 
 }

@@ -36,8 +36,23 @@ abstract class UiShell extends Html.Template {
     hover/background-color:var(--color-btn-primary-hover)
     """);
 
+  /// The default 'follow' action.
   protected final JsAction follow(String url) {
     return Js.byId(AppRoutes.ID).render(url);
+  }
+
+  /// The default 'submit' action.
+  protected final JsAction submit() {
+    return Js.submit(opts -> {
+      // disable history
+      opts.history(false);
+
+      // disable scroll
+      opts.scroll(false);
+
+      // update only the demo shell
+      opts.update(AppRoutes.ID);
+    });
   }
 
   @Override

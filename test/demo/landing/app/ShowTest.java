@@ -17,12 +17,13 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import java.util.Optional;
+import objectos.way.Http;
+import objectos.way.Sql;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class SeatsShowTest {
+public class ShowTest {
 
   private final String data = """
   insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
@@ -38,16 +39,6 @@ public class SeatsShowTest {
   ,      (42, 11, 32)
   ,      (43, 12, 32);
 
-  insert into FEATURE (FEATURE_ID, NAME)
-  values (51, 'Feature B')
-  ,      (52, 'Feature A');
-
-  insert into SCREENING_FEATURE (SCREENING_ID, FEATURE_ID)
-  values (41, 51)
-  ,      (41, 52)
-  ,      (42, 52)
-  ,      (43, 51);
-
   insert into SHOW (SHOW_ID, SCREENING_ID, SHOWDATE, SHOWTIME, SEAT_PRICE)
   values (61, 41, '2025-01-25', '13:00:00', 9.99)
   ,      (62, 41, '2025-01-25', '17:00:00', 14.99)
@@ -55,6 +46,16 @@ public class SeatsShowTest {
   ,      (64, 42, '2025-01-25', '14:00:00', 9.99)
   ,      (65, 42, '2025-01-25', '18:00:00', 14.99)
   ,      (66, 41, '2025-01-26', '13:00:00', 9.99);
+
+  insert into SEAT (SEAT_ID, SCREEN_ID, SEAT_ROW, SEAT_COL, GRID_Y, GRID_X)
+  values (101, 31, 'A', 1, 4, 4)
+  ,      (102, 31, 'A', 2, 4, 5)
+  ,      (103, 31, 'B', 1, 6, 2)
+  ,      (104, 31, 'B', 2, 6, 3)
+  ,      (105, 31, 'B', 3, 6, 6)
+  ,      (106, 31, 'B', 4, 6, 7)
+  ,      (107, 31, 'C', 1, 7, 4)
+  ,      (108, 31, 'C', 2, 7, 5);
   """;
 
   @Test
@@ -62,51 +63,69 @@ public class SeatsShowTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final Optional<SeatsShow> maybe;
-      maybe = SeatsShow.queryOptional(trx, 61);
+      final Http.Exchange http;
+      http = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
 
-      assertEquals(maybe.isPresent(), true);
+        config.method(Http.Method.GET);
 
-      final SeatsShow show;
-      show = maybe.get();
+        config.path("/demo.landing/show/61");
+      });
 
-      assertEquals(show.showId(), 61);
-      assertEquals(show.date(), "Sat 25/Jan");
-      assertEquals(show.time(), "13:00");
-      assertEquals(show.screenId(), 31);
-      assertEquals(show.screen(), "Screen 1");
-      assertEquals(show.capacity(), 40);
-      assertEquals(show.movieId(), 11);
-      assertEquals(show.title(), "Title 1");
+      assertEquals(
+          Testing.handle0(http),
+
+          """
+          HTTP/1.1 200 OK
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Type: text/html; charset=utf-8
+          Transfer-Encoding: chunked
+
+          back-link: /demo.landing/movie/11
+
+          # Show details
+
+          title: Title 1
+          date: Sat 25/Jan
+          time: 13:00
+          screen: Screen 1
+
+          # Seats
+
+          reservationId: 1
+          screenId: 31
+          """
+      );
     });
   }
 
-  @Test
+  @Test(description = "non-existing id")
   public void testCase02() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      Testing.load(trx, """
-      insert into RESERVATION (RESERVATION_ID, SHOW_ID)
-      values (904, 64);
-      """);
+      final Http.Exchange http;
+      http = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
 
-      final Optional<SeatsShow> maybe;
-      maybe = SeatsShow.queryBackButton(trx, 904L);
+        config.method(Http.Method.GET);
 
-      assertEquals(maybe.isPresent(), true);
+        config.path("/demo.landing/show/4444");
+      });
 
-      final SeatsShow show;
-      show = maybe.get();
+      assertEquals(
+          Testing.handle0(http),
 
-      assertEquals(show.showId(), 64);
-      assertEquals(show.date(), "Sat 25/Jan");
-      assertEquals(show.time(), "14:00");
-      assertEquals(show.screenId(), 32);
-      assertEquals(show.screen(), "Screen 2");
-      assertEquals(show.capacity(), 30);
-      assertEquals(show.movieId(), 11);
-      assertEquals(show.title(), "Title 1");
+          """
+          HTTP/1.1 404 Not Found
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Type: text/html; charset=utf-8
+          Transfer-Encoding: chunked
+
+          # Something Went Wrong
+
+          """
+      );
     });
   }
 

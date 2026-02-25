@@ -25,15 +25,12 @@ import objectos.way.Sql;
 record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] selection) {
 
   public static SeatsData parse(Http.Exchange http) {
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
     return new SeatsData(
         wayRequest(http),
 
-        query.id(),
+        http.formParamAsInt("reservationId", Integer.MIN_VALUE),
 
-        query.aux(),
+        http.formParamAsInt("screenId", Integer.MIN_VALUE),
 
         http.formParamAllAsInt("seat", Integer.MIN_VALUE).distinct().toArray()
     );

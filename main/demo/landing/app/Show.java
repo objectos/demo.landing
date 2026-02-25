@@ -15,20 +15,15 @@
  */
 package demo.landing.app;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
-/// The "/movie/{id}" controller.
-final class Movie implements Http.Handler {
+final class Show implements Http.Handler {
 
-  private final Clock clock;
+  private final AppReservation reservation;
 
-  Movie(Clock clock) {
-    this.clock = clock;
+  Show(AppReservation reservation) {
+    this.reservation = reservation;
   }
 
   @Override
@@ -36,11 +31,11 @@ final class Movie implements Http.Handler {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final int movieId;
-    movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    final int showId;
+    showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
 
-    final Optional<MovieDetails> maybeDetails;
-    maybeDetails = MovieDetails.queryOptional(trx, movieId);
+    final Optional<ShowDetails> maybeDetails;
+    maybeDetails = ShowDetails.queryOptional(trx, showId);
 
     if (maybeDetails.isEmpty()) {
       final NotFoundView view;
@@ -51,17 +46,30 @@ final class Movie implements Http.Handler {
       return;
     }
 
-    final MovieDetails details;
+    final long reservationId;
+    reservationId = reservation.next();
+
+    trx.sql("""
+    insert into
+      RESERVATION (RESERVATION_ID, SHOW_ID)
+    values
+      (?, ?)
+    """);
+
+    trx.param(reservationId);
+
+    trx.param(showId);
+
+    trx.update();
+
+    final ShowDetails details;
     details = maybeDetails.get();
 
-    final LocalDateTime now;
-    now = LocalDateTime.now(clock);
+    final ShowGrid grid;
+    grid = ShowGrid.query(trx, reservationId);
 
-    final List<MovieScreening> screenings;
-    screenings = MovieScreening.query(trx, movieId, now);
-
-    final MovieView view;
-    view = new MovieView(details, screenings);
+    final ShowView view;
+    view = new ShowView(details, grid, reservationId);
 
     http.ok(view);
   }
