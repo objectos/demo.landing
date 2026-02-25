@@ -15,22 +15,45 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
+import java.util.List;
 
-/**
- * Movie details and screening selection view.
- */
-final class MovieScreeningUi extends Html.Template {
+/// Renders the details of a movie and lists its available screenings.
+final class MovieView extends UiShell {
+
+  private final MovieDetails details;
 
   private final List<MovieScreening> screenings;
 
-  MovieScreeningUi(List<MovieScreening> screenings) {
+  MovieView(MovieDetails details, List<MovieScreening> screenings) {
+    this.details = details;
+
     this.screenings = screenings;
   }
 
   @Override
-  protected final void render() {
+  final List<SourceModel> viewSources() {
+    return List.of(
+        Source.Movie,
+        Source.MovieDetails,
+        Source.MovieScreening,
+        Source.MovieShowtime
+    );
+  }
+
+  @Override
+  final void renderMain() {
+    backLink("/demo.landing/home");
+
+    div(
+        css("""
+        display:grid
+        gap:16rx
+        grid-template-columns:1fr_160rx
+        """),
+
+        f(this::renderMovieDetails)
+    );
+
     div(
         css("""
         display:flex
@@ -49,17 +72,85 @@ final class MovieScreeningUi extends Html.Template {
             text(testableH1("Showtimes"))
         ),
 
-        f(this::renderList)
+        f(this::renderMovieScreenings)
     );
   }
 
-  private void renderList() {
+  // ##################################################################
+  // # BEGIN: Movie Details
+  // ##################################################################
+
+  private void renderMovieDetails() {
+    div(
+        h2(testableH1(details.title())),
+
+        p(testableField("synopsys", details.synopsys())),
+
+        dl(
+            css("""
+            display:grid
+            font-size:14rx
+            grid-template-columns:repeat(2,1fr)
+
+            &_dt/font-weight:600
+            &_dt/padding-top:12rx
+            """),
+
+            div(
+                dt("Rating"),
+                dd("N/A")
+            ),
+
+            div(
+                dt("Runtime"),
+                dd(testableField("runtime", details.runtime()))
+            ),
+
+            div(
+                dt("Release date"),
+                dd(testableField("release-date", details.releaseDate()))
+            ),
+
+            div(
+                dt("Genres"),
+                dd(testableField("genres", details.genres()))
+            )
+        )
+    );
+
+    div(
+        css("""
+        padding-top:16rx
+        """),
+
+        img(
+            css("""
+            border-radius:6rx
+            width:100%
+            """),
+
+            alt(details.title()),
+
+            src("/demo/landing/poster" + details.movieId() + ".jpg")
+        )
+    );
+  }
+
+  // ##################################################################
+  // # END: Movie Details
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Movie Screening
+  // ##################################################################
+
+  private void renderMovieScreenings() {
     for (MovieScreening screening : screenings) {
-      renderItem(screening);
+      renderMovieScreening(screening);
     }
   }
 
-  private void renderItem(MovieScreening screening) {
+  private void renderMovieScreening(MovieScreening screening) {
     div(
         css("""
         border:1px_solid_var(--color-border)
@@ -124,18 +215,26 @@ final class MovieScreeningUi extends Html.Template {
 
                 testableNewLine(),
 
-                f(this::renderShowtimes, screening.showtimes())
+                f(this::renderMovieShowtimes, screening.showtimes())
             )
         )
     );
   }
 
-  private void renderShowtimes(List<MovieShowtime> showtimes) {
+  // ##################################################################
+  // # END: Movie Screening
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Movie Showtime
+  // ##################################################################
+
+  private void renderMovieShowtimes(List<MovieShowtime> showtimes) {
     for (MovieShowtime showtime : showtimes) {
       final int showId;
       showId = showtime.showId();
 
-      testableCell(Integer.toString(showId), 32);
+      testableCell(Integer.toString(showId), 2);
 
       final String time;
       time = showtime.time();
@@ -164,5 +263,9 @@ final class MovieScreeningUi extends Html.Template {
       );
     }
   }
+
+  // ##################################################################
+  // # END: Movie Showtime
+  // ##################################################################
 
 }

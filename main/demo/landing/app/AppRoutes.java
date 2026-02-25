@@ -24,6 +24,10 @@ import module objectos.way;
 /// Declares the application routes.
 public final class AppRoutes implements Http.Routing.Module {
 
+  static final Html.Id ID = Html.Id.of("demo.landing");
+
+  public static final JsAction ONLOAD = Js.byId(ID).render("/demo.landing/home");
+
   private final Clock clock;
 
   private final AppTransactional transactional;

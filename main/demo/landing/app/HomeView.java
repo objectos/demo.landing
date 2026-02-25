@@ -16,19 +16,41 @@
 package demo.landing.app;
 
 import module java.base;
-import module objectos.way;
 
-/// The Home Page movie selection.
-final class HomeList extends Html.Template {
+/// Renders the home page view. More specifically, it renders:
+///
+/// - a top header with the "Now Showing" title.
+/// - a list of the movies that are
+/// currently playing.
+final class HomeView extends UiShell {
 
   private final List<HomeModel> movies;
 
-  HomeList(List<HomeModel> movies) {
+  HomeView(List<HomeModel> movies) {
     this.movies = movies;
   }
 
   @Override
-  protected final void render() {
+  final List<SourceModel> viewSources() {
+    return List.of(
+        Source.Home,
+        Source.HomeModel,
+        Source.HomeView
+    );
+  }
+
+  @Override
+  final void renderMain() {
+    div(
+        css("""
+        margin-bottom:32rx
+        """),
+
+        h2("Now Showing"),
+
+        p("Please choose a movie")
+    );
+
     ul(
         css("""
         display:flex
@@ -43,11 +65,11 @@ final class HomeList extends Html.Template {
 
   private void renderMovies() {
     for (HomeModel movie : movies) {
-      renderItem(movie);
+      renderMovie(movie);
     }
   }
 
-  private void renderItem(HomeModel movie) {
+  private void renderMovie(HomeModel movie) {
     li(
         css("""
         flex:0_0_128rx
@@ -59,7 +81,7 @@ final class HomeList extends Html.Template {
             hover/cursor:pointer
             """),
 
-            onclick(UiShell.link("/demo.landing/movie/" + movie.id())),
+            onclick(follow("/demo.landing/movie/" + movie.id())),
 
             img(
                 css("""

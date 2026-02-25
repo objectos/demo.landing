@@ -21,13 +21,6 @@ import module objectos.way;
 /// The "/home" controller.
 final class Home implements Http.Handler {
 
-  private final UiSources sources = UiSources.of(
-      Source.Home,
-      Source.HomeModel,
-      Source.HomeHeader,
-      Source.HomeList
-  );
-
   @Override
   public final void handle(Http.Exchange http) {
     final Sql.Transaction trx;
@@ -36,17 +29,10 @@ final class Home implements Http.Handler {
     final List<HomeModel> movies;
     movies = HomeModel.query(trx);
 
-    http.ok(
-        UiShell.of(
-            UiContent.of(
-                new HomeHeader(),
+    final HomeView view;
+    view = new HomeView(movies);
 
-                new HomeList(movies)
-            ),
-
-            sources
-        )
-    );
+    http.ok(view);
   }
 
 }

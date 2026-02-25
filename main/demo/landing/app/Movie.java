@@ -27,8 +27,6 @@ final class Movie implements Http.Handler {
 
   private final Clock clock;
 
-  private final UiSources sources = UiSources.of();
-
   Movie(Clock clock) {
     this.clock = clock;
   }
@@ -60,19 +58,10 @@ final class Movie implements Http.Handler {
     final List<MovieScreening> screenings;
     screenings = MovieScreening.query(trx, movieId, now);
 
-    http.ok(
-        UiShell.of(
-            UiContent.of(
-                UiBackLink.of("/demo.landing/home"),
+    final MovieView view;
+    view = new MovieView(details, screenings);
 
-                new MovieDetailsUi(details),
-
-                new MovieScreeningUi(screenings)
-            ),
-
-            sources
-        )
-    );
+    http.ok(view);
   }
 
 }

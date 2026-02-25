@@ -80,11 +80,7 @@ public class MovieTest {
 
         config.method(Http.Method.GET);
 
-        config.path("/index.html");
-
-        config.queryParam("page", Page.MOVIE.key);
-
-        config.queryParam("id", 11);
+        config.path("/demo.landing/movie/11");
       });
 
       assertEquals(
@@ -96,7 +92,7 @@ public class MovieTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /index.html
+          back-link: /demo.landing/home
 
           # Title 1
 
@@ -112,24 +108,24 @@ public class MovieTest {
           screen: Screen 1
           features: Feature B, Feature A
 
-          Query[page=SEATS, id=61, aux=0]  | 13:00
-          Query[page=SEATS, id=62, aux=0]  | 17:00
-          Query[page=SEATS, id=63, aux=0]  | 21:00
+          61 | 13:00
+          62 | 17:00
+          63 | 21:00
 
           ## Sat 25/Jan
 
           screen: Screen 2
           features: Feature A
 
-          Query[page=SEATS, id=64, aux=0]  | 14:00
-          Query[page=SEATS, id=65, aux=0]  | 18:00
+          64 | 14:00
+          65 | 18:00
 
           ## Sun 26/Jan
 
           screen: Screen 1
           features: Feature B, Feature A
 
-          Query[page=SEATS, id=66, aux=0]  | 13:00
+          66 | 13:00
           """
       );
     });
@@ -146,13 +142,7 @@ public class MovieTest {
 
         config.method(Http.Method.GET);
 
-        config.path("/index.html");
-
-        config.queryParam("page", Page.MOVIE.key);
-
-        config.queryParam("demo", "movie");
-
-        config.queryParam("movie", Integer.MAX_VALUE);
+        config.path("/demo.landing/movie/999");
       });
 
       assertEquals(
