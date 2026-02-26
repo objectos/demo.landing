@@ -15,44 +15,19 @@
  */
 package demo.landing.app;
 
-import demo.landing.LandingDemo;
-import java.time.LocalDateTime;
-import java.util.Optional;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
-final class Confirm implements Kino.GET, Kino.POST {
+final class Confirm implements Http.Handler {
 
-  private final Kino.Ctx ctx;
+  private final Clock clock;
 
-  Confirm(Kino.Ctx ctx) {
-    this.ctx = ctx;
-  }
-
-  public static Html.Component create(Kino.Ctx ctx, Sql.Transaction trx, long reservationId) {
-    final Confirm action;
-    action = new Confirm(ctx);
-
-    return action.view(trx, reservationId);
+  Confirm(Clock clock) {
+    this.clock = clock;
   }
 
   @Override
-  public final Html.Component get(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
-    long reservationId;
-    reservationId = query.id();
-
-    return view(trx, reservationId);
-  }
-
-  @Override
-  public final Kino.PostResult post(Http.Exchange http) {
+  public final void handle(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
@@ -60,12 +35,12 @@ final class Confirm implements Kino.GET, Kino.POST {
     data = ConfirmData.parse(http);
 
     final LocalDateTime today;
-    today = ctx.today();
+    today = LocalDateTime.now(clock);
 
     final Sql.Update ticketResult;
     ticketResult = data.persistTicket(trx, today);
 
-    return switch (ticketResult) {
+    switch (ticketResult) {
       case Sql.UpdateFailed _ -> {
 
         throw new UnsupportedOperationException("Implement me");
@@ -76,28 +51,18 @@ final class Confirm implements Kino.GET, Kino.POST {
         final long reservationId;
         reservationId = data.reservationId();
 
-        final String href;
-        href = ctx.href(Page.TICKET, reservationId);
+        final Optional<TicketModel> maybe;
+        maybe = TicketModel.queryOptional(trx, reservationId);
 
-        yield LandingDemo.redirect(href);
+        final TicketModel model;
+        model = maybe.get();
+
+        final TicketView view;
+        view = new TicketView(model);
+
+        http.ok(view);
       }
-    };
-  }
-
-  private Html.Component view(Sql.Transaction trx, long reservationId) {
-    final Optional<ConfirmDetails> maybe;
-    maybe = ConfirmDetails.queryOptional(trx, reservationId);
-
-    if (maybe.isEmpty()) {
-      return NotFound.create();
     }
-
-    final ConfirmDetails details;
-    details = maybe.get();
-
-    return Shell.create(shell -> {
-      throw new UnsupportedOperationException("Implement me");
-    });
   }
 
 }

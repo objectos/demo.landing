@@ -17,8 +17,9 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.List;
 
-final class TicketView extends Kino.View {
+final class TicketView extends UiShell {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
@@ -29,7 +30,12 @@ final class TicketView extends Kino.View {
   }
 
   @Override
-  protected final void render() {
+  final List<SourceModel> viewSources() {
+    return List.of();
+  }
+
+  @Override
+  final void renderMain() {
     testableH1("Ticket #" + model.id());
 
     h2("Thank You");
@@ -41,10 +47,8 @@ final class TicketView extends Kino.View {
         position:relative
         """),
 
-        icon(
-            Kino.Icon.RECEIPT,
-
-            css("""
+        c(
+            UiIcon.RECEIPT.css("""
             border:1px_solid_var(--color-border)
             border-radius:9999px
             height:auto
@@ -109,10 +113,8 @@ final class TicketView extends Kino.View {
           padding:16rx
           """),
 
-          icon(
-              Kino.Icon.TICKET,
-
-              css("""
+          c(
+              UiIcon.TICKET.css("""
               height:auto
               margin-right:16rx
               padding:16rx

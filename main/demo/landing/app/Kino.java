@@ -93,24 +93,7 @@ public final class Kino implements LandingDemo {
    */
   @Override
   public final Html.Component get(Http.Exchange http) {
-    ctx.decode(http);
-
-    final Page page;
-    page = Page.parse(http);
-
-    // based on the 'page' value we create our controller
-    final GET controller;
-    controller = switch (page) {
-      case CONFIRM -> new Confirm(ctx);
-
-      case TICKET -> new Ticket();
-
-      default -> throw new UnsupportedOperationException();
-    };
-
-    // we intercept all controllers even though
-    // not all require DB access strictly speaking
-    return ctx.transactional(http, controller);
+    throw new UnsupportedOperationException("Implement me");
   }
 
   /**
@@ -118,17 +101,7 @@ public final class Kino implements LandingDemo {
    */
   @Override
   public final Kino.PostResult post(Http.Exchange http) {
-    final Query query;
-    query = ctx.decode(http);
-
-    final POST controller;
-    controller = switch (query.page) {
-      case CONFIRM -> new Confirm(ctx);
-
-      default -> throw new UnsupportedOperationException();
-    };
-
-    return ctx.transactional(http, controller);
+    throw new UnsupportedOperationException("Implement me");
   }
 
   //

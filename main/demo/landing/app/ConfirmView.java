@@ -145,11 +145,7 @@ final class ConfirmView extends UiShell {
           ),
 
           div(
-              css("""
-
-              """),
-
-              text(testableCell(format(item.price()), 6))
+              testableCell(format(item.price()), 6)
           )
       );
 
@@ -166,7 +162,7 @@ final class ConfirmView extends UiShell {
         padding-top:12rx
         """),
 
-        div(text(testableCell("Total", 5))),
+        div(testableCell("Total", 5)),
 
         div(
             css("""

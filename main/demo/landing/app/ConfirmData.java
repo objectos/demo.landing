@@ -22,11 +22,8 @@ import objectos.way.Sql;
 record ConfirmData(long reservationId, boolean wayRequest) {
 
   static ConfirmData parse(Http.Exchange http) {
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
-
-    long reservationId;
-    reservationId = query.id();
+    final long reservationId;
+    reservationId = http.formParamAsLong("reservationId", Long.MIN_VALUE);
 
     return new ConfirmData(
         reservationId,

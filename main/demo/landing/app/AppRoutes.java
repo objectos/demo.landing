@@ -65,6 +65,8 @@ public final class AppRoutes implements Http.Routing.Module {
     routes.subpath("show/{id}", GET, new Show(reservation));
 
     routes.subpath("seats", POST, new Seats(noteSink));
+
+    routes.subpath("confirm", POST, new Confirm(clock));
   }
 
 }
