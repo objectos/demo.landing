@@ -17,31 +17,36 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.List;
 import objectos.script.Js;
 import objectos.way.Html;
 
-final class ConfirmView extends Kino.View {
-
-  private final Kino.Ctx ctx;
+final class ConfirmView extends UiShell {
 
   private final ConfirmDetails details;
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  ConfirmView(Kino.Ctx ctx, ConfirmDetails details) {
-    this.ctx = ctx;
-
+  ConfirmView(ConfirmDetails details) {
     this.details = details;
   }
 
   @Override
-  protected final void render() {
-    backLink(ctx, Page.SEATS, details.reservationId(), SeatsView.BACK);
+  final List<SourceModel> viewSources() {
+    return List.of();
+  }
+
+  @Override
+  final void renderMain() {
+    final long reservationId;
+    reservationId = details.reservationId();
+
+    backLink("/demo.landing/seats/0?reservationId=" + reservationId);
 
     h2("Your Order");
 
     // testable node only
-    testableH1("Order #" + details.reservationId());
+    testableH1("Order #" + reservationId);
 
     p("Please review and confirm your order");
 
@@ -86,26 +91,24 @@ final class ConfirmView extends Kino.View {
   private void renderLeft() {
     h3("Movie");
 
-    renderDetailsItem(Kino.Icon.FILM, "title", details.title());
+    renderDetailsItem(UiIcon.FILM, "title", details.title());
 
-    renderDetailsItem(Kino.Icon.CALENDAR_CHECK, "date", details.date());
+    renderDetailsItem(UiIcon.CALENDAR_CHECK, "date", details.date());
 
-    renderDetailsItem(Kino.Icon.CLOCK, "time", details.time());
+    renderDetailsItem(UiIcon.CLOCK, "time", details.time());
 
-    renderDetailsItem(Kino.Icon.PROJECTOR, "screen", details.screen());
+    renderDetailsItem(UiIcon.PROJECTOR, "screen", details.screen());
   }
 
-  private Html.Instruction.OfElement renderDetailsItem(Kino.Icon icon, String name, String value) {
+  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
     return div(
         css("""
         display:flex
         gap:12rx
         """),
 
-        icon(
-            icon,
-
-            css("""
+        c(
+            icon.css("""
             height:auto
             width:16rx
             """)
@@ -191,10 +194,8 @@ final class ConfirmView extends Kino.View {
             gap:8rx
             """),
 
-            icon(
-                Kino.Icon.CREDIT_CARD,
-
-                css("""
+            c(
+                UiIcon.CREDIT_CARD.css("""
                 height:auto
                 width:16rx
                 """)
@@ -210,24 +211,22 @@ final class ConfirmView extends Kino.View {
     reservationId = details.reservationId();
 
     form(
-        formAction(ctx, Page.CONFIRM, reservationId),
-
         css("""
         display:flex
         justify-content:end
         margin-top:24rx
         """),
 
+        action("/demo.landing/confirm"),
+
         onsubmit(Js.submit()),
 
-        //        dataOnSuccess(script -> {
-        //          final String successUrl;
-        //          successUrl = ctx.href(Kino.Page.TICKET, reservationId);
-        //
-        //          script.replaceState(successUrl);
-        //        }),
-
         method("post"),
+
+        input(
+            type("hidden"),
+            name("reservationId"),
+            value(testableField("reservationId", Long.toString(reservationId)))),
 
         button(
             PRIMARY,

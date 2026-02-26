@@ -15,12 +15,35 @@
  */
 package demo.landing.app;
 
-import java.util.List;
+import module java.base;
 import module objectos.way;
 
 final class ShowView extends UiShell {
 
+  enum Alert {
+
+    EMPTY("""
+    Kindly choose at least 1 seat."""),
+
+    LIMIT("""
+    We regret to inform you that we limit purchases to 6 tickets per person. \
+    Kindly choose at most 6 seats."""),
+
+    BOOKED("""
+    We regret to inform you that another customer has already reserved one or more of the selected seats. \
+    Kindly choose alternative seats.""");
+
+    private final String msg;
+
+    private Alert(String msg) {
+      this.msg = msg;
+    }
+
+  }
+
   private static final String FORM_ID = "seats-form";
+
+  private final Alert alert;
 
   private final ShowDetails details;
 
@@ -29,6 +52,12 @@ final class ShowView extends UiShell {
   private final long reservationId;
 
   ShowView(ShowDetails details, ShowGrid grid, long reservationId) {
+    this(null, details, grid, reservationId);
+  }
+
+  ShowView(ShowView.Alert alert, ShowDetails details, ShowGrid grid, long reservationId) {
+    this.alert = alert;
+
     this.details = details;
 
     this.grid = grid;
@@ -53,6 +82,12 @@ final class ShowView extends UiShell {
 
     p("Please choose your seats");
 
+    if (alert != null) {
+      testableField("alert", alert.name());
+
+      renderAlert(alert.msg);
+    }
+
     div(
         css("""
         border:1px_solid_var(--color-border)
@@ -66,6 +101,37 @@ final class ShowView extends UiShell {
         f(this::renderDetails),
 
         f(this::renderSeats)
+    );
+  }
+
+  private void renderAlert(String msg) {
+    div(
+        css("""
+        align-items:center
+        background-color:var(--color-blue-100)
+        border-left:3px_solid_var(--color-blue-800)
+        display:flex
+        font-size:14rx
+        line-height:16rx
+        margin:16rx_0
+        padding:16rx
+        """),
+
+        c(
+            UiIcon.INFO.css("""
+            height:20rx
+            width:auto
+            padding-right:16rx
+            """)
+        ),
+
+        div(
+            css("""
+            flex:1
+            """),
+
+            text(msg)
+        )
     );
   }
 

@@ -16,9 +16,10 @@
 package demo.landing.app;
 
 import static objectos.way.Http.Method.GET;
+import static objectos.way.Http.Method.POST;
 
 import demo.landing.LandingDemoConfig;
-import java.time.Clock;
+import module java.base;
 import module objectos.way;
 
 /// Declares the application routes.
@@ -30,12 +31,16 @@ public final class AppRoutes implements Http.Routing.Module {
 
   private final Clock clock;
 
+  private final Note.Sink noteSink;
+
   private final AppReservation reservation;
 
   private final AppTransactional transactional;
 
   public AppRoutes(LandingDemoConfig config) {
     clock = config.clock;
+
+    noteSink = config.noteSink;
 
     reservation = new AppReservation(clock, config.reservationEpoch, config.reservationRandom);
 
@@ -58,6 +63,8 @@ public final class AppRoutes implements Http.Routing.Module {
     routes.subpath("movie/{id}", GET, new Movie(clock));
 
     routes.subpath("show/{id}", GET, new Show(reservation));
+
+    routes.subpath("seats", POST, new Seats(noteSink));
   }
 
 }

@@ -35,7 +35,7 @@ final class Show implements Http.Handler {
     showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
 
     final Optional<ShowDetails> maybeDetails;
-    maybeDetails = ShowDetails.queryOptional(trx, showId);
+    maybeDetails = ShowDetails.byId(trx, showId);
 
     if (maybeDetails.isEmpty()) {
       final NotFoundView view;

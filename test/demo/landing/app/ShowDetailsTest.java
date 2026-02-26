@@ -63,7 +63,7 @@ public class ShowDetailsTest {
       Testing.load(trx, data);
 
       final Optional<ShowDetails> maybe;
-      maybe = ShowDetails.queryOptional(trx, 61);
+      maybe = ShowDetails.byId(trx, 61);
 
       assertEquals(maybe.isPresent(), true);
 
@@ -92,7 +92,7 @@ public class ShowDetailsTest {
       """);
 
       final Optional<ShowDetails> maybe;
-      maybe = ShowDetails.queryBackButton(trx, 904L);
+      maybe = ShowDetails.byReservationId(trx, 904L);
 
       assertEquals(maybe.isPresent(), true);
 

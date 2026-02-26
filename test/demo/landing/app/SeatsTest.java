@@ -63,23 +63,26 @@ public class SeatsTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
+      Testing.load(trx, """
+      insert into RESERVATION (RESERVATION_ID, SHOW_ID)
+      values (901, 61);
+      """);
+
       final Http.Exchange http;
       http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(Http.Method.POST);
 
-        config.path("/index.html");
+        config.path("/demo.landing/seats");
 
-        config.queryParam("page", Page.SEATS.key);
+        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
-        final int showId;
-        showId = 61;
+        config.formParam("reservationId", 901);
 
-        final String demo;
-        demo = Testing.encode(Page.SEATS, showId);
+        config.formParam("screenId", 31);
 
-        config.queryParam("demo", demo);
+        config.formParam("seat", 103);
       });
 
       assertEquals(
@@ -91,92 +94,7 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /index.html?page=M&id=11
-
-          # Show details
-
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
-
-          # Seats
-
-          action: SEATS:1:31
-          """
-      );
-    });
-  }
-
-  @Test
-  public void testCase02() {
-    Testing.rollback(trx -> {
-      Testing.load(trx, data);
-
-      Testing.load(trx, """
-      insert into RESERVATION (RESERVATION_ID, SHOW_ID)
-      values (901, 61);
-      """);
-
-      final Http.Exchange http0;
-      http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.POST);
-
-        config.path("/demo/landing");
-
-        final long reservationId;
-        reservationId = 901;
-
-        final int screenId;
-        screenId = 31;
-
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
-
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
-
-        config.formParam("seat", 103);
-      });
-
-      assertEquals(
-          Testing.handle0(http0),
-
-          """
-          HTTP/1.1 302 Found
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
-
-          """
-      );
-
-      final Http.Exchange http1;
-      http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.GET);
-
-        config.path("/index.html");
-
-        config.queryParam("page", Page.CONFIRM.key);
-
-        config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
-      });
-
-      assertEquals(
-          Testing.handle0(http1),
-
-          """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
-          back-link: SEATS:901:999
+          back-link: /demo.landing/seats/0?reservationId=901
 
           # Order #901
 
@@ -189,7 +107,7 @@ public class SeatsTest {
 
           B1    | $9.99
           Total | $9.99
-          action: CONFIRM:901
+          reservationId: 901
           """
       );
     });
@@ -208,26 +126,19 @@ public class SeatsTest {
       values (901, 103, 61);
       """);
 
-      final Http.Exchange http0;
-      http0 = Testing.http(config -> {
+      final Http.Exchange http;
+      http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
-
-        final long reservationId;
-        reservationId = 901;
-
-        final int screenId;
-        screenId = 31;
-
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.path("/demo.landing/seats");
 
         config.header(Http.HeaderName.WAY_REQUEST, "true");
+
+        config.formParam("reservationId", 901);
+
+        config.formParam("screenId", 31);
 
         config.formParam("seat", 103);
 
@@ -237,32 +148,7 @@ public class SeatsTest {
       });
 
       assertEquals(
-          Testing.handle0(http0),
-
-          """
-          HTTP/1.1 302 Found
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
-
-          """
-      );
-
-      final Http.Exchange http1;
-      http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.GET);
-
-        config.path("/index.html");
-
-        config.queryParam("page", Page.CONFIRM.key);
-
-        config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
-      });
-
-      assertEquals(
-          Testing.handle0(http1),
+          Testing.handle0(http),
 
           """
           HTTP/1.1 200 OK
@@ -270,7 +156,7 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: SEATS:901:999
+          back-link: /demo.landing/seats/0?reservationId=901
 
           # Order #901
 
@@ -285,7 +171,7 @@ public class SeatsTest {
           B2    | $9.99
           B3    | $9.99
           Total | $29.97
-          action: CONFIRM:901
+          reservationId: 901
           """
       );
     });
@@ -306,26 +192,19 @@ public class SeatsTest {
       ,      (901, 105, 61);
       """);
 
-      final Http.Exchange http0;
-      http0 = Testing.http(config -> {
+      final Http.Exchange http;
+      http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
-
-        final long reservationId;
-        reservationId = 901;
-
-        final int screenId;
-        screenId = 31;
-
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.path("/demo.landing/seats");
 
         config.header(Http.HeaderName.WAY_REQUEST, "true");
+
+        config.formParam("reservationId", 901);
+
+        config.formParam("screenId", 31);
 
         config.formParam("seat", 103);
 
@@ -333,32 +212,7 @@ public class SeatsTest {
       });
 
       assertEquals(
-          Testing.handle0(http0),
-
-          """
-          HTTP/1.1 302 Found
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
-
-          """
-      );
-
-      final Http.Exchange http1;
-      http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.GET);
-
-        config.path("/index.html");
-
-        config.queryParam("page", Page.CONFIRM.key);
-
-        config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
-      });
-
-      assertEquals(
-          Testing.handle0(http1),
+          Testing.handle0(http),
 
           """
           HTTP/1.1 200 OK
@@ -366,7 +220,7 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: SEATS:901:999
+          back-link: /demo.landing/seats/0?reservationId=901
 
           # Order #901
 
@@ -380,7 +234,7 @@ public class SeatsTest {
           B1    | $9.99
           B2    | $9.99
           Total | $19.98
-          action: CONFIRM:901
+          reservationId: 901
           """
       );
     });
@@ -406,62 +260,17 @@ public class SeatsTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
+        config.path("/demo.landing/seats");
 
-        final long reservationId;
-        reservationId = 901;
+        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
-        final int screenId;
-        screenId = 31;
+        config.formParam("reservationId", 901);
 
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.formParam("screenId", 31);
 
         config.formParam("seat", 103);
 
         config.formParam("seat", 104);
-      });
-
-      assertEquals(
-          Testing.handle0(http),
-
-          """
-          HTTP/1.1 302 Found
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
-
-          """
-      );
-
-      assertEquals(Testing.decode("7e9e0b7b9e2a4f6f081e3b5a0f"), Page.CONFIRM.query(901));
-    });
-  }
-
-  @Test
-  public void testCase06() {
-    Testing.rollback(trx -> {
-      Testing.load(trx, data);
-
-      final Http.Exchange http;
-      http = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.GET);
-
-        config.path("/index.html");
-
-        config.queryParam("page", Page.SEATS.key);
-
-        final int showId;
-        showId = Integer.MAX_VALUE;
-
-        final String demo;
-        demo = Testing.encode(Page.SEATS, showId);
-
-        config.queryParam("demo", demo);
       });
 
       assertEquals(
@@ -473,8 +282,21 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          # Something Went Wrong
+          back-link: /demo.landing/seats/0?reservationId=901
 
+          # Order #901
+
+          title: Title 1
+          date: Sat 25/Jan
+          time: 13:00
+          screen: Screen 1
+
+          ## Order Details
+
+          B1    | $9.99
+          B2    | $9.99
+          Total | $19.98
+          reservationId: 901
           """
       );
     });
@@ -496,18 +318,13 @@ public class SeatsTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
+        config.path("/demo.landing/seats");
 
-        final long reservationId;
-        reservationId = 902; // bad reservation id
+        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
-        final int screenId;
-        screenId = 31; // valid screen id
+        config.formParam("reservationId", 902); // bad reservation id
 
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.formParam("screenId", 31); // valid screen id
 
         config.formParam("seat", 103);
 
@@ -546,21 +363,15 @@ public class SeatsTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
+        config.path("/demo.landing/seats");
 
-        final long reservationId;
-        reservationId = 901;
+        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
-        final int screenId;
-        screenId = 31; // valid screen id
+        config.formParam("reservationId", 901); // valid reservation id
 
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
+        config.formParam("screenId", 31); // valid screen id
 
-        config.queryParam("demo", demo);
-
-        // bad seat id
-        config.formParam("seat", 999);
+        config.formParam("seat", 999); // bad seat id
       });
 
       assertEquals(
@@ -599,18 +410,13 @@ public class SeatsTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
+        config.path("/demo.landing/seats");
 
-        final long reservationId;
-        reservationId = 901;
+        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
-        final int screenId;
-        screenId = 31;
+        config.formParam("reservationId", 901);
 
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.formParam("screenId", 31);
 
         config.formParam("seat", 105);
       });
@@ -641,26 +447,19 @@ public class SeatsTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http0;
-      http0 = Testing.http(config -> {
+      final Http.Exchange http;
+      http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
-
-        final long reservationId;
-        reservationId = 901;
-
-        final int screenId;
-        screenId = 31;
-
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.path("/demo.landing/seats");
 
         config.header(Http.HeaderName.WAY_REQUEST, "true");
+
+        config.formParam("reservationId", 901);
+
+        config.formParam("screenId", 31);
 
         config.formParam("seat", 101);
         config.formParam("seat", 102);
@@ -671,32 +470,7 @@ public class SeatsTest {
       });
 
       assertEquals(
-          Testing.handle0(http0),
-
-          """
-          HTTP/1.1 302 Found
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /index.html?page=C&demo=7e9e0b7b9e2a4f6f081e3b5a0f
-
-          """
-      );
-
-      final Http.Exchange http1;
-      http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.GET);
-
-        config.path("/index.html");
-
-        config.queryParam("page", Page.CONFIRM.key);
-
-        config.queryParam("demo", "7e9e0b7b9e2a4f6f081e3b5a0f");
-      });
-
-      assertEquals(
-          Testing.handle0(http1),
+          Testing.handle0(http),
 
           """
           HTTP/1.1 200 OK
@@ -704,7 +478,7 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: SEATS:901:999
+          back-link: /demo.landing/seats/0?reservationId=901
 
           # Order #901
 
@@ -722,13 +496,13 @@ public class SeatsTest {
           B3    | $9.99
           B4    | $9.99
           Total | $59.94
-          action: CONFIRM:901
+          reservationId: 901
           """
       );
     });
   }
 
-  @Test
+  @Test(description = "Too many seats")
   public void testCase11() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
@@ -744,21 +518,15 @@ public class SeatsTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
-
-        final long reservationId;
-        reservationId = 901;
-
-        final int screenId;
-        screenId = 31;
-
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.path("/demo.landing/seats");
 
         config.header(Http.HeaderName.WAY_REQUEST, "true");
 
+        config.formParam("reservationId", 901);
+
+        config.formParam("screenId", 31);
+
+        // more than 6 seats
         config.formParam("seat", 101);
         config.formParam("seat", 102);
         config.formParam("seat", 103);
@@ -772,12 +540,12 @@ public class SeatsTest {
           Testing.handle0(http),
 
           """
-          HTTP/1.1 200 OK
+          HTTP/1.1 400 Bad Request
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /index.html?page=M&id=11
+          back-link: /demo.landing/movie/11
 
           # Show details
 
@@ -789,13 +557,14 @@ public class SeatsTest {
 
           # Seats
 
-          action: SEATS:901:31
+          reservationId: 901
+          screenId: 31
           """
       );
     });
   }
 
-  @Test
+  @Test(description = "No seats selected")
   public void testCase12() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
@@ -811,20 +580,13 @@ public class SeatsTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
-
-        final long reservationId;
-        reservationId = 901;
-
-        final int screenId;
-        screenId = 31;
-
-        final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.path("/demo.landing/seats");
 
         config.header(Http.HeaderName.WAY_REQUEST, "true");
+
+        config.formParam("reservationId", 901);
+
+        config.formParam("screenId", 31);
 
         // no seats selected
         config.formParam("dummy", "");
@@ -834,12 +596,12 @@ public class SeatsTest {
           Testing.handle0(http),
 
           """
-          HTTP/1.1 200 OK
+          HTTP/1.1 400 Bad Request
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /index.html?page=M&id=11
+          back-link: /demo.landing/movie/11
 
           # Show details
 
@@ -851,7 +613,8 @@ public class SeatsTest {
 
           # Seats
 
-          action: SEATS:901:31
+          reservationId: 901
+          screenId: 31
           """
       );
     });

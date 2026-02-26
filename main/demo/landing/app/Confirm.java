@@ -96,14 +96,7 @@ final class Confirm implements Kino.GET, Kino.POST {
     details = maybe.get();
 
     return Shell.create(shell -> {
-      shell.app = new ConfirmView(ctx, details);
-
-      shell.sources(
-        //          Source.Confirm,
-      //          Source.ConfirmData,
-      //          Source.ConfirmDetails,
-      //          Source.ConfirmView
-      );
+      throw new UnsupportedOperationException("Implement me");
     });
   }
 

@@ -48,7 +48,7 @@ record ShowDetails(
     );
   }
 
-  public static Optional<ShowDetails> queryOptional(Sql.Transaction trx, int id) {
+  public static Optional<ShowDetails> byId(Sql.Transaction trx, int id) {
     trx.sql("""
     select
       SHOW.SHOW_ID,
@@ -75,8 +75,30 @@ record ShowDetails(
     return trx.queryOptional(ShowDetails::new);
   }
 
-  public static Optional<ShowDetails> queryBackButton(Sql.Transaction trx, long reservationId) {
-    reservation(trx, reservationId);
+  public static Optional<ShowDetails> byReservationId(Sql.Transaction trx, long reservationId) {
+    trx.sql("""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      RESERVATION
+      natural join SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+    """);
+
+    trx.param(reservationId);
 
     return trx.queryOptional(ShowDetails::new);
   }

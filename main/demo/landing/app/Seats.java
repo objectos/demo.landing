@@ -15,8 +15,10 @@
  */
 package demo.landing.app;
 
+import java.util.Optional;
 import module objectos.way;
 
+/// The seats selection form controller.
 final class Seats implements Http.Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(Seats.class, "Read", Note.DEBUG);
@@ -39,82 +41,120 @@ final class Seats implements Http.Handler {
 
     if (data.seats() == 0) {
       // no seats were selected...
-      throw new UnsupportedOperationException("Implement me");
+      handleAlert(http, trx, data, ShowView.Alert.EMPTY);
+
+      return;
     }
 
     if (data.seats() > 6) {
       // too many seats were selected...
-      throw new UnsupportedOperationException("Implement me");
+      handleAlert(http, trx, data, ShowView.Alert.LIMIT);
+
+      return;
     }
 
     final Sql.BatchUpdate tmpSelectionResult;
     tmpSelectionResult = data.persistTmpSelection(trx);
 
     switch (tmpSelectionResult) {
-      case Sql.BatchUpdateSuccess _ -> {
-        final Sql.Update userSelectionResult;
-        userSelectionResult = data.persisUserSelection(trx);
+      case Sql.BatchUpdateFailed _ -> handleTmpSelectionFailed(http, trx, data);
 
-        switch (userSelectionResult) {
-          case Sql.UpdateSuccess ok -> {
-            int count;
-            count = ok.count();
-
-            if (data.seats() != count) {
-
-              // some or possibly all of the seats were not selected.
-              // 1) maybe an already sold ticket was submitted
-              // 2) seats refer to a different show
-              // anyways... bad data
-
-              // clear SELECTION just in case some of the records were inserted
-              data.clearUserSelection(trx);
-
-              final NotFoundView view;
-              view = new NotFoundView();
-
-              http.badRequest(view);
-
-              return;
-            }
-
-            // all seats were persisted.
-            // go to next screen.
-
-            final long reservationId;
-            reservationId = data.reservationId();
-
-            throw new UnsupportedOperationException("Implement me");
-          }
-
-          case Sql.UpdateFailed _ -> userSelectionError(http, data);
-        }
-      }
-
-      case Sql.BatchUpdateFailed _ -> {
-        // clear TMP_SELECTION just in case some of the records were inserted
-        data.clearTmpSelection(trx);
-
-        final NotFoundView view;
-        view = new NotFoundView();
-
-        http.badRequest(view);
-      }
+      case Sql.BatchUpdateSuccess _ -> handleTmpSelectionSuccess(http, trx, data);
     }
   }
 
-  private void userSelectionError(Http.Exchange http, SeatsData data) {
-    // one or more seats were committed by another trx...
-    // inform user
-
-    final int state;
-    state = SeatsView.BOOKED;
-
+  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, ShowView.Alert alert) {
     final long reservationId;
     reservationId = data.reservationId();
 
-    throw new UnsupportedOperationException("Implement me");
+    final Optional<ShowDetails> maybe;
+    maybe = ShowDetails.byReservationId(trx, reservationId);
 
+    final Media view;
+
+    if (maybe.isPresent()) {
+      final ShowDetails details;
+      details = maybe.get();
+
+      final ShowGrid grid;
+      grid = ShowGrid.query(trx, reservationId);
+
+      view = new ShowView(alert, details, grid, reservationId);
+    } else {
+      view = new NotFoundView();
+    }
+
+    http.badRequest(view);
+  }
+
+  private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
+    // clear TMP_SELECTION just in case some of the records were inserted
+    data.clearTmpSelection(trx);
+
+    final NotFoundView view;
+    view = new NotFoundView();
+
+    http.badRequest(view);
+  }
+
+  private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
+    final Sql.Update userSelectionResult;
+    userSelectionResult = data.persisUserSelection(trx);
+
+    switch (userSelectionResult) {
+      case Sql.UpdateSuccess ok -> {
+        int count;
+        count = ok.count();
+
+        if (data.seats() != count) {
+
+          // some or possibly all of the seats were not selected.
+          // 1) maybe an already sold ticket was submitted
+          // 2) seats refer to a different show
+          // anyways... bad data
+
+          // clear SELECTION just in case some of the records were inserted
+          data.clearUserSelection(trx);
+
+          final NotFoundView view;
+          view = new NotFoundView();
+
+          http.badRequest(view);
+
+        } else {
+
+          // all seats were persisted.
+          // render next screen.
+
+          final long reservationId;
+          reservationId = data.reservationId();
+
+          final Optional<ConfirmDetails> maybe;
+          maybe = ConfirmDetails.queryOptional(trx, reservationId);
+
+          if (maybe.isPresent()) {
+            // renders the confirmation view
+            final ConfirmDetails details;
+            details = maybe.get();
+
+            final ConfirmView view;
+            view = new ConfirmView(details);
+
+            http.ok(view);
+          } else {
+            // unlikely? in any case, we assume bad data
+            final NotFoundView view;
+            view = new NotFoundView();
+
+            http.badRequest(view);
+          }
+
+        }
+
+      }
+
+      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, ShowView.Alert.BOOKED);
+    }
   }
 
 }
