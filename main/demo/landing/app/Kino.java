@@ -53,10 +53,7 @@ public final class Kino implements LandingDemo {
 
   public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home");
 
-  private final Ctx ctx;
-
   private Kino(Ctx ctx) {
-    this.ctx = ctx;
   }
 
   /**
@@ -178,7 +175,7 @@ public final class Kino implements LandingDemo {
     /**
      * Renders the "Go Back" link.
      */
-    final Html.Instruction.OfElement backLink(Ctx ctx, Page page) {
+    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page) {
       testableField("back-link", page.name());
 
       return backLink(ctx.href(page));
@@ -187,7 +184,7 @@ public final class Kino implements LandingDemo {
     /**
      * Renders the "Go Back" link.
      */
-    final Html.Instruction.OfElement backLink(Ctx ctx, Page page, long id) {
+    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page, long id) {
       testableField("back-link", page.name() + ":" + id);
 
       return backLink(ctx.href(page, id));
@@ -196,10 +193,10 @@ public final class Kino implements LandingDemo {
     /**
      * Renders the "Go Back" link.
      */
-    final Html.Instruction.OfElement backLink(Ctx ctx, Page page, long id, int aux) {
+    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page, long id, int aux) {
       testableField("back-link", page.name() + ":" + id + ":" + aux);
 
-      Query query = page.query(id, aux);
+      AppHash query = page.query(id, aux);
 
       return backLink(ctx.href(query));
     }
@@ -268,13 +265,13 @@ public final class Kino implements LandingDemo {
       );
     }
 
-    final Html.Instruction.OfAttribute formAction(Ctx ctx, Page page, long id) {
+    final Html.Instruction.OfAttribute formAction(Ctx ctx, AppView page, long id) {
       testableField("action", page.name() + ":" + id);
 
       return action(ctx.action(page, id));
     }
 
-    final Html.Instruction.OfAttribute formAction(Ctx ctx, Page page, long id, int aux) {
+    final Html.Instruction.OfAttribute formAction(Ctx ctx, AppView page, long id, int aux) {
       testableField("action", page.name() + ":" + id + ":" + aux);
 
       return action(ctx.action(page, id, aux));
@@ -306,7 +303,7 @@ public final class Kino implements LandingDemo {
   record Ctx(
       Clock clock,
 
-      KinoCodec codec,
+      AppCodec codec,
 
       Note.Sink noteSink,
 
@@ -322,8 +319,8 @@ public final class Kino implements LandingDemo {
       final byte[] codecKey;
       codecKey = config.codecKey();
 
-      final KinoCodec codec;
-      codec = new KinoCodec(codecKey);
+      final AppCodec codec;
+      codec = new AppCodec(clock, codecKey);
 
       final Note.Sink noteSink;
       noteSink = config.noteSink;
@@ -337,12 +334,12 @@ public final class Kino implements LandingDemo {
       return new Ctx(clock, codec, noteSink, reservation, transactional);
     }
 
-    final String action(Page page, long id) {
+    final String action(AppView page, long id) {
       return action(page, id, 0);
     }
 
-    final String action(Page page, long id, int aux) {
-      Query query;
+    final String action(AppView page, long id, int aux) {
+      AppHash query;
       query = page.query(id, aux);
 
       String demo;
@@ -351,20 +348,20 @@ public final class Kino implements LandingDemo {
       return "/demo/landing?demo=" + demo;
     }
 
-    final String href(Page page) {
-      return page == Page.NOW_SHOWING ? "/index.html" : href(page, 0L);
+    final String href(AppView page) {
+      return page == AppView.HOME ? "/index.html" : href(page, 0L);
     }
 
-    final String href(Page page, long id) {
-      Query query;
+    final String href(AppView page, long id) {
+      AppHash query;
       query = page.query(id);
 
       return href(query);
     }
 
-    final String href(Query query) {
-      final Page page;
-      page = query.page;
+    final String href(AppHash query) {
+      final AppView page;
+      page = query.page();
 
       final String demo;
       demo = codec.encode(query);
@@ -392,7 +389,8 @@ public final class Kino implements LandingDemo {
       return transactional.post(http, action);
     }
 
-    private Query decode(Http.Exchange http) {
+    @SuppressWarnings("unused")
+    private AppHash decode(Http.Exchange http) {
       // We cannot rely on the path to render the different pages
       // of the application because this demo will be embedded in another page.
       // So, we use an URL query parameter.
@@ -401,10 +399,10 @@ public final class Kino implements LandingDemo {
 
       // the query parameter value is encoded/obfuscated.
       // we use the codec to decode it.
-      final Query query;
+      final AppHash query;
       query = codec.decode(demo);
 
-      http.set(Query.class, query);
+      http.set(AppHash.class, query);
 
       return query;
     }
@@ -449,17 +447,6 @@ public final class Kino implements LandingDemo {
   interface POST {
 
     PostResult post(Http.Exchange http);
-
-  }
-
-  /**
-   * Represents the demo query parameter.
-   */
-  record Query(Page page, long id, int aux) {
-
-    final int idAsInt() {
-      return (int) id;
-    }
 
   }
 

@@ -26,23 +26,23 @@ public class PageTest {
   @DataProvider
   public Object[][] parseProvider() {
     return new Object[][] {
-        {"N", Page.NOW_SHOWING},
-        {"M", Page.MOVIE},
-        {"S", Page.SEATS},
-        {"C", Page.CONFIRM},
-        {"T", Page.TICKET},
-        {"B", Page.BAD_REQUEST},
-        {"x", Page.BAD_REQUEST},
+        {"N", AppView.HOME},
+        {"M", AppView.MOVIE},
+        {"S", AppView.SEATS},
+        {"C", AppView.CONFIRM},
+        {"T", AppView.TICKET},
+        {"B", AppView.NOT_FOUND},
+        {"x", AppView.NOT_FOUND},
     };
   }
 
   @Test(dataProvider = "parseProvider")
-  public void parse(String q, Page expected) {
+  public void parse(String q, AppView expected) {
     Http.Exchange http = Http.Exchange.create(opts -> {
       opts.queryParam("page", q);
     });
 
-    Page res = Page.parse(http);
+    AppView res = AppView.parse(http);
 
     assertEquals(res, expected);
   }

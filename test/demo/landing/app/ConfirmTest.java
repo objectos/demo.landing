@@ -77,9 +77,9 @@ public class ConfirmTest {
 
         config.path("/index.html");
 
-        config.queryParam("page", Page.CONFIRM.key);
+        config.queryParam("page", AppView.CONFIRM.key);
 
-        config.queryParam("demo", Testing.encode(Page.CONFIRM, 901));
+        config.queryParam("demo", Testing.encode(AppView.CONFIRM, 901));
       });
 
       assertEquals(
@@ -124,7 +124,7 @@ public class ConfirmTest {
 
         config.path("/demo/landing");
 
-        config.queryParam("demo", Testing.encode(Page.CONFIRM, 901));
+        config.queryParam("demo", Testing.encode(AppView.CONFIRM, 901));
       });
 
       assertEquals(
@@ -147,7 +147,7 @@ public class ConfirmTest {
 
         config.path("/index.html");
 
-        config.queryParam("page", Page.TICKET.key);
+        config.queryParam("page", AppView.TICKET.key);
 
         config.queryParam("demo", "799e0b7b9e2a4f6f081e3b5a0f");
       });

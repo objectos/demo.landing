@@ -58,20 +58,20 @@ public class Testing implements ISuiteListener {
     }
   }
 
-  public static Kino.Query decode(String hex) {
+  public static AppHash decode(String hex) {
     return CodecHolder.INSTANCE.decode(hex);
   }
 
-  public static String encode(Page page) {
+  public static String encode(AppView page) {
     return encode(page, 0L);
   }
 
-  public static String encode(Page page, long id) {
+  public static String encode(AppView page, long id) {
     return encode(page, id, 0);
   }
 
-  public static String encode(Page page, long id, int aux) {
-    final Kino.Query q;
+  public static String encode(AppView page, long id, int aux) {
+    final AppHash q;
     q = page.query(id, aux);
 
     return CodecHolder.INSTANCE.encode(q);
@@ -135,13 +135,13 @@ public class Testing implements ISuiteListener {
 
   private static final class CodecHolder {
 
-    static KinoCodec INSTANCE = create();
+    static AppCodec INSTANCE = create();
 
-    private static KinoCodec create() {
+    private static AppCodec create() {
       final LandingDemoConfig config;
       config = INJECTOR.getInstance(LandingDemoConfig.class);
 
-      return new KinoCodec(config.codecKey());
+      return new AppCodec(config.clock, config.codecKey());
     }
 
   }

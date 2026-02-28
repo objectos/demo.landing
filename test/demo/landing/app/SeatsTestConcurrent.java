@@ -100,7 +100,7 @@ public class SeatsTestConcurrent {
         screenId = 1031;
 
         final String demo;
-        demo = Testing.encode(Page.SEATS, reservationId, screenId);
+        demo = Testing.encode(AppView.SEATS, reservationId, screenId);
 
         config.queryParam("demo", demo);
 
@@ -127,7 +127,7 @@ public class SeatsTestConcurrent {
 
         config.path("/index.html");
 
-        config.queryParam("page", Page.SEATS.key);
+        config.queryParam("page", AppView.SEATS.key);
 
         config.queryParam("demo", "7f9e0b7b9e2a4f461b1e3b5a0e");
       });

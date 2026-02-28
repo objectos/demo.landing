@@ -15,20 +15,13 @@
  */
 package demo.landing.app;
 
-import demo.landing.app.Kino.Query;
-import java.util.Map;
-import objectos.way.Http;
+import module java.base;
+import module objectos.way;
 
-/**
- * The pages of this application.
- *
- * <p>
- * As a reminder, as this application will be embedded in another one, it does
- * not have actual pages.
- */
-enum Page {
+/// The views of this application.
+enum AppView {
 
-  NOW_SHOWING,
+  HOME,
 
   MOVIE,
 
@@ -38,35 +31,35 @@ enum Page {
 
   TICKET,
 
-  BAD_REQUEST;
+  NOT_FOUND;
 
-  private static final Map<String, Page> Q = Map.of(
-      "N", NOW_SHOWING,
+  private static final Map<String, AppView> Q = Map.of(
+      "N", HOME,
       "M", MOVIE,
       "S", SEATS,
       "C", CONFIRM,
       "T", TICKET,
-      "B", BAD_REQUEST
+      "B", NOT_FOUND
   );
 
   final String key = name().substring(0, 1);
 
-  static Page parse(Http.Exchange http) {
-    Page res;
-    res = NOW_SHOWING;
+  static AppView parse(Http.Exchange http) {
+    AppView res;
+    res = HOME;
 
     final String q;
     q = http.queryParam("page");
 
     if (q != null) {
-      res = Q.getOrDefault(q, BAD_REQUEST);
+      res = Q.getOrDefault(q, NOT_FOUND);
     }
 
     return res;
   }
 
   final String href() {
-    return this == NOW_SHOWING
+    return this == HOME
         ? "/index.html"
         : "/index.html?page=" + key;
   }
@@ -75,16 +68,16 @@ enum Page {
     return href() + "&id=" + value;
   }
 
-  final Query query() {
-    return new Query(this, 0L, 0);
+  final AppHash query() {
+    return new AppHash(this, 0L, 0);
   }
 
-  final Query query(long id) {
-    return new Query(this, id, 0);
+  final AppHash query(long id) {
+    return new AppHash(this, id, 0);
   }
 
-  final Query query(long id, int aux) {
-    return new Query(this, id, aux);
+  final AppHash query(long id, int aux) {
+    return new AppHash(this, id, aux);
   }
 
 }

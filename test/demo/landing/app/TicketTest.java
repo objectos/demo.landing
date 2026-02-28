@@ -78,9 +78,9 @@ public class TicketTest {
 
         config.path("/index.html");
 
-        config.queryParam("page", Page.TICKET.key);
+        config.queryParam("page", AppView.TICKET.key);
 
-        config.queryParam("demo", Testing.encode(Page.TICKET, 901));
+        config.queryParam("demo", Testing.encode(AppView.TICKET, 901));
       });
 
       assertEquals(

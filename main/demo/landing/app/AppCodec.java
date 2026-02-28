@@ -15,62 +15,59 @@
  */
 package demo.landing.app;
 
-import java.util.Arrays;
-import java.util.HexFormat;
-import java.util.Objects;
+import module java.base;
 
-final class KinoCodec {
+final class AppCodec {
 
   private static final int BYTE_MASK = 0xFF;
 
-  private static final int LENGTH = 13;
+  private static final int LENGTH = 17;
 
-  private final Kino.Query badRequest = Page.BAD_REQUEST.query();
+  private final AppHash badRequest = AppView.NOT_FOUND.query();
+
+  private final Clock clock;
 
   private final HexFormat hexFormat = HexFormat.of();
 
   private final byte[] key;
 
-  private final int offset;
+  private final AppView[] views = AppView.values();
 
-  private final Page[] views = Page.values();
+  AppCodec(Clock clock, byte[] key) {
+    this.clock = Objects.requireNonNull(clock, "clock == null");
 
-  KinoCodec(byte[] key) {
     if (key.length < LENGTH) {
       throw new IllegalArgumentException("Key should have at least " + LENGTH + " bytes");
     }
 
     this.key = key;
-
-    final int hash;
-    hash = Arrays.hashCode(key);
-
-    this.offset = hash == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(hash);
   }
 
-  public static KinoCodec create(byte[] key) {
-    return new KinoCodec(key);
+  public static AppCodec create(Clock clock, byte[] key) {
+    return new AppCodec(clock, key);
   }
 
   /*
-
+  
    to simplify we assume the ID is always a long
-
+  
+   random = 4 bytes
+  
    page = 1 byte
-
+  
    id = 8 bytes
-
+  
    aux = 4 byte
    ------------------
-   total = 13 bytes
-
+   total = 17 bytes
+  
    */
 
-  public final Kino.Query decode(String raw) {
+  public final AppHash decode(String raw) {
     if (raw == null) {
       // a null value means a request with no query parameters
       // => we should present the first view
-      return Page.NOW_SHOWING.query();
+      return AppView.HOME.query();
     }
 
     final byte[] bytes;
@@ -89,7 +86,13 @@ final class KinoCodec {
     int index;
     index = 0;
 
-    obfuscate(bytes);
+    int random = 0;
+    random |= (bytes[index++] & BYTE_MASK) << 24;
+    random |= (bytes[index++] & BYTE_MASK) << 16;
+    random |= (bytes[index++] & BYTE_MASK) << 8;
+    random |= (bytes[index++] & BYTE_MASK) << 0;
+
+    obfuscate(bytes, random);
 
     int pageOrdinal;
     pageOrdinal = bytes[index++] & BYTE_MASK;
@@ -98,7 +101,7 @@ final class KinoCodec {
       return badRequest;
     }
 
-    Page page;
+    AppView page;
     page = views[pageOrdinal];
 
     // next 8 bytes = id (big endian)
@@ -122,7 +125,7 @@ final class KinoCodec {
     return page.query(id, aux);
   }
 
-  public final String encode(Kino.Query query) {
+  public final String encode(AppHash query) {
     Objects.requireNonNull(query, "query == null");
 
     final byte[] bytes;
@@ -131,8 +134,19 @@ final class KinoCodec {
     int index;
     index = 0;
 
+    final long millis;
+    millis = clock.millis();
+
+    final int random;
+    random = (int) millis ^ (int) (millis >>> 32);
+
+    bytes[index++] = (byte) ((random >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 0) & BYTE_MASK);
+
     // first byte = view
-    final Page view;
+    final AppView view;
     view = query.page();
 
     bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
@@ -160,13 +174,16 @@ final class KinoCodec {
     bytes[index++] = (byte) ((aux >>> 8) & BYTE_MASK);
     bytes[index++] = (byte) ((aux >>> 0) & BYTE_MASK);
 
-    obfuscate(bytes);
+    obfuscate(bytes, random);
 
     return hexFormat.formatHex(bytes);
   }
 
-  private void obfuscate(byte[] bytes) {
-    for (int idx = 0, len = bytes.length; idx < len; idx++) {
+  private void obfuscate(byte[] bytes, int random) {
+    final int offset;
+    offset = random == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(random);
+
+    for (int idx = 4, len = bytes.length; idx < len; idx++) {
       byte b;
       b = bytes[idx];
 
