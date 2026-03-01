@@ -48,4 +48,42 @@ record AppUrl(AppView page, long id, int aux) {
     return (int) id;
   }
 
+  final String to(AppView view) {
+    final StringBuilder url;
+    url = new StringBuilder();
+
+    url.append("/demo.landing/");
+
+    url.append(view.slug);
+
+    if (id != 0) {
+      url.append("?reservationId=");
+
+      url.append(id);
+    }
+
+    return url.toString();
+  }
+
+  final String to(AppView view, int viewId) {
+    final StringBuilder url;
+    url = new StringBuilder();
+
+    url.append("/demo.landing/");
+
+    url.append(view.slug);
+
+    url.append("/");
+
+    url.append(viewId);
+
+    if (id != 0) {
+      url.append("?reservationId=");
+
+      url.append(id);
+    }
+
+    return url.toString();
+  }
+
 }

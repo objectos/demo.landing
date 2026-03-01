@@ -447,14 +447,17 @@ import module java.base;
 
 /// Renders the home page view. More specifically, it renders:
 ///
-/// - a top header with the "Now Showing" title.
-/// - a list of the movies that are
+/// - a top header with the "Now Showing" title. - a list of the movies that are
 /// currently playing.
 final class HomeView extends UiShell {
 
+  private final AppUrl url;
+
   private final List<HomeModel> movies;
 
-  HomeView(List<HomeModel> movies) {
+  HomeView(AppUrl url, List<HomeModel> movies) {
+    this.url = url;
+
     this.movies = movies;
   }
 
@@ -509,7 +512,7 @@ final class HomeView extends UiShell {
             hover/cursor:pointer
             \"""),
 
-            onclick(follow("/demo.landing/movie/" + movie.id())),
+            onclick(follow(url.to(AppView.MOVIE, movie.id()))),
 
             img(
                 css(\"""
@@ -1210,11 +1213,14 @@ final class Home extends AppTransactional {
 
   @Override
   final void handle(Http.Exchange http, Sql.Transaction trx) {
+    final AppUrl url;
+    url = AppUrl.parse(http);
+
     final List<HomeModel> movies;
     movies = HomeModel.query(trx);
 
     final HomeView view;
-    view = new HomeView(movies);
+    view = new HomeView(url, movies);
 
     http.ok(view);
   }
@@ -1652,55 +1658,51 @@ final class Shell extends Kino.View {
  */
 package demo.landing.app;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /// The "/movie/{id}" controller.
-final class Movie implements Http.Handler {
+final class Movie extends AppTransactional {
 
   private final Clock clock;
 
-  Movie(Clock clock) {
-    this.clock = clock;
+  Movie(App.Injector injector) {
+    super(injector);
+
+    clock = injector.getInstance(Clock.class);
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+  final void handle(Http.Exchange http, Sql.Transaction trx) {
+    final AppUrl url;
+    url = AppUrl.parse(http);
 
     final int movieId;
-    movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    movieId = url.aux();
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
-    if (maybeDetails.isEmpty()) {
+    if (maybeDetails.isPresent()) {
+      final MovieDetails details;
+      details = maybeDetails.get();
+
+      final LocalDateTime now;
+      now = LocalDateTime.now(clock);
+
+      final List<MovieScreening> screenings;
+      screenings = MovieScreening.query(trx, movieId, now);
+
+      final MovieView view;
+      view = new MovieView(url, details, screenings);
+
+      http.ok(view);
+    } else {
       final NotFoundView view;
       view = new NotFoundView();
 
       http.notFound(view);
-
-      return;
     }
-
-    final MovieDetails details;
-    details = maybeDetails.get();
-
-    final LocalDateTime now;
-    now = LocalDateTime.now(clock);
-
-    final List<MovieScreening> screenings;
-    screenings = MovieScreening.query(trx, movieId, now);
-
-    final MovieView view;
-    view = new MovieView(details, screenings);
-
-    http.ok(view);
   }
 
 }
@@ -1975,7 +1977,7 @@ record AppUrl(AppView page, long id, int aux) {
 
   static final Http.HeaderName DEMO_HASH = Http.HeaderName.of("Demo-Hash");
 
-  static void handle(Http.Exchange http) {
+  static AppUrl parse(Http.Exchange http) {
     final String demoHash;
     demoHash = http.header(DEMO_HASH);
 
@@ -1994,11 +1996,49 @@ record AppUrl(AppView page, long id, int aux) {
       state = new AppUrl(null, reservationId, id);
     }
 
-    http.set(AppUrl.class, state);
+    return state;
   }
 
   final int idAsInt() {
     return (int) id;
+  }
+
+  final String to(AppView view) {
+    final StringBuilder url;
+    url = new StringBuilder();
+
+    url.append("/demo.landing/");
+
+    url.append(view.slug);
+
+    if (id != 0) {
+      url.append("?reservationId=");
+
+      url.append(id);
+    }
+
+    return url.toString();
+  }
+
+  final String to(AppView view, int viewId) {
+    final StringBuilder url;
+    url = new StringBuilder();
+
+    url.append("/demo.landing/");
+
+    url.append(view.slug);
+
+    url.append("/");
+
+    url.append(viewId);
+
+    if (id != 0) {
+      url.append("?reservationId=");
+
+      url.append(id);
+    }
+
+    return url.toString();
   }
 
 }
@@ -3061,6 +3101,8 @@ public final class AppRoutes implements Http.Routing.Module {
   @Override
   public final void configure(Http.Routing routing) {
     routing.path("/demo.landing/home", GET, new Home(injector));
+
+    routing.path("/demo.landing/movie/{id}", GET, new Movie(injector));
   }
 
 }
@@ -4059,11 +4101,15 @@ import java.util.List;
 /// Renders the details of a movie and lists its available screenings.
 final class MovieView extends UiShell {
 
+  private final AppUrl url;
+
   private final MovieDetails details;
 
   private final List<MovieScreening> screenings;
 
-  MovieView(MovieDetails details, List<MovieScreening> screenings) {
+  MovieView(AppUrl url, MovieDetails details, List<MovieScreening> screenings) {
+    this.url = url;
+
     this.details = details;
 
     this.screenings = screenings;
@@ -4081,7 +4127,7 @@ final class MovieView extends UiShell {
 
   @Override
   final void renderMain() {
-    backLink("/demo.landing/home");
+    backLink(url.to(AppView.HOME));
 
     div(
         css(\"""
@@ -4793,6 +4839,8 @@ enum AppView {
   );
 
   final String key = name().substring(0, 1);
+
+  final String slug = name().toLowerCase(Locale.US);
 
   static AppView parse(Http.Exchange http) {
     AppView res;

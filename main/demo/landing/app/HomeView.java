@@ -19,14 +19,17 @@ import module java.base;
 
 /// Renders the home page view. More specifically, it renders:
 ///
-/// - a top header with the "Now Showing" title.
-/// - a list of the movies that are
+/// - a top header with the "Now Showing" title. - a list of the movies that are
 /// currently playing.
 final class HomeView extends UiShell {
 
+  private final AppUrl url;
+
   private final List<HomeModel> movies;
 
-  HomeView(List<HomeModel> movies) {
+  HomeView(AppUrl url, List<HomeModel> movies) {
+    this.url = url;
+
     this.movies = movies;
   }
 
@@ -81,7 +84,7 @@ final class HomeView extends UiShell {
             hover/cursor:pointer
             """),
 
-            onclick(follow("/demo.landing/movie/" + movie.id())),
+            onclick(follow(url.to(AppView.MOVIE, movie.id()))),
 
             img(
                 css("""

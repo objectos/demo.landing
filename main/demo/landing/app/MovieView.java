@@ -20,11 +20,15 @@ import java.util.List;
 /// Renders the details of a movie and lists its available screenings.
 final class MovieView extends UiShell {
 
+  private final AppUrl url;
+
   private final MovieDetails details;
 
   private final List<MovieScreening> screenings;
 
-  MovieView(MovieDetails details, List<MovieScreening> screenings) {
+  MovieView(AppUrl url, MovieDetails details, List<MovieScreening> screenings) {
+    this.url = url;
+
     this.details = details;
 
     this.screenings = screenings;
@@ -42,7 +46,7 @@ final class MovieView extends UiShell {
 
   @Override
   final void renderMain() {
-    backLink("/demo.landing/home");
+    backLink(url.to(AppView.HOME));
 
     div(
         css("""

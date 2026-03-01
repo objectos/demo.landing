@@ -44,6 +44,8 @@ enum AppView {
 
   final String key = name().substring(0, 1);
 
+  final String slug = name().toLowerCase(Locale.US);
+
   static AppView parse(Http.Exchange http) {
     AppView res;
     res = HOME;

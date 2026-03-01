@@ -15,55 +15,51 @@
  */
 package demo.landing.app;
 
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /// The "/movie/{id}" controller.
-final class Movie implements Http.Handler {
+final class Movie extends AppTransactional {
 
   private final Clock clock;
 
-  Movie(Clock clock) {
-    this.clock = clock;
+  Movie(App.Injector injector) {
+    super(injector);
+
+    clock = injector.getInstance(Clock.class);
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+  final void handle(Http.Exchange http, Sql.Transaction trx) {
+    final AppUrl url;
+    url = AppUrl.parse(http);
 
     final int movieId;
-    movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    movieId = url.aux();
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
-    if (maybeDetails.isEmpty()) {
+    if (maybeDetails.isPresent()) {
+      final MovieDetails details;
+      details = maybeDetails.get();
+
+      final LocalDateTime now;
+      now = LocalDateTime.now(clock);
+
+      final List<MovieScreening> screenings;
+      screenings = MovieScreening.query(trx, movieId, now);
+
+      final MovieView view;
+      view = new MovieView(url, details, screenings);
+
+      http.ok(view);
+    } else {
       final NotFoundView view;
       view = new NotFoundView();
 
       http.notFound(view);
-
-      return;
     }
-
-    final MovieDetails details;
-    details = maybeDetails.get();
-
-    final LocalDateTime now;
-    now = LocalDateTime.now(clock);
-
-    final List<MovieScreening> screenings;
-    screenings = MovieScreening.query(trx, movieId, now);
-
-    final MovieView view;
-    view = new MovieView(details, screenings);
-
-    http.ok(view);
   }
 
 }

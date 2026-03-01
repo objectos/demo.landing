@@ -19,6 +19,7 @@ import module objectos.way;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
+import java.time.Clock;
 import org.h2.jdbcx.JdbcConnectionPool;
 
 abstract class Start extends App.Bootstrap {
@@ -107,6 +108,8 @@ abstract class Start extends App.Bootstrap {
     // Application Config
     final LandingDemoConfig config;
     config = config(ctx);
+
+    ctx.putInstance(Clock.class, config.clock);
 
     ctx.putInstance(LandingDemoConfig.class, config);
 

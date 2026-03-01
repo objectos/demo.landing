@@ -34,6 +34,8 @@ public final class AppRoutes implements Http.Routing.Module {
   @Override
   public final void configure(Http.Routing routing) {
     routing.path("/demo.landing/home", GET, new Home(injector));
+
+    routing.path("/demo.landing/movie/{id}", GET, new Movie(injector));
   }
 
 }
