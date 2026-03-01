@@ -58,7 +58,7 @@ public class Testing implements ISuiteListener {
     }
   }
 
-  public static AppHash decode(String hex) {
+  public static AppUrl decode(String hex) {
     return CodecHolder.INSTANCE.decode(hex);
   }
 
@@ -71,7 +71,7 @@ public class Testing implements ISuiteListener {
   }
 
   public static String encode(AppView page, long id, int aux) {
-    final AppHash q;
+    final AppUrl q;
     q = page.query(id, aux);
 
     return CodecHolder.INSTANCE.encode(q);

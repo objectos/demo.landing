@@ -782,7 +782,6 @@ import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import objectos.script.Js;
 import objectos.script.JsAction;
 import objectos.way.Css;
@@ -816,22 +815,14 @@ public final class Kino implements LandingDemo {
 
   public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home");
 
-  private final Ctx ctx;
-
   private Kino(Ctx ctx) {
-    this.ctx = ctx;
   }
 
   /**
    * Creates a new {@code Kino} instance with the specified configuration.
    */
   public static Kino create(LandingDemoConfig config) {
-    Objects.requireNonNull(config, "config == null");
-
-    final Ctx ctx;
-    ctx = Ctx.of(config);
-
-    return new Kino(ctx);
+    throw new UnsupportedOperationException("Implement me");
   }
 
   /// The default 'link' action.
@@ -941,7 +932,7 @@ public final class Kino implements LandingDemo {
     /**
      * Renders the "Go Back" link.
      */
-    final Html.Instruction.OfElement backLink(Ctx ctx, Page page) {
+    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page) {
       testableField("back-link", page.name());
 
       return backLink(ctx.href(page));
@@ -950,7 +941,7 @@ public final class Kino implements LandingDemo {
     /**
      * Renders the "Go Back" link.
      */
-    final Html.Instruction.OfElement backLink(Ctx ctx, Page page, long id) {
+    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page, long id) {
       testableField("back-link", page.name() + ":" + id);
 
       return backLink(ctx.href(page, id));
@@ -959,10 +950,10 @@ public final class Kino implements LandingDemo {
     /**
      * Renders the "Go Back" link.
      */
-    final Html.Instruction.OfElement backLink(Ctx ctx, Page page, long id, int aux) {
+    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page, long id, int aux) {
       testableField("back-link", page.name() + ":" + id + ":" + aux);
 
-      Query query = page.query(id, aux);
+      AppUrl query = page.query(id, aux);
 
       return backLink(ctx.href(query));
     }
@@ -1031,13 +1022,13 @@ public final class Kino implements LandingDemo {
       );
     }
 
-    final Html.Instruction.OfAttribute formAction(Ctx ctx, Page page, long id) {
+    final Html.Instruction.OfAttribute formAction(Ctx ctx, AppView page, long id) {
       testableField("action", page.name() + ":" + id);
 
       return action(ctx.action(page, id));
     }
 
-    final Html.Instruction.OfAttribute formAction(Ctx ctx, Page page, long id, int aux) {
+    final Html.Instruction.OfAttribute formAction(Ctx ctx, AppView page, long id, int aux) {
       testableField("action", page.name() + ":" + id + ":" + aux);
 
       return action(ctx.action(page, id, aux));
@@ -1069,7 +1060,7 @@ public final class Kino implements LandingDemo {
   record Ctx(
       Clock clock,
 
-      KinoCodec codec,
+      AppCodec codec,
 
       Note.Sink noteSink,
 
@@ -1078,34 +1069,12 @@ public final class Kino implements LandingDemo {
       AppTransactional transactional
   ) {
 
-    static Ctx of(LandingDemoConfig config) {
-      final Clock clock;
-      clock = config.clock;
-
-      final byte[] codecKey;
-      codecKey = config.codecKey();
-
-      final KinoCodec codec;
-      codec = new KinoCodec(codecKey);
-
-      final Note.Sink noteSink;
-      noteSink = config.noteSink;
-
-      final AppReservation reservation;
-      reservation = new AppReservation(clock, config.reservationEpoch, config.reservationRandom);
-
-      final AppTransactional transactional;
-      transactional = new AppTransactional(config.stage, config.database);
-
-      return new Ctx(clock, codec, noteSink, reservation, transactional);
-    }
-
-    final String action(Page page, long id) {
+    final String action(AppView page, long id) {
       return action(page, id, 0);
     }
 
-    final String action(Page page, long id, int aux) {
-      Query query;
+    final String action(AppView page, long id, int aux) {
+      AppUrl query;
       query = page.query(id, aux);
 
       String demo;
@@ -1114,20 +1083,20 @@ public final class Kino implements LandingDemo {
       return "/demo/landing?demo=" + demo;
     }
 
-    final String href(Page page) {
-      return page == Page.NOW_SHOWING ? "/index.html" : href(page, 0L);
+    final String href(AppView page) {
+      return page == AppView.HOME ? "/index.html" : href(page, 0L);
     }
 
-    final String href(Page page, long id) {
-      Query query;
+    final String href(AppView page, long id) {
+      AppUrl query;
       query = page.query(id);
 
       return href(query);
     }
 
-    final String href(Query query) {
-      final Page page;
-      page = query.page;
+    final String href(AppUrl query) {
+      final AppView page;
+      page = query.page();
 
       final String demo;
       demo = codec.encode(query);
@@ -1147,15 +1116,8 @@ public final class Kino implements LandingDemo {
       return LocalDateTime.now(clock);
     }
 
-    final Html.Component transactional(Http.Exchange http, GET action) {
-      return transactional.get(http, action);
-    }
-
-    final PostResult transactional(Http.Exchange http, POST action) {
-      return transactional.post(http, action);
-    }
-
-    private Query decode(Http.Exchange http) {
+    @SuppressWarnings("unused")
+    private AppUrl decode(Http.Exchange http) {
       // We cannot rely on the path to render the different pages
       // of the application because this demo will be embedded in another page.
       // So, we use an URL query parameter.
@@ -1164,10 +1126,10 @@ public final class Kino implements LandingDemo {
 
       // the query parameter value is encoded/obfuscated.
       // we use the codec to decode it.
-      final Query query;
+      final AppUrl query;
       query = codec.decode(demo);
 
-      http.set(Query.class, query);
+      http.set(AppUrl.class, query);
 
       return query;
     }
@@ -1215,17 +1177,6 @@ public final class Kino implements LandingDemo {
 
   }
 
-  /**
-   * Represents the demo query parameter.
-   */
-  record Query(Page page, long id, int aux) {
-
-    final int idAsInt() {
-      return (int) id;
-    }
-
-  }
-
 }
 """);
 
@@ -1251,13 +1202,14 @@ import module java.base;
 import module objectos.way;
 
 /// The "/home" controller.
-final class Home implements Http.Handler {
+final class Home extends AppTransactional {
+
+  Home(App.Injector injector) {
+    super(injector);
+  }
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
+  final void handle(Http.Exchange http, Sql.Transaction trx) {
     final List<HomeModel> movies;
     movies = HomeModel.query(trx);
 
@@ -1268,193 +1220,6 @@ final class Home implements Http.Handler {
   }
 
 }
-""");
-
-  static final SourceModel KinoCodec = SourceModel.create("KinoCodec.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.util.Arrays;
-import java.util.HexFormat;
-import java.util.Objects;
-
-final class KinoCodec {
-
-  private static final int BYTE_MASK = 0xFF;
-
-  private static final int LENGTH = 13;
-
-  private final Kino.Query badRequest = Page.BAD_REQUEST.query();
-
-  private final HexFormat hexFormat = HexFormat.of();
-
-  private final byte[] key;
-
-  private final int offset;
-
-  private final Page[] views = Page.values();
-
-  KinoCodec(byte[] key) {
-    if (key.length < LENGTH) {
-      throw new IllegalArgumentException("Key should have at least " + LENGTH + " bytes");
-    }
-
-    this.key = key;
-
-    final int hash;
-    hash = Arrays.hashCode(key);
-
-    this.offset = hash == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(hash);
-  }
-
-  public static KinoCodec create(byte[] key) {
-    return new KinoCodec(key);
-  }
-
-  /*
-
-   to simplify we assume the ID is always a long
-
-   page = 1 byte
-
-   id = 8 bytes
-
-   aux = 4 byte
-   ------------------
-   total = 13 bytes
-
-   */
-
-  public final Kino.Query decode(String raw) {
-    if (raw == null) {
-      // a null value means a request with no query parameters
-      // => we should present the first view
-      return Page.NOW_SHOWING.query();
-    }
-
-    final byte[] bytes;
-
-    try {
-      bytes = hexFormat.parseHex(raw);
-    } catch (IllegalArgumentException expected) {
-      return badRequest;
-    }
-
-    if (bytes.length != LENGTH) {
-      // wrong length
-      return badRequest;
-    }
-
-    int index;
-    index = 0;
-
-    obfuscate(bytes);
-
-    int pageOrdinal;
-    pageOrdinal = bytes[index++] & BYTE_MASK;
-
-    if (pageOrdinal < 0 || pageOrdinal >= views.length) {
-      return badRequest;
-    }
-
-    Page page;
-    page = views[pageOrdinal];
-
-    // next 8 bytes = id (big endian)
-    long id = 0L;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 56;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 48;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 40;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 32;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 24;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 16;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 8;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 0;
-
-    // next 4 byte = aux
-    int aux = 0;
-    aux |= (bytes[index++] & BYTE_MASK) << 24;
-    aux |= (bytes[index++] & BYTE_MASK) << 16;
-    aux |= (bytes[index++] & BYTE_MASK) << 8;
-    aux |= (bytes[index++] & BYTE_MASK) << 0;
-
-    return page.query(id, aux);
-  }
-
-  public final String encode(Kino.Query query) {
-    Objects.requireNonNull(query, "query == null");
-
-    final byte[] bytes;
-    bytes = new byte[LENGTH];
-
-    int index;
-    index = 0;
-
-    // first byte = view
-    final Page view;
-    view = query.page();
-
-    bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
-
-    // next 8 bytes = id (big endian)
-
-    final long id;
-    id = query.id();
-
-    bytes[index++] = (byte) ((id >>> 56) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 48) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 40) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 32) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) (id & BYTE_MASK);
-
-    // next 4 bytes = aux
-    int aux;
-    aux = query.aux();
-
-    bytes[index++] = (byte) ((aux >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 0) & BYTE_MASK);
-
-    obfuscate(bytes);
-
-    return hexFormat.formatHex(bytes);
-  }
-
-  private void obfuscate(byte[] bytes) {
-    for (int idx = 0, len = bytes.length; idx < len; idx++) {
-      byte b;
-      b = bytes[idx];
-
-      int keyIndex;
-      keyIndex = (idx + offset) % key.length;
-
-      byte k;
-      k = key[keyIndex];
-
-      bytes[idx] = (byte) (b ^ k);
-    }
-  }
-
-}
-
 """);
 
   static final SourceModel HomeModel = SourceModel.create("HomeModel.java", """
@@ -1528,102 +1293,39 @@ record HomeModel(
  */
 package demo.landing.app;
 
-import demo.landing.app.Kino.Action;
-import module java.base;
 import module objectos.way;
 
 /// Filters HTTP requests around a SQL transaction and performs a no-op in
 /// testing environments.
-final class AppTransactional implements Http.Filter {
-
-  private final Kino.Stage stage;
+abstract class AppTransactional implements Http.Handler {
 
   private final Sql.Database db;
 
-  AppTransactional(Kino.Stage stage, Sql.Database db) {
-    this.stage = stage;
-
-    this.db = db;
-  }
-
-  public static AppTransactional of(Kino.Stage stage, Sql.Database db) {
-    Objects.requireNonNull(stage, "stage == null");
-    Objects.requireNonNull(db, "db == null");
-
-    return new AppTransactional(stage, db);
-  }
-
-  public final Html.Component get(Http.Exchange http, Kino.GET action) {
-    return execute(http, action::get);
-  }
-
-  public final Kino.PostResult post(Http.Exchange http, Kino.POST action) {
-    return execute(http, action::post);
+  AppTransactional(App.Injector injector) {
+    db = injector.getInstance(Sql.Database.class);
   }
 
   @Override
-  public final void filter(Http.Exchange http, Http.Handler handler) {
-    switch (stage) {
-      case DEFAULT -> {
-        final Sql.Transaction trx;
-        trx = db.beginTransaction(Sql.READ_COMMITED);
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = db.beginTransaction(Sql.READ_COMMITED);
 
-        try {
-          trx.sql("set schema CINEMA");
+    try {
+      trx.sql("set schema CINEMA");
 
-          trx.update();
+      trx.update();
 
-          http.set(Sql.Transaction.class, trx);
+      handle(http, trx);
 
-          handler.handle(http);
-
-          trx.commit();
-        } catch (Throwable e) {
-          throw trx.rollbackAndWrap(e);
-        } finally {
-          trx.close();
-        }
-      }
-
-      // this is a no-op during testing.
-      case TESTING -> handler.handle(http);
+      trx.commit();
+    } catch (Throwable e) {
+      throw trx.rollbackAndWrap(e);
+    } finally {
+      trx.close();
     }
   }
 
-  private <T> T execute(Http.Exchange http, Action<T> action) {
-    return switch (stage) {
-      case DEFAULT -> {
-
-        final Sql.Transaction trx;
-        trx = db.beginTransaction(Sql.READ_COMMITED);
-
-        try {
-
-          trx.sql("set schema CINEMA");
-
-          trx.update();
-
-          http.set(Sql.Transaction.class, trx);
-
-          final T result;
-          result = action.execute(http);
-
-          trx.commit();
-
-          yield result;
-
-        } catch (Throwable e) {
-          throw trx.rollbackAndWrap(e);
-        } finally {
-          trx.close();
-        }
-
-      }
-
-      // this is a no-op during testing.
-      case TESTING -> action.execute(http);
-    };
-  }
+  abstract void handle(Http.Exchange http, Sql.Transaction trx);
 
 }
 """);
@@ -2246,6 +1948,60 @@ enum UiIcon {
 
 }
 
+""");
+
+  static final SourceModel AppUrl = SourceModel.create("AppUrl.java", """
+/*
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import objectos.way.Http;
+
+/// Decoded value of the URL's fragment.
+record AppUrl(AppView page, long id, int aux) {
+
+  static final Http.HeaderName DEMO_HASH = Http.HeaderName.of("Demo-Hash");
+
+  static void handle(Http.Exchange http) {
+    final String demoHash;
+    demoHash = http.header(DEMO_HASH);
+
+    final AppUrl state;
+
+    if (demoHash != null) {
+      throw new UnsupportedOperationException("Implement me");
+    } else {
+
+      final long reservationId;
+      reservationId = http.queryParamAsLong("reservationId", 0L);
+
+      final int id;
+      id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+
+      state = new AppUrl(null, reservationId, id);
+    }
+
+    http.set(AppUrl.class, state);
+  }
+
+  final int idAsInt() {
+    return (int) id;
+  }
+
+}
 """);
 
   static final SourceModel MovieShowtime = SourceModel.create("MovieShowtime.java", """
@@ -3287,10 +3043,6 @@ record ShowDetails(
 package demo.landing.app;
 
 import static objectos.way.Http.Method.GET;
-import static objectos.way.Http.Method.POST;
-
-import demo.landing.LandingDemoConfig;
-import module java.base;
 import module objectos.way;
 
 /// Declares the application routes.
@@ -3300,44 +3052,15 @@ public final class AppRoutes implements Http.Routing.Module {
 
   public static final JsAction ONLOAD = Js.byId(ID).render("/demo.landing/home");
 
-  private final Clock clock;
+  private final App.Injector injector;
 
-  private final Note.Sink noteSink;
-
-  private final AppReservation reservation;
-
-  private final AppTransactional transactional;
-
-  public AppRoutes(LandingDemoConfig config) {
-    clock = config.clock;
-
-    noteSink = config.noteSink;
-
-    reservation = new AppReservation(clock, config.reservationEpoch, config.reservationRandom);
-
-    transactional = AppTransactional.of(config.stage, config.database);
+  public AppRoutes(App.Injector injector) {
+    this.injector = injector;
   }
 
   @Override
   public final void configure(Http.Routing routing) {
-    routing.path("/demo.landing/{}", demo -> {
-      // we filter these requests with transactionl
-      demo.filter(transactional, this::routes);
-
-      demo.handler(new NotFound());
-    });
-  }
-
-  private void routes(Http.RoutingPath routes) {
-    routes.subpath("home", GET, new Home());
-
-    routes.subpath("movie/{id}", GET, new Movie(clock));
-
-    routes.subpath("show/{id}", GET, new Show(reservation));
-
-    routes.subpath("seats", POST, new Seats(noteSink));
-
-    routes.subpath("confirm", POST, new Confirm(clock));
+    routing.path("/demo.landing/home", GET, new Home(injector));
   }
 
 }
@@ -3535,6 +3258,210 @@ final class ShowGrid implements Iterable<ShowGrid.Seat> {
 }
 """);
 
+  static final SourceModel AppCodec = SourceModel.create("AppCodec.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module java.base;
+
+final class AppCodec {
+
+  private static final int BYTE_MASK = 0xFF;
+
+  private static final int LENGTH = 17;
+
+  private final AppUrl badRequest = AppView.NOT_FOUND.query();
+
+  private final Clock clock;
+
+  private final HexFormat hexFormat = HexFormat.of();
+
+  private final byte[] key;
+
+  private final AppView[] views = AppView.values();
+
+  AppCodec(Clock clock, byte[] key) {
+    this.clock = Objects.requireNonNull(clock, "clock == null");
+
+    if (key.length < LENGTH) {
+      throw new IllegalArgumentException("Key should have at least " + LENGTH + " bytes");
+    }
+
+    this.key = key;
+  }
+
+  public static AppCodec create(Clock clock, byte[] key) {
+    return new AppCodec(clock, key);
+  }
+
+  /*
+  
+   to simplify we assume the ID is always a long
+  
+   random = 4 bytes
+  
+   page = 1 byte
+  
+   id = 8 bytes
+  
+   aux = 4 byte
+   ------------------
+   total = 17 bytes
+  
+   */
+
+  public final AppUrl decode(String raw) {
+    if (raw == null) {
+      // a null value means a request with no query parameters
+      // => we should present the first view
+      return AppView.HOME.query();
+    }
+
+    final byte[] bytes;
+
+    try {
+      bytes = hexFormat.parseHex(raw);
+    } catch (IllegalArgumentException expected) {
+      return badRequest;
+    }
+
+    if (bytes.length != LENGTH) {
+      // wrong length
+      return badRequest;
+    }
+
+    int index;
+    index = 0;
+
+    int random = 0;
+    random |= (bytes[index++] & BYTE_MASK) << 24;
+    random |= (bytes[index++] & BYTE_MASK) << 16;
+    random |= (bytes[index++] & BYTE_MASK) << 8;
+    random |= (bytes[index++] & BYTE_MASK) << 0;
+
+    obfuscate(bytes, random);
+
+    int pageOrdinal;
+    pageOrdinal = bytes[index++] & BYTE_MASK;
+
+    if (pageOrdinal < 0 || pageOrdinal >= views.length) {
+      return badRequest;
+    }
+
+    AppView page;
+    page = views[pageOrdinal];
+
+    // next 8 bytes = id (big endian)
+    long id = 0L;
+    id |= (long) (bytes[index++] & BYTE_MASK) << 56;
+    id |= (long) (bytes[index++] & BYTE_MASK) << 48;
+    id |= (long) (bytes[index++] & BYTE_MASK) << 40;
+    id |= (long) (bytes[index++] & BYTE_MASK) << 32;
+    id |= (long) (bytes[index++] & BYTE_MASK) << 24;
+    id |= (long) (bytes[index++] & BYTE_MASK) << 16;
+    id |= (long) (bytes[index++] & BYTE_MASK) << 8;
+    id |= (long) (bytes[index++] & BYTE_MASK) << 0;
+
+    // next 4 byte = aux
+    int aux = 0;
+    aux |= (bytes[index++] & BYTE_MASK) << 24;
+    aux |= (bytes[index++] & BYTE_MASK) << 16;
+    aux |= (bytes[index++] & BYTE_MASK) << 8;
+    aux |= (bytes[index++] & BYTE_MASK) << 0;
+
+    return page.query(id, aux);
+  }
+
+  public final String encode(AppUrl query) {
+    Objects.requireNonNull(query, "query == null");
+
+    final byte[] bytes;
+    bytes = new byte[LENGTH];
+
+    int index;
+    index = 0;
+
+    final long millis;
+    millis = clock.millis();
+
+    final int random;
+    random = (int) millis ^ (int) (millis >>> 32);
+
+    bytes[index++] = (byte) ((random >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 0) & BYTE_MASK);
+
+    // first byte = view
+    final AppView view;
+    view = query.page();
+
+    bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
+
+    // next 8 bytes = id (big endian)
+
+    final long id;
+    id = query.id();
+
+    bytes[index++] = (byte) ((id >>> 56) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 48) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 40) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 32) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) (id & BYTE_MASK);
+
+    // next 4 bytes = aux
+    int aux;
+    aux = query.aux();
+
+    bytes[index++] = (byte) ((aux >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((aux >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((aux >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) ((aux >>> 0) & BYTE_MASK);
+
+    obfuscate(bytes, random);
+
+    return hexFormat.formatHex(bytes);
+  }
+
+  private void obfuscate(byte[] bytes, int random) {
+    final int offset;
+    offset = random == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(random);
+
+    for (int idx = 4, len = bytes.length; idx < len; idx++) {
+      byte b;
+      b = bytes[idx];
+
+      int keyIndex;
+      keyIndex = (idx + offset) % key.length;
+
+      byte k;
+      k = key[keyIndex];
+
+      bytes[idx] = (byte) (b ^ k);
+    }
+  }
+
+}
+
+""");
+
   static final SourceModel MovieScreening = SourceModel.create("MovieScreening.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -3711,99 +3638,6 @@ record MovieDetails(
     trx.param(id);
 
     return trx.queryOptional(MovieDetails::new);
-  }
-
-}
-""");
-
-  static final SourceModel Page = SourceModel.create("Page.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import demo.landing.app.Kino.Query;
-import java.util.Map;
-import objectos.way.Http;
-
-/**
- * The pages of this application.
- *
- * <p>
- * As a reminder, as this application will be embedded in another one, it does
- * not have actual pages.
- */
-enum Page {
-
-  NOW_SHOWING,
-
-  MOVIE,
-
-  SEATS,
-
-  CONFIRM,
-
-  TICKET,
-
-  BAD_REQUEST;
-
-  private static final Map<String, Page> Q = Map.of(
-      "N", NOW_SHOWING,
-      "M", MOVIE,
-      "S", SEATS,
-      "C", CONFIRM,
-      "T", TICKET,
-      "B", BAD_REQUEST
-  );
-
-  final String key = name().substring(0, 1);
-
-  static Page parse(Http.Exchange http) {
-    Page res;
-    res = NOW_SHOWING;
-
-    final String q;
-    q = http.queryParam("page");
-
-    if (q != null) {
-      res = Q.getOrDefault(q, BAD_REQUEST);
-    }
-
-    return res;
-  }
-
-  final String href() {
-    return this == NOW_SHOWING
-        ? "/index.html"
-        : "/index.html?page=" + key;
-  }
-
-  final String hrefId(int value) {
-    return href() + "&id=" + value;
-  }
-
-  final Query query() {
-    return new Query(this, 0L, 0);
-  }
-
-  final Query query(long id) {
-    return new Query(this, id, 0);
-  }
-
-  final Query query(long id, int aux) {
-    return new Query(this, id, aux);
   }
 
 }
@@ -4167,8 +4001,8 @@ final class Ticket implements Kino.GET {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final Kino.Query query;
-    query = http.get(Kino.Query.class);
+    final AppUrl query;
+    query = http.get(AppUrl.class);
 
     final long ticketId;
     ticketId = query.id();
@@ -4909,6 +4743,92 @@ abstract class UiShell extends Html.Template {
   // ##################################################################
   // # END: Logos
   // ##################################################################
+
+}
+""");
+
+  static final SourceModel AppView = SourceModel.create("AppView.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module java.base;
+import module objectos.way;
+
+/// The views of this application.
+enum AppView {
+
+  HOME,
+
+  MOVIE,
+
+  SEATS,
+
+  CONFIRM,
+
+  TICKET,
+
+  NOT_FOUND;
+
+  private static final Map<String, AppView> Q = Map.of(
+      "N", HOME,
+      "M", MOVIE,
+      "S", SEATS,
+      "C", CONFIRM,
+      "T", TICKET,
+      "B", NOT_FOUND
+  );
+
+  final String key = name().substring(0, 1);
+
+  static AppView parse(Http.Exchange http) {
+    AppView res;
+    res = HOME;
+
+    final String q;
+    q = http.queryParam("page");
+
+    if (q != null) {
+      res = Q.getOrDefault(q, NOT_FOUND);
+    }
+
+    return res;
+  }
+
+  final String href() {
+    return this == HOME
+        ? "/index.html"
+        : "/index.html?page=" + key;
+  }
+
+  final String hrefId(int value) {
+    return href() + "&id=" + value;
+  }
+
+  final AppUrl query() {
+    return new AppUrl(this, 0L, 0);
+  }
+
+  final AppUrl query(long id) {
+    return new AppUrl(this, id, 0);
+  }
+
+  final AppUrl query(long id, int aux) {
+    return new AppUrl(this, id, aux);
+  }
 
 }
 """);

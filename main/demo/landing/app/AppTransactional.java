@@ -15,101 +15,38 @@
  */
 package demo.landing.app;
 
-import demo.landing.app.Kino.Action;
-import module java.base;
 import module objectos.way;
 
 /// Filters HTTP requests around a SQL transaction and performs a no-op in
 /// testing environments.
-final class AppTransactional implements Http.Filter {
-
-  private final Kino.Stage stage;
+abstract class AppTransactional implements Http.Handler {
 
   private final Sql.Database db;
 
-  AppTransactional(Kino.Stage stage, Sql.Database db) {
-    this.stage = stage;
-
-    this.db = db;
-  }
-
-  public static AppTransactional of(Kino.Stage stage, Sql.Database db) {
-    Objects.requireNonNull(stage, "stage == null");
-    Objects.requireNonNull(db, "db == null");
-
-    return new AppTransactional(stage, db);
-  }
-
-  public final Html.Component get(Http.Exchange http, Kino.GET action) {
-    return execute(http, action::get);
-  }
-
-  public final Kino.PostResult post(Http.Exchange http, Kino.POST action) {
-    return execute(http, action::post);
+  AppTransactional(App.Injector injector) {
+    db = injector.getInstance(Sql.Database.class);
   }
 
   @Override
-  public final void filter(Http.Exchange http, Http.Handler handler) {
-    switch (stage) {
-      case DEFAULT -> {
-        final Sql.Transaction trx;
-        trx = db.beginTransaction(Sql.READ_COMMITED);
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = db.beginTransaction(Sql.READ_COMMITED);
 
-        try {
-          trx.sql("set schema CINEMA");
+    try {
+      trx.sql("set schema CINEMA");
 
-          trx.update();
+      trx.update();
 
-          http.set(Sql.Transaction.class, trx);
+      handle(http, trx);
 
-          handler.handle(http);
-
-          trx.commit();
-        } catch (Throwable e) {
-          throw trx.rollbackAndWrap(e);
-        } finally {
-          trx.close();
-        }
-      }
-
-      // this is a no-op during testing.
-      case TESTING -> handler.handle(http);
+      trx.commit();
+    } catch (Throwable e) {
+      throw trx.rollbackAndWrap(e);
+    } finally {
+      trx.close();
     }
   }
 
-  private <T> T execute(Http.Exchange http, Action<T> action) {
-    return switch (stage) {
-      case DEFAULT -> {
-
-        final Sql.Transaction trx;
-        trx = db.beginTransaction(Sql.READ_COMMITED);
-
-        try {
-
-          trx.sql("set schema CINEMA");
-
-          trx.update();
-
-          http.set(Sql.Transaction.class, trx);
-
-          final T result;
-          result = action.execute(http);
-
-          trx.commit();
-
-          yield result;
-
-        } catch (Throwable e) {
-          throw trx.rollbackAndWrap(e);
-        } finally {
-          trx.close();
-        }
-
-      }
-
-      // this is a no-op during testing.
-      case TESTING -> action.execute(http);
-    };
-  }
+  abstract void handle(Http.Exchange http, Sql.Transaction trx);
 
 }

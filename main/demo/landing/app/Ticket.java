@@ -39,8 +39,8 @@ final class Ticket implements Kino.GET {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final AppHash query;
-    query = http.get(AppHash.class);
+    final AppUrl query;
+    query = http.get(AppUrl.class);
 
     final long ticketId;
     ticketId = query.id();

@@ -19,7 +19,6 @@ import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.util.Objects;
 import objectos.script.Js;
 import objectos.script.JsAction;
 import objectos.way.Css;
@@ -60,12 +59,7 @@ public final class Kino implements LandingDemo {
    * Creates a new {@code Kino} instance with the specified configuration.
    */
   public static Kino create(LandingDemoConfig config) {
-    Objects.requireNonNull(config, "config == null");
-
-    final Ctx ctx;
-    ctx = Ctx.of(config);
-
-    return new Kino(ctx);
+    throw new UnsupportedOperationException("Implement me");
   }
 
   /// The default 'link' action.
@@ -196,7 +190,7 @@ public final class Kino implements LandingDemo {
     final Html.Instruction.OfElement backLink(Ctx ctx, AppView page, long id, int aux) {
       testableField("back-link", page.name() + ":" + id + ":" + aux);
 
-      AppHash query = page.query(id, aux);
+      AppUrl query = page.query(id, aux);
 
       return backLink(ctx.href(query));
     }
@@ -312,34 +306,12 @@ public final class Kino implements LandingDemo {
       AppTransactional transactional
   ) {
 
-    static Ctx of(LandingDemoConfig config) {
-      final Clock clock;
-      clock = config.clock;
-
-      final byte[] codecKey;
-      codecKey = config.codecKey();
-
-      final AppCodec codec;
-      codec = new AppCodec(clock, codecKey);
-
-      final Note.Sink noteSink;
-      noteSink = config.noteSink;
-
-      final AppReservation reservation;
-      reservation = new AppReservation(clock, config.reservationEpoch, config.reservationRandom);
-
-      final AppTransactional transactional;
-      transactional = new AppTransactional(config.stage, config.database);
-
-      return new Ctx(clock, codec, noteSink, reservation, transactional);
-    }
-
     final String action(AppView page, long id) {
       return action(page, id, 0);
     }
 
     final String action(AppView page, long id, int aux) {
-      AppHash query;
+      AppUrl query;
       query = page.query(id, aux);
 
       String demo;
@@ -353,13 +325,13 @@ public final class Kino implements LandingDemo {
     }
 
     final String href(AppView page, long id) {
-      AppHash query;
+      AppUrl query;
       query = page.query(id);
 
       return href(query);
     }
 
-    final String href(AppHash query) {
+    final String href(AppUrl query) {
       final AppView page;
       page = query.page();
 
@@ -381,16 +353,8 @@ public final class Kino implements LandingDemo {
       return LocalDateTime.now(clock);
     }
 
-    final Html.Component transactional(Http.Exchange http, GET action) {
-      return transactional.get(http, action);
-    }
-
-    final PostResult transactional(Http.Exchange http, POST action) {
-      return transactional.post(http, action);
-    }
-
     @SuppressWarnings("unused")
-    private AppHash decode(Http.Exchange http) {
+    private AppUrl decode(Http.Exchange http) {
       // We cannot rely on the path to render the different pages
       // of the application because this demo will be embedded in another page.
       // So, we use an URL query parameter.
@@ -399,10 +363,10 @@ public final class Kino implements LandingDemo {
 
       // the query parameter value is encoded/obfuscated.
       // we use the codec to decode it.
-      final AppHash query;
+      final AppUrl query;
       query = codec.decode(demo);
 
-      http.set(AppHash.class, query);
+      http.set(AppUrl.class, query);
 
       return query;
     }

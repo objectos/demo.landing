@@ -19,13 +19,14 @@ import module java.base;
 import module objectos.way;
 
 /// The "/home" controller.
-final class Home implements Http.Handler {
+final class Home extends AppTransactional {
+
+  Home(App.Injector injector) {
+    super(injector);
+  }
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
+  final void handle(Http.Exchange http, Sql.Transaction trx) {
     final List<HomeModel> movies;
     movies = HomeModel.query(trx);
 

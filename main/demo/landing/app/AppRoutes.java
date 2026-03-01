@@ -16,10 +16,6 @@
 package demo.landing.app;
 
 import static objectos.way.Http.Method.GET;
-import static objectos.way.Http.Method.POST;
-
-import demo.landing.LandingDemoConfig;
-import module java.base;
 import module objectos.way;
 
 /// Declares the application routes.
@@ -29,44 +25,15 @@ public final class AppRoutes implements Http.Routing.Module {
 
   public static final JsAction ONLOAD = Js.byId(ID).render("/demo.landing/home");
 
-  private final Clock clock;
+  private final App.Injector injector;
 
-  private final Note.Sink noteSink;
-
-  private final AppReservation reservation;
-
-  private final AppTransactional transactional;
-
-  public AppRoutes(LandingDemoConfig config) {
-    clock = config.clock;
-
-    noteSink = config.noteSink;
-
-    reservation = new AppReservation(clock, config.reservationEpoch, config.reservationRandom);
-
-    transactional = AppTransactional.of(config.stage, config.database);
+  public AppRoutes(App.Injector injector) {
+    this.injector = injector;
   }
 
   @Override
   public final void configure(Http.Routing routing) {
-    routing.path("/demo.landing/{}", demo -> {
-      // we filter these requests with transactionl
-      demo.filter(transactional, this::routes);
-
-      demo.handler(new NotFound());
-    });
-  }
-
-  private void routes(Http.RoutingPath routes) {
-    routes.subpath("home", GET, new Home());
-
-    routes.subpath("movie/{id}", GET, new Movie(clock));
-
-    routes.subpath("show/{id}", GET, new Show(reservation));
-
-    routes.subpath("seats", POST, new Seats(noteSink));
-
-    routes.subpath("confirm", POST, new Confirm(clock));
+    routing.path("/demo.landing/home", GET, new Home(injector));
   }
 
 }

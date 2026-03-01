@@ -15,9 +15,37 @@
  */
 package demo.landing.app;
 
+import objectos.way.Http;
+
 /// Decoded value of the URL's fragment.
-record AppHash(AppView page, long id, int aux) {
+record AppUrl(AppView page, long id, int aux) {
+
+  static final Http.HeaderName DEMO_HASH = Http.HeaderName.of("Demo-Hash");
+
+  static AppUrl parse(Http.Exchange http) {
+    final String demoHash;
+    demoHash = http.header(DEMO_HASH);
+
+    final AppUrl state;
+
+    if (demoHash != null) {
+      throw new UnsupportedOperationException("Implement me");
+    } else {
+
+      final long reservationId;
+      reservationId = http.queryParamAsLong("reservationId", 0L);
+
+      final int id;
+      id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+
+      state = new AppUrl(null, reservationId, id);
+    }
+
+    return state;
+  }
+
   final int idAsInt() {
     return (int) id;
   }
+
 }

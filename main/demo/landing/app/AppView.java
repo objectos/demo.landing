@@ -68,16 +68,16 @@ enum AppView {
     return href() + "&id=" + value;
   }
 
-  final AppHash query() {
-    return new AppHash(this, 0L, 0);
+  final AppUrl query() {
+    return new AppUrl(this, 0L, 0);
   }
 
-  final AppHash query(long id) {
-    return new AppHash(this, id, 0);
+  final AppUrl query(long id) {
+    return new AppUrl(this, id, 0);
   }
 
-  final AppHash query(long id, int aux) {
-    return new AppHash(this, id, aux);
+  final AppUrl query(long id, int aux) {
+    return new AppUrl(this, id, aux);
   }
 
 }
