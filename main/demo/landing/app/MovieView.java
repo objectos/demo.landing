@@ -16,6 +16,7 @@
 package demo.landing.app;
 
 import java.util.List;
+import objectos.script.JsAction;
 
 /// Renders the details of a movie and lists its available screenings.
 final class MovieView extends UiShell {
@@ -46,7 +47,10 @@ final class MovieView extends UiShell {
 
   @Override
   final void renderMain() {
-    backLink(url.to(AppView.HOME));
+    final String backUrl;
+    backUrl = url.to(AppView.HOME);
+
+    backLink(backUrl);
 
     div(
         css("""
@@ -240,6 +244,12 @@ final class MovieView extends UiShell {
 
       testableCell(Integer.toString(showId), 2);
 
+      final String showUrl;
+      showUrl = url.to(AppView.SEATS, showId);
+
+      final JsAction showClick;
+      showClick = follow(showUrl);
+
       final String time;
       time = showtime.time();
 
@@ -256,7 +266,7 @@ final class MovieView extends UiShell {
               hover/cursor:pointer
               """),
 
-              onclick(follow("/demo.landing/show/" + showId)),
+              onclick(showClick),
 
               span(testableCell(time, 5))
           ),

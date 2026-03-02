@@ -16,7 +16,8 @@
 package demo.landing.dev;
 
 import demo.landing.LandingDemo;
-import demo.landing.app.AppRoutes;
+import demo.landing.LandingDemoConfig;
+import demo.landing.app.Kino;
 import java.nio.file.Path;
 import objectos.way.App;
 import objectos.way.Css;
@@ -35,9 +36,7 @@ public final class DevModule implements Http.Routing.Module {
 
   @Override
   public final void configure(Http.Routing routing) {
-    routing.install(
-        new AppRoutes(injector)
-    );
+    routing.install(appRoutes());
 
     routing.path("/", path -> {
       path.allow(Http.Method.GET, http -> http.movedPermanently("/index.html"));
@@ -55,6 +54,13 @@ public final class DevModule implements Http.Routing.Module {
     webResources = injector.getInstance(Web.Resources.class);
 
     routing.handler(webResources);
+  }
+
+  private Http.Routing.Module appRoutes() {
+    final LandingDemoConfig config;
+    config = injector.getInstance(LandingDemoConfig.class);
+
+    return Kino.routes(config);
   }
 
   private void index(Http.Exchange http) {

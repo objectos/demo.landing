@@ -18,7 +18,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-final class ShowGrid implements Iterable<ShowGrid.Seat> {
+final class SeatsGrid implements Iterable<SeatsGrid.Seat> {
 
   record Seat(
       int gridY,
@@ -50,11 +50,11 @@ final class ShowGrid implements Iterable<ShowGrid.Seat> {
 
   private final List<Seat> seats;
 
-  private ShowGrid(List<Seat> seats) {
+  private SeatsGrid(List<Seat> seats) {
     this.seats = seats;
   }
 
-  public static ShowGrid query(Sql.Transaction trx, long reservationId) {
+  public static SeatsGrid query(Sql.Transaction trx, long reservationId) {
     trx.sql("""
     with
       MAIN as (
@@ -134,11 +134,11 @@ final class ShowGrid implements Iterable<ShowGrid.Seat> {
     final List<Seat> seats;
     seats = trx.query(Seat::new);
 
-    return new ShowGrid(seats);
+    return new SeatsGrid(seats);
   }
 
   @Override
-  public final Iterator<ShowGrid.Seat> iterator() {
+  public final Iterator<SeatsGrid.Seat> iterator() {
     return seats.iterator();
   }
 

@@ -16,6 +16,7 @@
 package demo.landing.app;
 
 import module java.base;
+import objectos.script.JsAction;
 
 /// Renders the home page view. More specifically, it renders:
 ///
@@ -73,6 +74,12 @@ final class HomeView extends UiShell {
   }
 
   private void renderMovie(HomeModel movie) {
+    final String movieUrl;
+    movieUrl = url.to(AppView.MOVIE, movie.id());
+
+    final JsAction movieClick;
+    movieClick = follow(movieUrl);
+
     li(
         css("""
         flex:0_0_128rx
@@ -84,7 +91,7 @@ final class HomeView extends UiShell {
             hover/cursor:pointer
             """),
 
-            onclick(follow(url.to(AppView.MOVIE, movie.id()))),
+            onclick(movieClick),
 
             img(
                 css("""

@@ -62,12 +62,12 @@ public class ShowDetailsTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final Optional<ShowDetails> maybe;
-      maybe = ShowDetails.byId(trx, 61);
+      final Optional<SeatsShow> maybe;
+      maybe = SeatsShow.byId(trx, 61);
 
       assertEquals(maybe.isPresent(), true);
 
-      final ShowDetails show;
+      final SeatsShow show;
       show = maybe.get();
 
       assertEquals(show.showId(), 61);
@@ -91,12 +91,12 @@ public class ShowDetailsTest {
       values (904, 64);
       """);
 
-      final Optional<ShowDetails> maybe;
-      maybe = ShowDetails.byReservationId(trx, 904L);
+      final Optional<SeatsShow> maybe;
+      maybe = SeatsShow.byReservationId(trx, 904L);
 
       assertEquals(maybe.isPresent(), true);
 
-      final ShowDetails show;
+      final SeatsShow show;
       show = maybe.get();
 
       assertEquals(show.showId(), 64);

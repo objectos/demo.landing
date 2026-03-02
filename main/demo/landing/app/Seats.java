@@ -15,145 +15,63 @@
  */
 package demo.landing.app;
 
-import java.util.Optional;
+import module java.base;
 import module objectos.way;
 
-/// The seats selection form controller.
-final class Seats implements Http.Handler {
+/// The "/seats/{id}" controller.
+final class Seats extends AppTransactional {
 
-  static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(Seats.class, "Read", Note.DEBUG);
+  private final AppReservation reservation;
 
-  private final Note.Sink noteSink;
+  Seats(App.Injector injector) {
+    super(injector);
 
-  Seats(Note.Sink noteSink) {
-    this.noteSink = noteSink;
+    reservation = injector.getInstance(AppReservation.class);
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+  final void handle(Http.Exchange http, Sql.Transaction trx) {
+    final AppUrl url;
+    url = AppUrl.parse(http);
 
-    final SeatsData data;
-    data = SeatsData.parse(http);
+    final int showId;
+    showId = url.aux();
 
-    noteSink.send(DATA_READ, data);
+    final Optional<SeatsShow> maybeDetails;
+    maybeDetails = SeatsShow.byId(trx, showId);
 
-    if (data.seats() == 0) {
-      // no seats were selected...
-      handleAlert(http, trx, data, ShowView.Alert.EMPTY);
+    if (maybeDetails.isPresent()) {
+      final long reservationId;
+      reservationId = reservation.next();
 
-      return;
-    }
+      trx.sql("""
+      insert into
+        RESERVATION (RESERVATION_ID, SHOW_ID)
+      values
+        (?, ?)
+      """);
 
-    if (data.seats() > 6) {
-      // too many seats were selected...
-      handleAlert(http, trx, data, ShowView.Alert.LIMIT);
+      trx.param(reservationId);
 
-      return;
-    }
+      trx.param(showId);
 
-    final Sql.BatchUpdate tmpSelectionResult;
-    tmpSelectionResult = data.persistTmpSelection(trx);
+      trx.update();
 
-    switch (tmpSelectionResult) {
-      case Sql.BatchUpdateFailed _ -> handleTmpSelectionFailed(http, trx, data);
+      final SeatsShow details;
+      details = maybeDetails.get();
 
-      case Sql.BatchUpdateSuccess _ -> handleTmpSelectionSuccess(http, trx, data);
-    }
-  }
+      final SeatsGrid grid;
+      grid = SeatsGrid.query(trx, reservationId);
 
-  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, ShowView.Alert alert) {
-    final long reservationId;
-    reservationId = data.reservationId();
+      final SeatsView view;
+      view = new SeatsView(url, details, grid, reservationId);
 
-    final Optional<ShowDetails> maybe;
-    maybe = ShowDetails.byReservationId(trx, reservationId);
-
-    final Media view;
-
-    if (maybe.isPresent()) {
-      final ShowDetails details;
-      details = maybe.get();
-
-      final ShowGrid grid;
-      grid = ShowGrid.query(trx, reservationId);
-
-      view = new ShowView(alert, details, grid, reservationId);
+      http.ok(view);
     } else {
+      final NotFoundView view;
       view = new NotFoundView();
-    }
 
-    http.badRequest(view);
-  }
-
-  private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
-    // clear TMP_SELECTION just in case some of the records were inserted
-    data.clearTmpSelection(trx);
-
-    final NotFoundView view;
-    view = new NotFoundView();
-
-    http.badRequest(view);
-  }
-
-  private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
-    final Sql.Update userSelectionResult;
-    userSelectionResult = data.persisUserSelection(trx);
-
-    switch (userSelectionResult) {
-      case Sql.UpdateSuccess ok -> {
-        int count;
-        count = ok.count();
-
-        if (data.seats() != count) {
-
-          // some or possibly all of the seats were not selected.
-          // 1) maybe an already sold ticket was submitted
-          // 2) seats refer to a different show
-          // anyways... bad data
-
-          // clear SELECTION just in case some of the records were inserted
-          data.clearUserSelection(trx);
-
-          final NotFoundView view;
-          view = new NotFoundView();
-
-          http.badRequest(view);
-
-        } else {
-
-          // all seats were persisted.
-          // render next screen.
-
-          final long reservationId;
-          reservationId = data.reservationId();
-
-          final Optional<ConfirmDetails> maybe;
-          maybe = ConfirmDetails.queryOptional(trx, reservationId);
-
-          if (maybe.isPresent()) {
-            // renders the confirmation view
-            final ConfirmDetails details;
-            details = maybe.get();
-
-            final ConfirmView view;
-            view = new ConfirmView(details);
-
-            http.ok(view);
-          } else {
-            // unlikely? in any case, we assume bad data
-            final NotFoundView view;
-            view = new NotFoundView();
-
-            http.badRequest(view);
-          }
-
-        }
-
-      }
-
-      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, ShowView.Alert.BOOKED);
+      http.notFound(view);
     }
   }
 

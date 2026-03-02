@@ -20,7 +20,7 @@ import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Sql;
 
-final class Ticket implements Kino.GET {
+final class Ticket {
 
   Ticket() {}
 
@@ -34,7 +34,6 @@ final class Ticket implements Kino.GET {
     return action.view(trx, ticketId);
   }
 
-  @Override
   public final Html.Component get(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
@@ -48,6 +47,7 @@ final class Ticket implements Kino.GET {
     return view(trx, ticketId);
   }
 
+  @SuppressWarnings("unused")
   private Html.Component view(Sql.Transaction trx, long ticketId) {
     final Optional<TicketModel> maybe;
     maybe = TicketModel.queryOptional(trx, ticketId);
@@ -56,15 +56,7 @@ final class Ticket implements Kino.GET {
       final TicketModel model;
       model = maybe.get();
 
-      return Shell.create(shell -> {
-        shell.app = new TicketView(model);
-
-        shell.sources(
-          //            Source.Ticket,
-        //            Source.TicketModel,
-        //            Source.TicketView
-        );
-      });
+      throw new UnsupportedOperationException("Implement me");
     } else {
       throw new UnsupportedOperationException("Implement me");
       //return NotFound.create();

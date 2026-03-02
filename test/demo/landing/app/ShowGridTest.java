@@ -64,8 +64,8 @@ public class ShowGridTest {
       values (901, 61)
       """);
 
-      final ShowGrid grid;
-      grid = ShowGrid.query(trx, 901);
+      final SeatsGrid grid;
+      grid = SeatsGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),
@@ -104,8 +104,8 @@ public class ShowGridTest {
       values (901, 103, 61);
       """);
 
-      final ShowGrid grid;
-      grid = ShowGrid.query(trx, 901);
+      final SeatsGrid grid;
+      grid = SeatsGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),
@@ -145,8 +145,8 @@ public class ShowGridTest {
       ,      (901, 104, 61);
       """);
 
-      final ShowGrid grid;
-      grid = ShowGrid.query(trx, 901);
+      final SeatsGrid grid;
+      grid = SeatsGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),
@@ -187,8 +187,8 @@ public class ShowGridTest {
       ,      (902, 104, 61);
       """);
 
-      final ShowGrid grid;
-      grid = ShowGrid.query(trx, 901);
+      final SeatsGrid grid;
+      grid = SeatsGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),
@@ -229,8 +229,8 @@ public class ShowGridTest {
       ,      (902, 104, 61);
       """);
 
-      final ShowGrid grid;
-      grid = ShowGrid.query(trx, 901);
+      final SeatsGrid grid;
+      grid = SeatsGrid.query(trx, 901);
 
       assertEquals(
           grid.toString(),

@@ -18,7 +18,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-final class ShowView extends UiShell {
+final class SeatsView extends UiShell {
 
   enum Alert {
 
@@ -43,19 +43,23 @@ final class ShowView extends UiShell {
 
   private static final String FORM_ID = "seats-form";
 
+  private final AppUrl url;
+
   private final Alert alert;
 
-  private final ShowDetails details;
+  private final SeatsShow details;
 
-  private final ShowGrid grid;
+  private final SeatsGrid grid;
 
   private final long reservationId;
 
-  ShowView(ShowDetails details, ShowGrid grid, long reservationId) {
-    this(null, details, grid, reservationId);
+  SeatsView(AppUrl url, SeatsShow details, SeatsGrid grid, long reservationId) {
+    this(url, null, details, grid, reservationId);
   }
 
-  ShowView(ShowView.Alert alert, ShowDetails details, ShowGrid grid, long reservationId) {
+  SeatsView(AppUrl url, SeatsView.Alert alert, SeatsShow details, SeatsGrid grid, long reservationId) {
+    this.url = url;
+
     this.alert = alert;
 
     this.details = details;
@@ -73,7 +77,10 @@ final class ShowView extends UiShell {
 
   @Override
   final void renderMain() {
-    backLink("/demo.landing/movie/" + details.movieId());
+    final String backUrl;
+    backUrl = url.to(AppView.MOVIE, details.movieId());
+
+    backLink(backUrl);
 
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
@@ -266,7 +273,7 @@ final class ShowView extends UiShell {
   }
 
   private void renderSeatsFormGrid() {
-    for (ShowGrid.Seat seat : grid) {
+    for (SeatsGrid.Seat seat : grid) {
       final int seatId;
       seatId = seat.seatId();
 

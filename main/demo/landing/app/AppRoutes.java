@@ -36,6 +36,8 @@ public final class AppRoutes implements Http.Routing.Module {
     routing.path("/demo.landing/home", GET, new Home(injector));
 
     routing.path("/demo.landing/movie/{id}", GET, new Movie(injector));
+
+    routing.path("/demo.landing/seats/{id}", GET, new Seats(injector));
   }
 
 }

@@ -291,7 +291,7 @@ final class KinoStyles implements Css.Library {
     opts.scanClasses(
         HomeView.class,
         MovieView.class,
-        ShowView.class,
+        SeatsView.class,
         UiIcon.class,
         UiShell.class
     );
@@ -444,6 +444,7 @@ final class AppReservation {
 package demo.landing.app;
 
 import module java.base;
+import objectos.script.JsAction;
 
 /// Renders the home page view. More specifically, it renders:
 ///
@@ -501,6 +502,12 @@ final class HomeView extends UiShell {
   }
 
   private void renderMovie(HomeModel movie) {
+    final String movieUrl;
+    movieUrl = url.to(AppView.MOVIE, movie.id());
+
+    final JsAction movieClick;
+    movieClick = follow(movieUrl);
+
     li(
         css(\"""
         flex:0_0_128rx
@@ -512,7 +519,7 @@ final class HomeView extends UiShell {
             hover/cursor:pointer
             \"""),
 
-            onclick(follow(url.to(AppView.MOVIE, movie.id()))),
+            onclick(movieClick),
 
             img(
                 css(\"""
@@ -618,6 +625,197 @@ final class Confirm implements Http.Handler {
 }
 """);
 
+  static final SourceModel SeatsGrid = SourceModel.create("SeatsGrid.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module java.base;
+import module objectos.way;
+
+final class SeatsGrid implements Iterable<SeatsGrid.Seat> {
+
+  record Seat(
+      int gridY,
+      int gridX,
+      int seatId,
+      String name,
+      int state
+  ) {
+
+    Seat(ResultSet rs, int idx) throws SQLException {
+      this(
+          rs.getInt(idx++),
+          rs.getInt(idx++),
+          rs.getInt(idx++),
+          rs.getString(idx++),
+          rs.getInt(idx++)
+      );
+    }
+
+    public final boolean checked() {
+      return state == 1;
+    }
+
+    public final boolean reserved() {
+      return state == 2;
+    }
+
+  }
+
+  private final List<Seat> seats;
+
+  private SeatsGrid(List<Seat> seats) {
+    this.seats = seats;
+  }
+
+  public static SeatsGrid query(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    with
+      MAIN as (
+        select
+          RESERVATION.RESERVATION_ID,
+          SHOW.SHOW_ID,
+          SCREENING.SCREEN_ID
+        from
+          RESERVATION
+          join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
+          join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
+        where
+          RESERVATION.RESERVATION_ID = ?
+      ),
+      GRID as (
+        select
+          X as GRID_Y,
+          gx.GRID_X
+        from
+          system_range (0, 9)
+          cross join (
+            select
+              X as GRID_X
+            from
+              system_range (0, 9)
+          ) gx
+      ),
+      SELF as (
+        select
+          SEAT_ID
+        from
+          SELECTION
+        where
+          RESERVATION_ID = ( select RESERVATION_ID from MAIN )
+      ),
+      OTHERS as (
+        select
+          SELECTION.SEAT_ID
+        from
+          MAIN
+          join RESERVATION on MAIN.RESERVATION_ID <> RESERVATION.RESERVATION_ID
+          and MAIN.SHOW_ID = RESERVATION.SHOW_ID
+          join SELECTION on RESERVATION.RESERVATION_ID = SELECTION.RESERVATION_ID
+      )
+    select
+      GRID.GRID_Y,
+      GRID.GRID_X,
+      coalesce(SEAT.SEAT_ID, -1) as SEAT_ID,
+      concat (SEAT_ROW, SEAT_COL) as SEAT_NAME,
+      case SELF.SEAT_ID
+        when is not null then 1
+        else case OTHERS.SEAT_ID
+          when is not null then 2
+          else 0
+        end
+      end
+    from
+      MAIN
+      cross join GRID
+
+      left join SEAT on MAIN.SCREEN_ID = SEAT.SCREEN_ID
+      and GRID.GRID_Y = SEAT.GRID_Y
+      and GRID.GRID_X = SEAT.GRID_X
+
+      left join SELF
+      on SEAT.SEAT_ID = SELF.SEAT_ID
+
+      left join OTHERS
+      on SEAT.SEAT_ID = OTHERS.SEAT_ID
+    order by
+      GRID.GRID_Y,
+      GRID.GRID_X
+    \""");
+
+    trx.param(reservationId);
+
+    final List<Seat> seats;
+    seats = trx.query(Seat::new);
+
+    return new SeatsGrid(seats);
+  }
+
+  @Override
+  public final Iterator<SeatsGrid.Seat> iterator() {
+    return seats.iterator();
+  }
+
+  @Override
+  public final String toString() {
+    final StringBuilder sb;
+    sb = new StringBuilder();
+
+    sb.append(". = empty space\\n");
+    sb.append("# = reserved\\n");
+    sb.append("o = selectable\\n");
+    sb.append("x = checked\\n");
+
+    int lastY = -1;
+
+    for (Seat cell : seats) {
+      int gridY;
+      gridY = cell.gridY();
+
+      if (gridY != lastY) {
+        sb.append('\\n');
+
+        lastY = gridY;
+      } else {
+        sb.append(' ');
+      }
+
+      int seatId;
+      seatId = cell.seatId();
+
+      if (seatId < 0) {
+        sb.append('.');
+      } else if (cell.checked()) {
+        sb.append('x');
+      } else if (cell.reserved()) {
+        sb.append('#');
+      } else {
+        sb.append('o');
+      }
+    }
+
+    sb.append('\\n');
+
+    return sb.toString();
+  }
+
+}
+""");
+
   static final SourceModel NotFound = SourceModel.create("NotFound.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -655,114 +853,6 @@ final class NotFound implements Http.Handler {
 }
 """);
 
-  static final SourceModel ShellSourceSelector = SourceModel.create("ShellSourceSelector.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import module java.base;
-import module objectos.way;
-
-/// Renders the source file selector.
-final class ShellSourceSelector extends Html.Template {
-
-  private final List<SourceModel> sources;
-
-  ShellSourceSelector(List<SourceModel> sources) {
-    this.sources = sources;
-  }
-
-  @Override
-  protected final void render() {
-    final SourceModel first;
-    first = sources.getFirst();
-
-    // the source file selector
-    div(
-        Shell.SRC,
-
-        css(\"""
-        border-left:1px_solid_var(--color-border)
-        border-right:1px_solid_var(--color-border)
-        display:flex
-        font-size:14rx
-        gap:4rx_8rx
-        grid-area:b
-        padding:16rx
-        overflow-x:auto
-
-        lg/border-bottom:1px_solid_var(--color-border)
-
-        xl/border-top:1px_solid_var(--color-border)
-        xl/border-right-width:0px
-        xl/flex-direction:column
-        \"""),
-
-        // stores the current selected button in the data-button attribute
-        attr(Shell.BTN, first.button().attrValue()),
-
-        // stores the current selected panel in the data-panel attribute
-        attr(Shell.PNL, first.panel().attrValue()),
-
-        f(this::renderSourceMenuItems)
-    );
-  }
-
-  private void renderSourceMenuItems() {
-    for (int idx = 0, size = sources.size(); idx < size; idx++) {
-      final SourceModel item;
-      item = sources.get(idx);
-
-      button(
-          item.button(),
-
-          css(\"""
-          border-radius:6rx
-          cursor:pointer
-          padding:4rx_8rx
-          &[data-selected=true]/background-color:var(--color-btn-ghost-active)
-
-          active/background-color:var(--color-btn-ghost-active)
-          hover/background-color:var(--color-btn-ghost-hover)
-          \"""),
-
-          attr(Shell.SEL, Boolean.toString(idx == 0)),
-
-          onclick(Js.of(
-              Js.var("frame", Js.byId(Shell.SRC)),
-              // 'deselects' current
-              Js.byId(Js.var("frame").as(JsElement.type).attr(Shell.BTN)).attr(Shell.SEL, "false"),
-              Js.byId(Js.var("frame").as(JsElement.type).attr(Shell.PNL)).attr(Shell.SEL, "false"),
-              // 'selects' self
-              Js.byId(item.button()).attr(Shell.SEL, "true"),
-              Js.byId(item.panel()).attr(Shell.SEL, "true"),
-              // stores selected,
-              Js.var("frame").as(JsElement.type).attr(Shell.BTN, item.button().attrValue()),
-              Js.var("frame").as(JsElement.type).attr(Shell.PNL, item.panel().attrValue())
-          )),
-
-          text(item.name())
-      );
-    }
-  }
-
-}
-
-""");
-
   static final SourceModel Kino = SourceModel.create("Kino.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -784,13 +874,13 @@ package demo.landing.app;
 import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
 import java.time.Clock;
-import java.time.LocalDateTime;
 import objectos.script.Js;
 import objectos.script.JsAction;
+import objectos.way.App;
 import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
-import objectos.way.Note;
+import objectos.way.Sql;
 
 /**
  * Demo entry point.
@@ -818,7 +908,7 @@ public final class Kino implements LandingDemo {
 
   public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home");
 
-  private Kino(Ctx ctx) {
+  private Kino() {
   }
 
   /**
@@ -828,9 +918,19 @@ public final class Kino implements LandingDemo {
     throw new UnsupportedOperationException("Implement me");
   }
 
-  /// The default 'link' action.
-  public static JsAction link(String url) {
-    return Js.byId(SHELL).render(url);
+  public static Http.Routing.Module routes(LandingDemoConfig config) {
+    return new AppRoutes(
+        App.Injector.create(opts -> {
+          opts.putInstance(Sql.Database.class, config.database);
+
+          opts.putInstance(Clock.class, config.clock);
+
+          final AppReservation reservation;
+          reservation = new AppReservation(config.clock, config.reservationEpoch, config.reservationRandom);
+
+          opts.putInstance(AppReservation.class, reservation);
+        })
+    );
   }
 
   /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
@@ -859,325 +959,6 @@ public final class Kino implements LandingDemo {
   @Override
   public final Kino.PostResult post(Http.Exchange http) {
     throw new UnsupportedOperationException("Implement me");
-  }
-
-  //
-  // UI related classes
-  //
-
-  /**
-   * SVG icons from the Lucide project.
-   */
-  enum Icon {
-    ARROW_LEFT(\"""
-    <path d="m12 19-7-7 7-7"/><path d="M19 12H5"/>\"""),
-
-    CALENDAR_CHECK(\"""
-    <path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>\"""),
-
-    CLOCK(\"""
-    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>\"""),
-
-    CREDIT_CARD(\"""
-    <rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>\"""),
-
-    FILM(
-        \"""
-    <rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>\"""),
-
-    FROWN(\"""
-    <circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/>\"""),
-
-    INFO(\"""
-    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>\"""),
-
-    PROJECTOR(
-        \"""
-    <path d="M5 7 3 5"/><path d="M9 6V3"/><path d="m13 7 2-2"/><circle cx="9" cy="13" r="3"/><path d="M11.83 12H20a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h2.17"/><path d="M16 16h2"/>\"""),
-
-    RECEIPT(\"""
-    <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>\"""),
-
-    TICKET(\"""
-    <path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>\""");
-
-    final String contents;
-
-    Icon(String contents) {
-      this.contents = contents;
-    }
-  }
-
-  /**
-   * Base HTML template of the application. Provides a utility methods for
-   * rendering UI fragments common to the application.
-   */
-  static abstract class View extends Html.Template {
-
-    static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""
-    appearance:none
-    background-color:var(--color-btn-primary)
-    color:var(--color-btn-primary-text)
-    cursor:pointer
-    display:flex
-    font-size:14rx
-    min-height:48rx
-    padding:14rx_63rx_14rx_15rx
-
-    active/background-color:var(--color-btn-primary-active)
-    hover/background-color:var(--color-btn-primary-hover)
-    \""");
-
-    //
-    // component methods
-    //
-
-    /**
-     * Renders the "Go Back" link.
-     */
-    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page) {
-      testableField("back-link", page.name());
-
-      return backLink(ctx.href(page));
-    }
-
-    /**
-     * Renders the "Go Back" link.
-     */
-    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page, long id) {
-      testableField("back-link", page.name() + ":" + id);
-
-      return backLink(ctx.href(page, id));
-    }
-
-    /**
-     * Renders the "Go Back" link.
-     */
-    final Html.Instruction.OfElement backLink(Ctx ctx, AppView page, long id, int aux) {
-      testableField("back-link", page.name() + ":" + id + ":" + aux);
-
-      AppUrl query = page.query(id, aux);
-
-      return backLink(ctx.href(query));
-    }
-
-    /**
-     * Renders the "Go Back" link.
-     */
-    final Html.Instruction.OfElement backLink(String href) {
-      return a(
-          css(\"""
-          border-radius:9999px
-          padding:6rx
-          margin:6rx_0_0_-6rx
-          position:absolute
-
-          active/background-color:var(--color-btn-ghost-active)
-          hover/background-color:var(--color-btn-ghost-hover)
-          \"""),
-
-          onclick(FOLLOW),
-
-          href(href),
-
-          rel("nofollow"),
-
-          icon(
-              Kino.Icon.ARROW_LEFT,
-
-              css(\"""
-              height:20rx
-              width:20rx
-              \""")
-          )
-      );
-    }
-
-    /// Renders the "Go Back" link.
-    final Html.Instruction.OfElement backLink2(String href) {
-      testableField("back-link", href);
-
-      return a(
-          css(\"""
-          border-radius:9999px
-          padding:6rx
-          margin:6rx_0_0_-6rx
-          position:absolute
-
-          active/background-color:var(--color-btn-ghost-active)
-          hover/background-color:var(--color-btn-ghost-hover)
-          \"""),
-
-          onclick(FOLLOW),
-
-          href(href),
-
-          rel("nofollow"),
-
-          icon(
-              Kino.Icon.ARROW_LEFT,
-
-              css(\"""
-              height:20rx
-              width:20rx
-              \""")
-          )
-      );
-    }
-
-    final Html.Instruction.OfAttribute formAction(Ctx ctx, AppView page, long id) {
-      testableField("action", page.name() + ":" + id);
-
-      return action(ctx.action(page, id));
-    }
-
-    final Html.Instruction.OfAttribute formAction(Ctx ctx, AppView page, long id, int aux) {
-      testableField("action", page.name() + ":" + id + ":" + aux);
-
-      return action(ctx.action(page, id, aux));
-    }
-
-    /**
-     * Renders a Lucide SVG icon.
-     */
-    final Html.Instruction icon(Kino.Icon icon, Html.Instruction... more) {
-      return svg(
-          xmlns("http://www.w3.org/2000/svg"), width("24"), height("24"), viewBox("0 0 24 24"),
-          fill("none"), stroke("currentColor"), strokeWidth("2"), strokeLinecap("round"), strokeLinejoin("round"),
-
-          flatten(more),
-
-          raw(icon.contents)
-      );
-    }
-
-  }
-
-  //
-  // Configuration related classes
-  //
-
-  /**
-   * Application-level context.
-   */
-  record Ctx(
-      Clock clock,
-
-      AppCodec codec,
-
-      Note.Sink noteSink,
-
-      AppReservation reservation,
-
-      AppTransactional transactional
-  ) {
-
-    final String action(AppView page, long id) {
-      return action(page, id, 0);
-    }
-
-    final String action(AppView page, long id, int aux) {
-      AppUrl query;
-      query = page.query(id, aux);
-
-      String demo;
-      demo = codec.encode(query);
-
-      return "/demo/landing?demo=" + demo;
-    }
-
-    final String href(AppView page) {
-      return page == AppView.HOME ? "/index.html" : href(page, 0L);
-    }
-
-    final String href(AppView page, long id) {
-      AppUrl query;
-      query = page.query(id);
-
-      return href(query);
-    }
-
-    final String href(AppUrl query) {
-      final AppView page;
-      page = query.page();
-
-      final String demo;
-      demo = codec.encode(query);
-
-      return page.href() + "&demo=" + demo;
-    }
-
-    final long nextReservation() {
-      return reservation.next();
-    }
-
-    final <T1> void send(Note.Ref1<T1> note, T1 v1) {
-      noteSink.send(note, v1);
-    }
-
-    final LocalDateTime today() {
-      return LocalDateTime.now(clock);
-    }
-
-    @SuppressWarnings("unused")
-    private AppUrl decode(Http.Exchange http) {
-      // We cannot rely on the path to render the different pages
-      // of the application because this demo will be embedded in another page.
-      // So, we use an URL query parameter.
-      final String demo;
-      demo = http.queryParam("demo");
-
-      // the query parameter value is encoded/obfuscated.
-      // we use the codec to decode it.
-      final AppUrl query;
-      query = codec.decode(demo);
-
-      http.set(AppUrl.class, query);
-
-      return query;
-    }
-
-  }
-
-  //
-  // SQL related classes
-  //
-
-  //
-  // Embedded related classes
-  //
-  // Most Objectos Way applications will not require the classes in this section.
-  // They are required because this demo will be embedded in another application.
-  //
-
-  /**
-   * Represents an HTTP action in the demo application.
-   */
-  @FunctionalInterface
-  interface Action<T> {
-
-    T execute(Http.Exchange http);
-
-  }
-
-  /**
-   * Handles a GET request. Similar to a {@code Http.Handler} instance, but for
-   * an embedded application.
-   */
-  interface GET {
-
-    Html.Component get(Http.Exchange http);
-
-  }
-
-  /**
-   * Handles a POST request. Similar to a {@code Http.Handler} instance, but for
-   * an embedded application.
-   */
-  interface POST {
-
-    PostResult post(Http.Exchange http);
-
   }
 
 }
@@ -1524,122 +1305,6 @@ record ConfirmData(long reservationId, boolean wayRequest) {
 }
 """);
 
-  static final SourceModel Shell = SourceModel.create("Shell.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.function.Consumer;
-import objectos.way.Html;
-
-/// The demo UI shell responsible for displaying the application on the
-/// top/right and the source code on the bottom/left.
-final class Shell extends Kino.View {
-
-  static final class Builder {
-
-    Html.Component app;
-
-    private SourceModel[] sources;
-
-    private Builder() {}
-
-    final void sources(SourceModel... values) {
-      sources = values.clone();
-    }
-
-  }
-
-  static final Html.Id SRC = Html.Id.of("source-frame");
-
-  static final Html.AttributeName BTN = Html.AttributeName.of("data-button");
-
-  static final Html.AttributeName PNL = Html.AttributeName.of("data-panel");
-
-  static final Html.AttributeName SEL = Html.AttributeName.of("data-selected");
-
-  private final Html.Component main;
-
-  private final Html.Component sourceCode;
-
-  private final Html.Component sourceSelector;
-
-  Shell(Html.Component mainView, SourceModel... more) {
-    main = new ShellMain(mainView);
-
-    final List<SourceModel> sources;
-    sources = new ArrayList<>();
-
-    for (SourceModel item : more) {
-      sources.add(item);
-    }
-
-    //    sources.add(Source.Kino);
-    //    sources.add(Source.Shell);
-    //    sources.add(Source.ShellMain);
-    //    sources.add(Source.ShellSourceCode);
-    //    sources.add(Source.ShellSourceSelector);
-    //    sources.add(Source.SourceModel_);
-
-    sourceCode = new ShellSourceCode(sources);
-
-    sourceSelector = new ShellSourceSelector(sources);
-  }
-
-  private Shell(Builder builder) {
-    this(builder.app, builder.sources);
-  }
-
-  public static Shell create(Consumer<Builder> config) {
-    final Builder builder;
-    builder = new Builder();
-
-    config.accept(builder);
-
-    return new Shell(builder);
-  }
-
-  @Override
-  protected final void render() {
-    // the demo shell UI
-    div(
-        Kino.SHELL,
-
-        css(\"""
-        display:grid
-        grid-template:'a'_448rx_'b'_auto_'c'_448rx_/_1fr
-
-        lg/grid-template:'c_a'_512rx_'b_b'_auto_/_1fr_1fr
-
-        xl/grid-template:'b_c_a'_512rx_/_200rx_1fr_1fr
-        \"""),
-
-        c(main),
-
-        c(sourceSelector),
-
-        c(sourceCode)
-    );
-  }
-
-}
-""");
-
   static final SourceModel Movie = SourceModel.create("Movie.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -1726,145 +1391,63 @@ final class Movie extends AppTransactional {
  */
 package demo.landing.app;
 
-import java.util.Optional;
+import module java.base;
 import module objectos.way;
 
-/// The seats selection form controller.
-final class Seats implements Http.Handler {
+/// The "/seats/{id}" controller.
+final class Seats extends AppTransactional {
 
-  static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(Seats.class, "Read", Note.DEBUG);
+  private final AppReservation reservation;
 
-  private final Note.Sink noteSink;
+  Seats(App.Injector injector) {
+    super(injector);
 
-  Seats(Note.Sink noteSink) {
-    this.noteSink = noteSink;
+    reservation = injector.getInstance(AppReservation.class);
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+  final void handle(Http.Exchange http, Sql.Transaction trx) {
+    final AppUrl url;
+    url = AppUrl.parse(http);
 
-    final SeatsData data;
-    data = SeatsData.parse(http);
+    final int showId;
+    showId = url.aux();
 
-    noteSink.send(DATA_READ, data);
+    final Optional<SeatsShow> maybeDetails;
+    maybeDetails = SeatsShow.byId(trx, showId);
 
-    if (data.seats() == 0) {
-      // no seats were selected...
-      handleAlert(http, trx, data, ShowView.Alert.EMPTY);
+    if (maybeDetails.isPresent()) {
+      final long reservationId;
+      reservationId = reservation.next();
 
-      return;
-    }
+      trx.sql(\"""
+      insert into
+        RESERVATION (RESERVATION_ID, SHOW_ID)
+      values
+        (?, ?)
+      \""");
 
-    if (data.seats() > 6) {
-      // too many seats were selected...
-      handleAlert(http, trx, data, ShowView.Alert.LIMIT);
+      trx.param(reservationId);
 
-      return;
-    }
+      trx.param(showId);
 
-    final Sql.BatchUpdate tmpSelectionResult;
-    tmpSelectionResult = data.persistTmpSelection(trx);
+      trx.update();
 
-    switch (tmpSelectionResult) {
-      case Sql.BatchUpdateFailed _ -> handleTmpSelectionFailed(http, trx, data);
+      final SeatsShow details;
+      details = maybeDetails.get();
 
-      case Sql.BatchUpdateSuccess _ -> handleTmpSelectionSuccess(http, trx, data);
-    }
-  }
+      final SeatsGrid grid;
+      grid = SeatsGrid.query(trx, reservationId);
 
-  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, ShowView.Alert alert) {
-    final long reservationId;
-    reservationId = data.reservationId();
+      final SeatsView view;
+      view = new SeatsView(url, details, grid, reservationId);
 
-    final Optional<ShowDetails> maybe;
-    maybe = ShowDetails.byReservationId(trx, reservationId);
-
-    final Media view;
-
-    if (maybe.isPresent()) {
-      final ShowDetails details;
-      details = maybe.get();
-
-      final ShowGrid grid;
-      grid = ShowGrid.query(trx, reservationId);
-
-      view = new ShowView(alert, details, grid, reservationId);
+      http.ok(view);
     } else {
+      final NotFoundView view;
       view = new NotFoundView();
-    }
 
-    http.badRequest(view);
-  }
-
-  private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
-    // clear TMP_SELECTION just in case some of the records were inserted
-    data.clearTmpSelection(trx);
-
-    final NotFoundView view;
-    view = new NotFoundView();
-
-    http.badRequest(view);
-  }
-
-  private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
-    final Sql.Update userSelectionResult;
-    userSelectionResult = data.persisUserSelection(trx);
-
-    switch (userSelectionResult) {
-      case Sql.UpdateSuccess ok -> {
-        int count;
-        count = ok.count();
-
-        if (data.seats() != count) {
-
-          // some or possibly all of the seats were not selected.
-          // 1) maybe an already sold ticket was submitted
-          // 2) seats refer to a different show
-          // anyways... bad data
-
-          // clear SELECTION just in case some of the records were inserted
-          data.clearUserSelection(trx);
-
-          final NotFoundView view;
-          view = new NotFoundView();
-
-          http.badRequest(view);
-
-        } else {
-
-          // all seats were persisted.
-          // render next screen.
-
-          final long reservationId;
-          reservationId = data.reservationId();
-
-          final Optional<ConfirmDetails> maybe;
-          maybe = ConfirmDetails.queryOptional(trx, reservationId);
-
-          if (maybe.isPresent()) {
-            // renders the confirmation view
-            final ConfirmDetails details;
-            details = maybe.get();
-
-            final ConfirmView view;
-            view = new ConfirmView(details);
-
-            http.ok(view);
-          } else {
-            // unlikely? in any case, we assume bad data
-            final NotFoundView view;
-            view = new NotFoundView();
-
-            http.badRequest(view);
-          }
-
-        }
-
-      }
-
-      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, ShowView.Alert.BOOKED);
+      http.notFound(view);
     }
   }
 
@@ -1891,7 +1474,7 @@ package demo.landing.app;
 
 import module objectos.way;
 
-/// Renders a SVG icon.
+/// Renders a SVG icon (from the Lucide project).
 enum UiIcon {
 
   ARROW_LEFT(\"""
@@ -1915,7 +1498,8 @@ enum UiIcon {
   INFO(\"""
   <circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>\"""),
 
-  PROJECTOR(\"""
+  PROJECTOR(
+      \"""
   <path d="M5 7 3 5"/><path d="M9 6V3"/><path d="m13 7 2-2"/><circle cx="9" cy="13" r="3"/><path d="M11.83 12H20a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h2.17"/><path d="M16 16h2"/>\"""),
 
   RECEIPT(\"""
@@ -2103,336 +1687,6 @@ record MovieShowtime(int showId, String time) {
 }
 """);
 
-  static final SourceModel ShowView = SourceModel.create("ShowView.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import module java.base;
-import module objectos.way;
-
-final class ShowView extends UiShell {
-
-  enum Alert {
-
-    EMPTY(\"""
-    Kindly choose at least 1 seat.\"""),
-
-    LIMIT(\"""
-    We regret to inform you that we limit purchases to 6 tickets per person. \
-    Kindly choose at most 6 seats.\"""),
-
-    BOOKED(\"""
-    We regret to inform you that another customer has already reserved one or more of the selected seats. \
-    Kindly choose alternative seats.\""");
-
-    private final String msg;
-
-    private Alert(String msg) {
-      this.msg = msg;
-    }
-
-  }
-
-  private static final String FORM_ID = "seats-form";
-
-  private final Alert alert;
-
-  private final ShowDetails details;
-
-  private final ShowGrid grid;
-
-  private final long reservationId;
-
-  ShowView(ShowDetails details, ShowGrid grid, long reservationId) {
-    this(null, details, grid, reservationId);
-  }
-
-  ShowView(ShowView.Alert alert, ShowDetails details, ShowGrid grid, long reservationId) {
-    this.alert = alert;
-
-    this.details = details;
-
-    this.grid = grid;
-
-    this.reservationId = reservationId;
-  }
-
-  @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-    );
-  }
-
-  @Override
-  final void renderMain() {
-    backLink("/demo.landing/movie/" + details.movieId());
-
-    // this node is for testing only, it is not rendered in the final HTML
-    testableH1("Show details");
-
-    h2(testableField("title", details.title()));
-
-    p("Please choose your seats");
-
-    if (alert != null) {
-      testableField("alert", alert.name());
-
-      renderAlert(alert.msg);
-    }
-
-    div(
-        css(\"""
-        border:1px_solid_var(--color-border)
-        display:flex
-        gap:24rx
-        margin:32rx_0
-        overflow-x:auto
-        padding:32rx_24rx
-        \"""),
-
-        f(this::renderDetails),
-
-        f(this::renderSeats)
-    );
-  }
-
-  private void renderAlert(String msg) {
-    div(
-        css(\"""
-        align-items:center
-        background-color:var(--color-blue-100)
-        border-left:3px_solid_var(--color-blue-800)
-        display:flex
-        font-size:14rx
-        line-height:16rx
-        margin:16rx_0
-        padding:16rx
-        \"""),
-
-        c(
-            UiIcon.INFO.css(\"""
-            height:20rx
-            width:auto
-            padding-right:16rx
-            \""")
-        ),
-
-        div(
-            css(\"""
-            flex:1
-            \"""),
-
-            text(msg)
-        )
-    );
-  }
-
-  private void renderDetails() {
-    div(
-        css(\"""
-        display:flex
-        flex-direction:column
-        font-size:14rx
-        gap:16rx
-        \"""),
-
-        renderDetailsItem(UiIcon.CALENDAR_CHECK, "date", details.date()),
-
-        renderDetailsItem(UiIcon.CLOCK, "time", details.time()),
-
-        renderDetailsItem(UiIcon.PROJECTOR, "screen", details.screen())
-    );
-  }
-
-  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
-    return div(
-        css(\"""
-        align-items:center
-        display:flex
-        flex-direction:column
-        gap:4rx
-        \"""),
-
-        c(
-            icon.css(\"""
-            height:auto
-            stroke:icon
-            width:20rx
-            \""")
-        ),
-
-        span(
-            css(\"""
-            text-align:center
-            width:6rch
-            \"""),
-
-            text(testableField(name, value))
-        )
-    );
-  }
-
-  private void renderSeats() {
-    // this node is for testing only, it is not rendered in the final HTML
-    testableH1("Seats");
-
-    div(
-        css(\"""
-        display:flex
-        flex-direction:column
-        flex-grow:1
-        justify-content:start
-        \"""),
-
-        f(this::renderSeatsScreen),
-
-        f(this::renderSeatsForm),
-
-        f(this::renderSeatsAction)
-    );
-  }
-
-  private void renderSeatsScreen() {
-    svg(
-        css(\"""
-        display:block
-        margin:0_auto
-        max-height:60rx
-        max-width:400rx
-        min-height:0
-        min-width:0
-        stroke:icon
-        width:100%
-        \"""),
-
-        width("400"), height("60"), viewBox("0 0 400 60"), xmlns("http://www.w3.org/2000/svg"),
-        path(d("M 0 50 Q 200 0 400 50")), fill("none"), strokeWidth("1.25")
-    );
-
-    p(
-        css(\"""
-        font-size:14rx
-        inset:-32rx_0_auto
-        position:relative
-        text-align:center
-        \"""),
-
-        text("Screen")
-    );
-  }
-
-  private void renderSeatsForm() {
-    form(
-        id(FORM_ID),
-
-        action("/demo.landing/seats"),
-
-        css(\"""
-        aspect-ratio:1.15
-        display:grid
-        flex-grow:1
-        gap:8rx
-        grid-template-columns:repeat(10,1fr)
-        grid-template-rows:repeat(10,minmax(20rx,1fr))
-        margin:0_auto
-        max-width:400rx
-        width:100%
-        \"""),
-
-        method("post"),
-
-        onsubmit(submit()),
-
-        input(
-            type("hidden"),
-            name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservationId)))),
-
-        input(
-            type("hidden"),
-            name("screenId"),
-            value(testableField("screenId", Integer.toString(details.screenId())))),
-
-        f(this::renderSeatsFormGrid)
-    );
-  }
-
-  private void renderSeatsFormGrid() {
-    for (ShowGrid.Seat seat : grid) {
-      final int seatId;
-      seatId = seat.seatId();
-
-      if (seatId < 0) {
-        div();
-      } else {
-        final String seatIdValue;
-        seatIdValue = Integer.toString(seatId);
-
-        input(
-            css(\"""
-            cursor:pointer
-
-            disabled:cursor:default
-            \"""),
-
-            name("seat"),
-
-            type("checkbox"),
-
-            seat.checked() ? checked : noop(),
-
-            seat.reserved() ? disabled : noop(),
-
-            value(seatIdValue)
-        );
-
-        if (seat.checked()) {
-          testableField("checked", seatIdValue);
-        }
-      }
-    }
-  }
-
-  private void renderSeatsAction() {
-    div(
-        css(\"""
-        display:flex
-        justify-content:end
-        padding-top:64rx
-        margin:0_auto
-        max-width:400rx
-        width:100%
-        \"""),
-
-        button(
-            PRIMARY,
-
-            form(FORM_ID),
-
-            type("submit"),
-
-            text("Book seats")
-        )
-    );
-  }
-
-}
-""");
-
   static final SourceModel NotFoundView = SourceModel.create("NotFoundView.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2506,7 +1760,7 @@ final class NotFoundView extends UiShell {
 }
 """);
 
-  static final SourceModel Show = SourceModel.create("Show.java", """
+  static final SourceModel SeatsForm = SourceModel.create("SeatsForm.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
  *
@@ -2524,15 +1778,18 @@ final class NotFoundView extends UiShell {
  */
 package demo.landing.app;
 
-import module java.base;
+import java.util.Optional;
 import module objectos.way;
 
-final class Show implements Http.Handler {
+/// The seats selection form controller.
+final class SeatsForm implements Http.Handler {
 
-  private final AppReservation reservation;
+  static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
-  Show(AppReservation reservation) {
-    this.reservation = reservation;
+  private final Note.Sink noteSink;
+
+  SeatsForm(Note.Sink noteSink) {
+    this.noteSink = noteSink;
   }
 
   @Override
@@ -2540,47 +1797,127 @@ final class Show implements Http.Handler {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final int showId;
-    showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    final SeatsData data;
+    data = SeatsData.parse(http);
 
-    final Optional<ShowDetails> maybeDetails;
-    maybeDetails = ShowDetails.byId(trx, showId);
+    noteSink.send(DATA_READ, data);
 
-    if (maybeDetails.isEmpty()) {
-      final NotFoundView view;
-      view = new NotFoundView();
-
-      http.notFound(view);
+    if (data.seats() == 0) {
+      // no seats were selected...
+      handleAlert(http, trx, data, SeatsView.Alert.EMPTY);
 
       return;
     }
 
+    if (data.seats() > 6) {
+      // too many seats were selected...
+      handleAlert(http, trx, data, SeatsView.Alert.LIMIT);
+
+      return;
+    }
+
+    final Sql.BatchUpdate tmpSelectionResult;
+    tmpSelectionResult = data.persistTmpSelection(trx);
+
+    switch (tmpSelectionResult) {
+      case Sql.BatchUpdateFailed _ -> handleTmpSelectionFailed(http, trx, data);
+
+      case Sql.BatchUpdateSuccess _ -> handleTmpSelectionSuccess(http, trx, data);
+    }
+  }
+
+  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, SeatsView.Alert alert) {
     final long reservationId;
-    reservationId = reservation.next();
+    reservationId = data.reservationId();
 
-    trx.sql(\"""
-    insert into
-      RESERVATION (RESERVATION_ID, SHOW_ID)
-    values
-      (?, ?)
-    \""");
+    final Optional<SeatsShow> maybe;
+    maybe = SeatsShow.byReservationId(trx, reservationId);
 
-    trx.param(reservationId);
+    final Media view;
 
-    trx.param(showId);
+    if (maybe.isPresent()) {
+      final SeatsShow details;
+      details = maybe.get();
 
-    trx.update();
+      final SeatsGrid grid;
+      grid = SeatsGrid.query(trx, reservationId);
 
-    final ShowDetails details;
-    details = maybeDetails.get();
+      view = new SeatsView(null, alert, details, grid, reservationId);
+    } else {
+      view = new NotFoundView();
+    }
 
-    final ShowGrid grid;
-    grid = ShowGrid.query(trx, reservationId);
+    http.badRequest(view);
+  }
 
-    final ShowView view;
-    view = new ShowView(details, grid, reservationId);
+  private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
+    // clear TMP_SELECTION just in case some of the records were inserted
+    data.clearTmpSelection(trx);
 
-    http.ok(view);
+    final NotFoundView view;
+    view = new NotFoundView();
+
+    http.badRequest(view);
+  }
+
+  private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
+    final Sql.Update userSelectionResult;
+    userSelectionResult = data.persisUserSelection(trx);
+
+    switch (userSelectionResult) {
+      case Sql.UpdateSuccess ok -> {
+        int count;
+        count = ok.count();
+
+        if (data.seats() != count) {
+
+          // some or possibly all of the seats were not selected.
+          // 1) maybe an already sold ticket was submitted
+          // 2) seats refer to a different show
+          // anyways... bad data
+
+          // clear SELECTION just in case some of the records were inserted
+          data.clearUserSelection(trx);
+
+          final NotFoundView view;
+          view = new NotFoundView();
+
+          http.badRequest(view);
+
+        } else {
+
+          // all seats were persisted.
+          // render next screen.
+
+          final long reservationId;
+          reservationId = data.reservationId();
+
+          final Optional<ConfirmDetails> maybe;
+          maybe = ConfirmDetails.queryOptional(trx, reservationId);
+
+          if (maybe.isPresent()) {
+            // renders the confirmation view
+            final ConfirmDetails details;
+            details = maybe.get();
+
+            final ConfirmView view;
+            view = new ConfirmView(details);
+
+            http.ok(view);
+          } else {
+            // unlikely? in any case, we assume bad data
+            final NotFoundView view;
+            view = new NotFoundView();
+
+            http.badRequest(view);
+          }
+
+        }
+
+      }
+
+      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, SeatsView.Alert.BOOKED);
+    }
   }
 
 }
@@ -2806,6 +2143,147 @@ record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 }
 """);
 
+  static final SourceModel SeatsShow = SourceModel.create("SeatsShow.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Optional;
+import objectos.way.Sql;
+
+record SeatsShow(
+    int showId,
+    String date,
+    String time,
+
+    int screenId,
+    String screen,
+    int capacity,
+
+    int movieId,
+    String title
+) {
+
+  private SeatsShow(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getInt(idx++),
+
+        rs.getInt(idx++),
+        rs.getString(idx++)
+    );
+  }
+
+  public static Optional<SeatsShow> byId(Sql.Transaction trx, int id) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      SHOW.SHOW_ID = ?
+    \""");
+
+    trx.param(id);
+
+    return trx.queryOptional(SeatsShow::new);
+  }
+
+  public static Optional<SeatsShow> byReservationId(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      RESERVATION
+      natural join SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+    \""");
+
+    trx.param(reservationId);
+
+    return trx.queryOptional(SeatsShow::new);
+  }
+
+  public static SeatsShow queryReservation(Sql.Transaction trx, long reservationId) {
+    reservation(trx, reservationId);
+
+    return trx.querySingle(SeatsShow::new);
+  }
+
+  private static void reservation(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      RESERVATION
+      natural join SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+    \""");
+
+    trx.param(reservationId);
+  }
+
+}
+""");
+
   static final SourceModel ConfirmDetails = SourceModel.create("ConfirmDetails.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2923,147 +2401,6 @@ final record ConfirmDetails(
 }
 """);
 
-  static final SourceModel ShowDetails = SourceModel.create("ShowDetails.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
-
-record ShowDetails(
-    int showId,
-    String date,
-    String time,
-
-    int screenId,
-    String screen,
-    int capacity,
-
-    int movieId,
-    String title
-) {
-
-  private ShowDetails(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getInt(idx++),
-
-        rs.getInt(idx++),
-        rs.getString(idx++)
-    );
-  }
-
-  public static Optional<ShowDetails> byId(Sql.Transaction trx, int id) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      SHOW.SHOW_ID = ?
-    \""");
-
-    trx.param(id);
-
-    return trx.queryOptional(ShowDetails::new);
-  }
-
-  public static Optional<ShowDetails> byReservationId(Sql.Transaction trx, long reservationId) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      RESERVATION
-      natural join SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-    \""");
-
-    trx.param(reservationId);
-
-    return trx.queryOptional(ShowDetails::new);
-  }
-
-  public static ShowDetails queryReservation(Sql.Transaction trx, long reservationId) {
-    reservation(trx, reservationId);
-
-    return trx.querySingle(ShowDetails::new);
-  }
-
-  private static void reservation(Sql.Transaction trx, long reservationId) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      RESERVATION
-      natural join SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-    \""");
-
-    trx.param(reservationId);
-  }
-
-}
-""");
-
   static final SourceModel AppRoutes = SourceModel.create("AppRoutes.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -3103,13 +2440,15 @@ public final class AppRoutes implements Http.Routing.Module {
     routing.path("/demo.landing/home", GET, new Home(injector));
 
     routing.path("/demo.landing/movie/{id}", GET, new Movie(injector));
+
+    routing.path("/demo.landing/seats/{id}", GET, new Seats(injector));
   }
 
 }
 
 """);
 
-  static final SourceModel ShowGrid = SourceModel.create("ShowGrid.java", """
+  static final SourceModel SeatsView = SourceModel.create("SeatsView.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
  *
@@ -3130,171 +2469,317 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-final class ShowGrid implements Iterable<ShowGrid.Seat> {
+final class SeatsView extends UiShell {
 
-  record Seat(
-      int gridY,
-      int gridX,
-      int seatId,
-      String name,
-      int state
-  ) {
+  enum Alert {
 
-    Seat(ResultSet rs, int idx) throws SQLException {
-      this(
-          rs.getInt(idx++),
-          rs.getInt(idx++),
-          rs.getInt(idx++),
-          rs.getString(idx++),
-          rs.getInt(idx++)
-      );
-    }
+    EMPTY(\"""
+    Kindly choose at least 1 seat.\"""),
 
-    public final boolean checked() {
-      return state == 1;
-    }
+    LIMIT(\"""
+    We regret to inform you that we limit purchases to 6 tickets per person. \
+    Kindly choose at most 6 seats.\"""),
 
-    public final boolean reserved() {
-      return state == 2;
+    BOOKED(\"""
+    We regret to inform you that another customer has already reserved one or more of the selected seats. \
+    Kindly choose alternative seats.\""");
+
+    private final String msg;
+
+    private Alert(String msg) {
+      this.msg = msg;
     }
 
   }
 
-  private final List<Seat> seats;
+  private static final String FORM_ID = "seats-form";
 
-  private ShowGrid(List<Seat> seats) {
-    this.seats = seats;
+  private final AppUrl url;
+
+  private final Alert alert;
+
+  private final SeatsShow details;
+
+  private final SeatsGrid grid;
+
+  private final long reservationId;
+
+  SeatsView(AppUrl url, SeatsShow details, SeatsGrid grid, long reservationId) {
+    this(url, null, details, grid, reservationId);
   }
 
-  public static ShowGrid query(Sql.Transaction trx, long reservationId) {
-    trx.sql(\"""
-    with
-      MAIN as (
-        select
-          RESERVATION.RESERVATION_ID,
-          SHOW.SHOW_ID,
-          SCREENING.SCREEN_ID
-        from
-          RESERVATION
-          join SHOW on RESERVATION.SHOW_ID = SHOW.SHOW_ID
-          join SCREENING on SHOW.SCREENING_ID = SCREENING.SCREENING_ID
-        where
-          RESERVATION.RESERVATION_ID = ?
-      ),
-      GRID as (
-        select
-          X as GRID_Y,
-          gx.GRID_X
-        from
-          system_range (0, 9)
-          cross join (
-            select
-              X as GRID_X
-            from
-              system_range (0, 9)
-          ) gx
-      ),
-      SELF as (
-        select
-          SEAT_ID
-        from
-          SELECTION
-        where
-          RESERVATION_ID = ( select RESERVATION_ID from MAIN )
-      ),
-      OTHERS as (
-        select
-          SELECTION.SEAT_ID
-        from
-          MAIN
-          join RESERVATION on MAIN.RESERVATION_ID <> RESERVATION.RESERVATION_ID
-          and MAIN.SHOW_ID = RESERVATION.SHOW_ID
-          join SELECTION on RESERVATION.RESERVATION_ID = SELECTION.RESERVATION_ID
-      )
-    select
-      GRID.GRID_Y,
-      GRID.GRID_X,
-      coalesce(SEAT.SEAT_ID, -1) as SEAT_ID,
-      concat (SEAT_ROW, SEAT_COL) as SEAT_NAME,
-      case SELF.SEAT_ID
-        when is not null then 1
-        else case OTHERS.SEAT_ID
-          when is not null then 2
-          else 0
-        end
-      end
-    from
-      MAIN
-      cross join GRID
+  SeatsView(AppUrl url, SeatsView.Alert alert, SeatsShow details, SeatsGrid grid, long reservationId) {
+    this.url = url;
 
-      left join SEAT on MAIN.SCREEN_ID = SEAT.SCREEN_ID
-      and GRID.GRID_Y = SEAT.GRID_Y
-      and GRID.GRID_X = SEAT.GRID_X
+    this.alert = alert;
 
-      left join SELF
-      on SEAT.SEAT_ID = SELF.SEAT_ID
+    this.details = details;
 
-      left join OTHERS
-      on SEAT.SEAT_ID = OTHERS.SEAT_ID
-    order by
-      GRID.GRID_Y,
-      GRID.GRID_X
-    \""");
+    this.grid = grid;
 
-    trx.param(reservationId);
-
-    final List<Seat> seats;
-    seats = trx.query(Seat::new);
-
-    return new ShowGrid(seats);
+    this.reservationId = reservationId;
   }
 
   @Override
-  public final Iterator<ShowGrid.Seat> iterator() {
-    return seats.iterator();
+  final List<SourceModel> viewSources() {
+    return List.of(
+    );
   }
 
   @Override
-  public final String toString() {
-    final StringBuilder sb;
-    sb = new StringBuilder();
+  final void renderMain() {
+    final String backUrl;
+    backUrl = url.to(AppView.MOVIE, details.movieId());
 
-    sb.append(". = empty space\\n");
-    sb.append("# = reserved\\n");
-    sb.append("o = selectable\\n");
-    sb.append("x = checked\\n");
+    backLink(backUrl);
 
-    int lastY = -1;
+    // this node is for testing only, it is not rendered in the final HTML
+    testableH1("Show details");
 
-    for (Seat cell : seats) {
-      int gridY;
-      gridY = cell.gridY();
+    h2(testableField("title", details.title()));
 
-      if (gridY != lastY) {
-        sb.append('\\n');
+    p("Please choose your seats");
 
-        lastY = gridY;
-      } else {
-        sb.append(' ');
-      }
+    if (alert != null) {
+      testableField("alert", alert.name());
 
-      int seatId;
-      seatId = cell.seatId();
+      renderAlert(alert.msg);
+    }
+
+    div(
+        css(\"""
+        border:1px_solid_var(--color-border)
+        display:flex
+        gap:24rx
+        margin:32rx_0
+        overflow-x:auto
+        padding:32rx_24rx
+        \"""),
+
+        f(this::renderDetails),
+
+        f(this::renderSeats)
+    );
+  }
+
+  private void renderAlert(String msg) {
+    div(
+        css(\"""
+        align-items:center
+        background-color:var(--color-blue-100)
+        border-left:3px_solid_var(--color-blue-800)
+        display:flex
+        font-size:14rx
+        line-height:16rx
+        margin:16rx_0
+        padding:16rx
+        \"""),
+
+        c(
+            UiIcon.INFO.css(\"""
+            height:20rx
+            width:auto
+            padding-right:16rx
+            \""")
+        ),
+
+        div(
+            css(\"""
+            flex:1
+            \"""),
+
+            text(msg)
+        )
+    );
+  }
+
+  private void renderDetails() {
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        font-size:14rx
+        gap:16rx
+        \"""),
+
+        renderDetailsItem(UiIcon.CALENDAR_CHECK, "date", details.date()),
+
+        renderDetailsItem(UiIcon.CLOCK, "time", details.time()),
+
+        renderDetailsItem(UiIcon.PROJECTOR, "screen", details.screen())
+    );
+  }
+
+  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
+    return div(
+        css(\"""
+        align-items:center
+        display:flex
+        flex-direction:column
+        gap:4rx
+        \"""),
+
+        c(
+            icon.css(\"""
+            height:auto
+            stroke:icon
+            width:20rx
+            \""")
+        ),
+
+        span(
+            css(\"""
+            text-align:center
+            width:6rch
+            \"""),
+
+            text(testableField(name, value))
+        )
+    );
+  }
+
+  private void renderSeats() {
+    // this node is for testing only, it is not rendered in the final HTML
+    testableH1("Seats");
+
+    div(
+        css(\"""
+        display:flex
+        flex-direction:column
+        flex-grow:1
+        justify-content:start
+        \"""),
+
+        f(this::renderSeatsScreen),
+
+        f(this::renderSeatsForm),
+
+        f(this::renderSeatsAction)
+    );
+  }
+
+  private void renderSeatsScreen() {
+    svg(
+        css(\"""
+        display:block
+        margin:0_auto
+        max-height:60rx
+        max-width:400rx
+        min-height:0
+        min-width:0
+        stroke:icon
+        width:100%
+        \"""),
+
+        width("400"), height("60"), viewBox("0 0 400 60"), xmlns("http://www.w3.org/2000/svg"),
+        path(d("M 0 50 Q 200 0 400 50")), fill("none"), strokeWidth("1.25")
+    );
+
+    p(
+        css(\"""
+        font-size:14rx
+        inset:-32rx_0_auto
+        position:relative
+        text-align:center
+        \"""),
+
+        text("Screen")
+    );
+  }
+
+  private void renderSeatsForm() {
+    form(
+        id(FORM_ID),
+
+        action("/demo.landing/seats"),
+
+        css(\"""
+        aspect-ratio:1.15
+        display:grid
+        flex-grow:1
+        gap:8rx
+        grid-template-columns:repeat(10,1fr)
+        grid-template-rows:repeat(10,minmax(20rx,1fr))
+        margin:0_auto
+        max-width:400rx
+        width:100%
+        \"""),
+
+        method("post"),
+
+        onsubmit(submit()),
+
+        input(
+            type("hidden"),
+            name("reservationId"),
+            value(testableField("reservationId", Long.toString(reservationId)))),
+
+        input(
+            type("hidden"),
+            name("screenId"),
+            value(testableField("screenId", Integer.toString(details.screenId())))),
+
+        f(this::renderSeatsFormGrid)
+    );
+  }
+
+  private void renderSeatsFormGrid() {
+    for (SeatsGrid.Seat seat : grid) {
+      final int seatId;
+      seatId = seat.seatId();
 
       if (seatId < 0) {
-        sb.append('.');
-      } else if (cell.checked()) {
-        sb.append('x');
-      } else if (cell.reserved()) {
-        sb.append('#');
+        div();
       } else {
-        sb.append('o');
+        final String seatIdValue;
+        seatIdValue = Integer.toString(seatId);
+
+        input(
+            css(\"""
+            cursor:pointer
+
+            disabled:cursor:default
+            \"""),
+
+            name("seat"),
+
+            type("checkbox"),
+
+            seat.checked() ? checked : noop(),
+
+            seat.reserved() ? disabled : noop(),
+
+            value(seatIdValue)
+        );
+
+        if (seat.checked()) {
+          testableField("checked", seatIdValue);
+        }
       }
     }
+  }
 
-    sb.append('\\n');
+  private void renderSeatsAction() {
+    div(
+        css(\"""
+        display:flex
+        justify-content:end
+        padding-top:64rx
+        margin:0_auto
+        max-width:400rx
+        width:100%
+        \"""),
 
-    return sb.toString();
+        button(
+            PRIMARY,
+
+            form(FORM_ID),
+
+            type("submit"),
+
+            text("Book seats")
+        )
+    );
   }
 
 }
@@ -3848,159 +3333,6 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
 }
 """);
 
-  static final SourceModel ShellMain = SourceModel.create("ShellMain.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import module objectos.way;
-
-/// Renders the main application content.
-final class ShellMain extends Html.Template {
-
-  private final Html.Component view;
-
-  ShellMain(Html.Component view) {
-    this.view = view;
-  }
-
-  @Override
-  protected final void render() {
-    div(
-        css(\"""
-        border:1px_solid_var(--color-border)
-        grid-area:a
-        overflow:auto
-        position:relative
-
-        lg/border-bottom-width:1px
-        lg/border-left-width:0px
-        \"""),
-
-        div(
-            css(\"""
-            align-items:center
-            background-color:var(--color-layer)
-            color:var(--color-gray-500)
-            display:flex
-            height:64rx
-            justify-content:space-between
-            padding:0_16rx
-            position:sticky
-            top:0px
-            z-index:8000
-            \"""),
-
-            a(
-                css(\"""
-                align-items:center
-                display:flex
-                gap:6rx
-                height:100%
-                \"""),
-
-                href("/index.html"),
-
-                onclick(Kino.FOLLOW),
-
-                objectosLogo(),
-
-                span(
-                    css(\"""
-                    font-size:24rx
-                    font-weight:300
-                    line-height:1
-                    transform:translateY(-1px)
-                    \"""),
-
-                    text("kino")
-                )
-            ),
-
-            a(
-                css(\"""
-                align-items:center
-                border-radius:6rx
-                display:flex
-                padding:8rx
-
-                active/background-color:var(--color-btn-ghost-active)
-                hover/background-color:var(--color-btn-ghost-hover)
-                \"""),
-
-                href("https://github.com/objectos/demo.landing"),
-
-                gitHubLogo()
-            )
-        ),
-
-        div(
-            css(\"""
-            padding:0_16rx_16rx
-
-            &_h2/font-size:36rx
-            &_h2/font-weight:200
-            &_h2/line-height:1
-            &_h2/padding:48rx_0_8rx
-            \"""),
-
-            c(view)
-        )
-    );
-  }
-
-  private Html.Instruction objectosLogo() {
-    return svg(
-        css(\"""
-        fill:var(--color-logo)
-        height:24rx
-        transition:fill_300ms_ease
-        width:auto
-        \"""),
-
-        xmlns("http://www.w3.org/2000/svg"), width("200"), height("49.28"), viewBox("0 0 200 49.28"),
-
-        path(
-            d("m189.6 38.21q-2.53 0-5.3-0.932-2.76-0.903-4.6-3.087-0.38-0.495-0.35-1.02 0.12-0.582 0.64-0.99 0.5-0.32 1.02-0.233 0.58 0.09 0.93 0.524 1.4 1.66 3.38 2.33 2.04 0.641 4.43 0.641 4.08 0 5.77-1.456 1.71-1.456 1.71-3.408 0-1.893-1.86-3.087-1.78-1.281-5.56-1.806-4.87-0.669-7.2-2.621-2.33-1.951-2.33-4.514 0-2.417 1.23-4.077 1.19-1.689 3.29-2.534 2.12-0.874 4.86-0.874 3.29 0 5.56 1.223 2.31 1.165 3.7 3.146 0.38 0.495 0.24 1.077-0.1 0.525-0.73 0.874-0.47 0.233-1.02 0.146-0.53-0.09-0.9-0.583-1.23-1.543-2.97-2.33-1.69-0.815-3.99-0.815-3.06 0-4.75 1.31-1.69 1.311-1.69 3.146 0 1.252 0.67 2.242 0.73 0.903 2.33 1.602 1.6 0.612 4.28 1.02 3.64 0.466 5.71 1.63 2.15 1.165 3.03 2.738 0.9 1.485 0.9 3.233 0 2.301-1.46 3.99-1.45 1.689-3.81 2.621-2.39 0.874-5.16 0.874zm-27.97 0q-3.9 0-6.99-1.748-3.05-1.805-4.85-4.863-1.75-3.088-1.75-6.932 0-3.873 1.75-6.931 1.8-3.117 4.85-4.864 3.09-1.806 6.99-1.806 3.89 0 6.95 1.806 3.05 1.747 4.8 4.864 1.81 3.058 1.81 6.931 0 3.844-1.81 6.932-1.75 3.058-4.8 4.863-3.06 1.748-6.95 1.748zm0-2.709q3.07 0 5.43-1.427 2.45-1.456 3.79-3.873 1.42-2.476 1.42-5.592 0-3.058-1.42-5.475-1.34-2.476-3.79-3.874-2.36-1.456-5.43-1.456-3.03 0-5.45 1.456-2.41 1.398-3.83 3.874-1.4 2.417-1.4 5.533 0 3.058 1.4 5.534 1.42 2.417 3.83 3.873 2.42 1.427 5.45 1.427zm-19.01 2.418q-2.65-0.06-4.75-1.224-2.09-1.194-3.26-3.291-1.16-2.126-1.16-4.805v-24.17q0-0.67 0.4-1.078 0.44-0.436 1.05-0.436 0.7 0 1.08 0.436 0.44 0.408 0.44 1.078v24.17q0 2.825 1.74 4.601 1.75 1.748 4.52 1.748h1.08q0.67 0 1.05 0.437 0.43 0.407 0.43 1.077 0 0.641-0.43 1.078-0.38 0.379-1.05 0.379zm-12.96-22.95q-0.58 0-0.96-0.35-0.35-0.378-0.35-0.961 0-0.582 0.35-0.932 0.38-0.378 0.96-0.378h13.16q0.59 0 0.94 0.378 0.38 0.35 0.38 0.932 0 0.583-0.38 0.961-0.35 0.35-0.94 0.35zm-13.09 23.24q-3.78 0-6.79-1.806-2.96-1.776-4.71-4.834-1.7-3.059-1.7-6.903 0-3.873 1.6-6.931t4.42-4.806q2.81-1.806 6.45-1.806 3.1 0 5.7 1.224 2.56 1.165 4.45 3.582 0.38 0.495 0.29 1.019-0.1 0.525-0.64 0.874-0.44 0.349-0.96 0.291-0.52-0.09-0.93-0.582-3.09-3.699-7.91-3.699-2.86 0-5.04 1.427-2.14 1.398-3.35 3.815-1.17 2.447-1.17 5.592 0 3.058 1.31 5.534 1.31 2.417 3.59 3.873 2.33 1.427 5.39 1.427 1.99 0 3.74-0.582 1.81-0.583 3.12-1.806 0.44-0.379 0.96-0.437 0.52-0.06 0.93 0.35 0.47 0.437 0.47 1.019 0.1 0.524-0.38 0.903-3.55 3.262-8.84 3.262zm-27.69-0.06q-3.84 0-6.85-1.69-2.96-1.747-4.66-4.805t-1.7-6.99q0-3.99 1.61-6.99 1.6-3.058 4.41-4.805 2.82-1.748 6.46-1.748 3.59 0 6.36 1.69 2.76 1.66 4.31 4.63 1.56 2.913 1.56 6.728 0 0.641-0.39 1.019-0.39 0.35-1.02 0.35h-21.35v-2.534h22.13l-2.14 1.602q0.1-3.146-1.07-5.563-1.16-2.446-3.35-3.786-2.13-1.427-5.04-1.427-2.77 0-4.95 1.427-2.14 1.34-3.4 3.786-1.21 2.417-1.21 5.621 0 3.146 1.31 5.592 1.31 2.417 3.64 3.815 2.33 1.369 5.34 1.369 1.89 0 3.78-0.641 1.94-0.67 3.06-1.747 0.39-0.379 0.92-0.379 0.58-0.06 0.97 0.291 0.54 0.437 0.54 0.962 0 0.553-0.44 0.99-1.55 1.398-4.08 2.33-2.47 0.903-4.75 0.903zm-30.93 11.13q-0.64 0-1.07-0.44-0.44-0.38-0.44-1.02 0-0.67 0.44-1.1 0.43-0.41 1.07-0.41 2.47 0 4.31-1.05 1.9-1.08 2.97-2.97 1.06-1.89 1.06-4.313v-25.16q0-0.67 0.39-1.049 0.44-0.408 1.07-0.408 0.68 0 1.07 0.408 0.43 0.379 0.43 1.049v25.16q0 3.291-1.45 5.821-1.46 2.57-4.03 4.02-2.52 1.46-5.82 1.46zm9.75-43.48q-0.92 0-1.6-0.641-0.63-0.67-0.63-1.66 0-1.107 0.68-1.631 0.73-0.582 1.6-0.582 0.82 0 1.5 0.582 0.73 0.524 0.73 1.631 0 0.99-0.68 1.66-0.63 0.641-1.6 0.641zm-21.55 32.42q-3.79 0-6.84-1.748-3.06-1.747-4.86-4.747-1.75-3.029-1.84-6.815v-23.44q0-0.67 0.39-1.048 0.43-0.408 1.06-0.408 0.68 0 1.07 0.408 0.39 0.378 0.39 1.048v15.14q1.55-2.505 4.32-4.019 2.82-1.515 6.31-1.515 3.88 0 6.94 1.806 3.11 1.747 4.85 4.805 1.8 3.058 1.8 6.932 0 3.902-1.8 6.99-1.74 3.058-4.85 4.863-3.06 1.748-6.94 1.748zm0-2.709q3.06 0 5.44-1.427 2.42-1.456 3.83-3.873 1.41-2.476 1.41-5.592 0-3.087-1.41-5.534-1.41-2.417-3.83-3.815-2.38-1.456-5.44-1.456-3.01 0-5.44 1.456-2.42 1.398-3.83 3.815-1.36 2.447-1.36 5.534 0 3.116 1.36 5.592 1.41 2.417 3.83 3.873 2.43 1.427 5.44 1.427zm-32.53 2.709q-3.88 0-6.99-1.748-3.06-1.805-4.85-4.863-1.75-3.088-1.75-6.932 0-3.873 1.75-6.931 1.79-3.117 4.85-4.864 3.11-1.806 6.99-1.806t6.94 1.806q3.06 1.747 4.8 4.864 1.8 3.058 1.8 6.931 0 3.844-1.8 6.932-1.74 3.058-4.8 4.863-3.06 1.748-6.94 1.748zm0-2.709q3.06 0 5.44-1.427 2.42-1.456 3.78-3.873 1.41-2.476 1.41-5.592 0-3.058-1.41-5.475-1.36-2.476-3.78-3.874-2.38-1.456-5.44-1.456-3.01 0-5.44 1.456-2.42 1.398-3.83 3.874-1.41 2.417-1.41 5.533 0 3.058 1.41 5.534 1.41 2.417 3.83 3.873 2.43 1.427 5.44 1.427z"),
-            strokeWidth(".9101")
-        )
-    );
-  }
-
-  private Html.Instruction gitHubLogo() {
-    return svg(
-        css(\"""
-        fill:var(--color-logo)
-        height:24rx
-        width:auto
-        \"""),
-
-        xmlns("http://www.w3.org/2000/svg"), width("98"), height("96"), viewBox("0 0 98 96"),
-
-        path(
-            fillRule("evenodd"), clipRule("evenodd"), d(
-                "M48.854 0C21.839 0 0 22 0 49.217c0 21.756 13.993 40.172 33.405 46.69 2.427.49 3.316-1.059 3.316-2.362 0-1.141-.08-5.052-.08-9.127-13.59 2.934-16.42-5.867-16.42-5.867-2.184-5.704-5.42-7.17-5.42-7.17-4.448-3.015.324-3.015.324-3.015 4.934.326 7.523 5.052 7.523 5.052 4.367 7.496 11.404 5.378 14.235 4.074.404-3.178 1.699-5.378 3.074-6.6-10.839-1.141-22.243-5.378-22.243-24.283 0-5.378 1.94-9.778 5.014-13.2-.485-1.222-2.184-6.275.486-13.038 0 0 4.125-1.304 13.426 5.052a46.97 46.97 0 0 1 12.214-1.63c4.125 0 8.33.571 12.213 1.63 9.302-6.356 13.427-5.052 13.427-5.052 2.67 6.763.97 11.816.485 13.038 3.155 3.422 5.015 7.822 5.015 13.2 0 18.905-11.404 23.06-22.324 24.283 1.78 1.548 3.316 4.481 3.316 9.126 0 6.6-.08 11.897-.08 13.526 0 1.304.89 2.853 3.316 2.364 19.412-6.52 33.405-24.935 33.405-46.691C97.707 22 75.788 0 48.854 0z")
-        )
-    );
-  }
-
-}
-
-""");
-
   static final SourceModel Ticket = SourceModel.create("Ticket.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -4024,7 +3356,7 @@ import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Sql;
 
-final class Ticket implements Kino.GET {
+final class Ticket {
 
   Ticket() {}
 
@@ -4038,7 +3370,6 @@ final class Ticket implements Kino.GET {
     return action.view(trx, ticketId);
   }
 
-  @Override
   public final Html.Component get(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
@@ -4052,6 +3383,7 @@ final class Ticket implements Kino.GET {
     return view(trx, ticketId);
   }
 
+  @SuppressWarnings("unused")
   private Html.Component view(Sql.Transaction trx, long ticketId) {
     final Optional<TicketModel> maybe;
     maybe = TicketModel.queryOptional(trx, ticketId);
@@ -4060,15 +3392,7 @@ final class Ticket implements Kino.GET {
       final TicketModel model;
       model = maybe.get();
 
-      return Shell.create(shell -> {
-        shell.app = new TicketView(model);
-
-        shell.sources(
-          //            Source.Ticket,
-        //            Source.TicketModel,
-        //            Source.TicketView
-        );
-      });
+      throw new UnsupportedOperationException("Implement me");
     } else {
       throw new UnsupportedOperationException("Implement me");
       //return NotFound.create();
@@ -4127,7 +3451,10 @@ final class MovieView extends UiShell {
 
   @Override
   final void renderMain() {
-    backLink(url.to(AppView.HOME));
+    final String backUrl;
+    backUrl = url.to(AppView.HOME);
+
+    backLink(backUrl);
 
     div(
         css(\"""
@@ -4879,105 +4206,5 @@ enum AppView {
   }
 
 }
-""");
-
-  static final SourceModel ShellSourceCode = SourceModel.create("ShellSourceCode.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import module java.base;
-import module objectos.way;
-
-/// Renders the source code of the selected file.
-final class ShellSourceCode extends Html.Template {
-
-  private final List<SourceModel> sources;
-
-  ShellSourceCode(List<SourceModel> sources) {
-    this.sources = sources;
-  }
-
-  @Override
-  protected final void render() {
-    div(
-        css(\"""
-        border:1px_solid_var(--color-border)
-        display:flex
-        flex-direction:column
-        grid-area:c
-        \"""),
-
-        css(\"""
-        flex:1
-        min-height:0
-        overflow:auto
-        \"""),
-
-        f(this::renderSourceCodeItems)
-    );
-  }
-
-  private void renderSourceCodeItems() {
-    for (int idx = 0, size = sources.size(); idx < size; idx++) {
-      final SourceModel item;
-      item = sources.get(idx);
-
-      final String source;
-      source = item.value();
-
-      pre(
-          item.panel(),
-
-          css(\"""
-          display:none
-          font-family:mono
-          font-size:13rx
-          line-height:18.6rx
-          padding:16rx
-          &[data-selected=true]/display:flex
-
-          &_span[data-line]/display:block
-          &_span[data-line]/min-height:1lh
-
-          &_span[data-line]:nth-child(-n+15)/display:none
-
-          &_span[data-high=annotation]/color:var(--color-high-meta)
-          &_span[data-high=comment]/color:var(--color-high-comment)
-          &_span[data-high=comment]/font-style:italic
-          &_span[data-high=keyword]/color:var(--color-high-keyword)
-          &_span[data-high=string]/color:var(--color-high-string)
-          \"""),
-
-          attr(Shell.SEL, Boolean.toString(idx == 0)),
-
-          code(
-              css(\"""
-              flex-grow:1
-              \"""),
-
-              c(
-                  Syntax.highlight(Syntax.JAVA, source)
-              )
-          )
-      );
-    }
-  }
-
-}
-
 """);
 }
