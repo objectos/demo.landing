@@ -16,6 +16,8 @@
 package demo.landing.app;
 
 import static objectos.way.Http.Method.GET;
+import static objectos.way.Http.Method.POST;
+
 import module objectos.way;
 
 /// Declares the application routes.
@@ -38,6 +40,8 @@ public final class AppRoutes implements Http.Routing.Module {
     routing.path("/demo.landing/movie/{id}", GET, new Movie(injector));
 
     routing.path("/demo.landing/seats/{id}", GET, new Seats(injector));
+
+    routing.path("/demo.landing/seats", POST, new SeatsForm(injector));
   }
 
 }

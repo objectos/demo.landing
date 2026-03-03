@@ -15,25 +15,23 @@
  */
 package demo.landing.app;
 
-import java.util.Optional;
 import module objectos.way;
 
 /// The seats selection form controller.
-final class SeatsForm implements Http.Handler {
+final class SeatsForm extends AppTransactional {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
   private final Note.Sink noteSink;
 
-  SeatsForm(Note.Sink noteSink) {
-    this.noteSink = noteSink;
+  SeatsForm(App.Injector injector) {
+    super(injector);
+
+    noteSink = injector.getInstance(Note.Sink.class);
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
+  final void handle(Http.Exchange http, Sql.Transaction trx) {
     final SeatsData data;
     data = SeatsData.parse(http);
 
@@ -41,14 +39,14 @@ final class SeatsForm implements Http.Handler {
 
     if (data.seats() == 0) {
       // no seats were selected...
-      handleAlert(http, trx, data, SeatsView.Alert.EMPTY);
+      handleAlert(http, trx, data, SeatsAlert.EMPTY);
 
       return;
     }
 
     if (data.seats() > 6) {
       // too many seats were selected...
-      handleAlert(http, trx, data, SeatsView.Alert.LIMIT);
+      handleAlert(http, trx, data, SeatsAlert.LIMIT);
 
       return;
     }
@@ -63,28 +61,23 @@ final class SeatsForm implements Http.Handler {
     }
   }
 
-  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, SeatsView.Alert alert) {
-    final long reservationId;
-    reservationId = data.reservationId();
+  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
+    // just in case, clear this user's selection
+    data.clearUserSelection(trx);
 
-    final Optional<SeatsShow> maybe;
-    maybe = SeatsShow.byReservationId(trx, reservationId);
+    final AppReservation reservation;
+    reservation = data.reservation();
 
-    final Media view;
+    final int showId;
+    showId = data.showId();
 
-    if (maybe.isPresent()) {
-      final SeatsShow details;
-      details = maybe.get();
+    final String seatsUrl;
+    seatsUrl = reservation.to(AppView.SEATS, showId);
 
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, reservationId);
+    final String withAlertUrl;
+    withAlertUrl = alert.query(seatsUrl);
 
-      view = new SeatsView(null, alert, details, grid, reservationId);
-    } else {
-      view = new NotFoundView();
-    }
-
-    http.badRequest(view);
+    http.seeOther(withAlertUrl);
   }
 
   private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
@@ -126,34 +119,19 @@ final class SeatsForm implements Http.Handler {
           // all seats were persisted.
           // render next screen.
 
-          final long reservationId;
-          reservationId = data.reservationId();
+          final AppReservation reservation;
+          reservation = data.reservation();
 
-          final Optional<ConfirmDetails> maybe;
-          maybe = ConfirmDetails.queryOptional(trx, reservationId);
+          final String redirectUrl;
+          redirectUrl = reservation.to(AppView.CONFIRM);
 
-          if (maybe.isPresent()) {
-            // renders the confirmation view
-            final ConfirmDetails details;
-            details = maybe.get();
-
-            final ConfirmView view;
-            view = new ConfirmView(details);
-
-            http.ok(view);
-          } else {
-            // unlikely? in any case, we assume bad data
-            final NotFoundView view;
-            view = new NotFoundView();
-
-            http.badRequest(view);
-          }
+          http.seeOther(redirectUrl);
 
         }
 
       }
 
-      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, SeatsView.Alert.BOOKED);
+      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, SeatsAlert.BOOKED);
     }
   }
 

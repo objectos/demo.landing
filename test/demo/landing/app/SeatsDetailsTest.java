@@ -22,7 +22,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class ShowDetailsTest {
+public class SeatsDetailsTest {
 
   private final String data = """
   insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
@@ -62,12 +62,12 @@ public class ShowDetailsTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final Optional<SeatsShow> maybe;
-      maybe = SeatsShow.byId(trx, 61);
+      final Optional<SeatsDetails> maybe;
+      maybe = SeatsDetails.byId(trx, 61);
 
       assertEquals(maybe.isPresent(), true);
 
-      final SeatsShow show;
+      final SeatsDetails show;
       show = maybe.get();
 
       assertEquals(show.showId(), 61);
@@ -91,12 +91,12 @@ public class ShowDetailsTest {
       values (904, 64);
       """);
 
-      final Optional<SeatsShow> maybe;
-      maybe = SeatsShow.byReservationId(trx, 904L);
+      final Optional<SeatsDetails> maybe;
+      maybe = SeatsDetails.byReservationId(trx, 904L);
 
       assertEquals(maybe.isPresent(), true);
 
-      final SeatsShow show;
+      final SeatsDetails show;
       show = maybe.get();
 
       assertEquals(show.showId(), 64);

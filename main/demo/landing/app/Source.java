@@ -46,11 +46,15 @@ import objectos.way.Html;
 
 final class ConfirmView extends UiShell {
 
+  private final AppReservation reservation;
+
   private final ConfirmDetails details;
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  ConfirmView(ConfirmDetails details) {
+  ConfirmView(AppReservation reservation, ConfirmDetails details) {
+    this.reservation = reservation;
+
     this.details = details;
   }
 
@@ -61,15 +65,15 @@ final class ConfirmView extends UiShell {
 
   @Override
   final void renderMain() {
-    final long reservationId;
-    reservationId = details.reservationId();
+    final String backUrl;
+    backUrl = reservation.to(AppView.SEATS, details.showId());
 
-    backLink("/demo.landing/seats/0?reservationId=" + reservationId);
+    backLink(backUrl);
 
     h2("Your Order");
 
     // testable node only
-    testableH1("Order #" + reservationId);
+    testableH1("Order #" + reservation.id());
 
     p("Please review and confirm your order");
 
@@ -226,9 +230,6 @@ final class ConfirmView extends UiShell {
 
     testableNewLine();
 
-    final long reservationId;
-    reservationId = details.reservationId();
-
     form(
         css(\"""
         display:flex
@@ -245,7 +246,7 @@ final class ConfirmView extends UiShell {
         input(
             type("hidden"),
             name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservationId)))),
+            value(testableField("reservationId", Long.toString(reservation.id())))),
 
         button(
             PRIMARY,
@@ -359,7 +360,7 @@ final class KinoStyles implements Css.Library {
 
   static final SourceModel AppReservation = SourceModel.create("AppReservation.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -375,51 +376,32 @@ final class KinoStyles implements Css.Library {
  */
 package demo.landing.app;
 
-import module java.base;
-import java.time.Duration;
+import objectos.way.Http;
 
-/// Generates a 64-bit Snowflake ID to uniquely identify an user making
-/// seat reservations.
-final class AppReservation {
+/// The ID of an user making seat reservation.
+record AppReservation(long id) {
 
-  private static final long TIMESTAMP_BITS = 41;
-
-  private static final long RANDOM_BITS = 64 - TIMESTAMP_BITS;
-
-  private static final long MAX_RANDOM = (1L << RANDOM_BITS) - 1;
-
-  private final Clock clock;
-
-  // January 1st, 2025 @ 00:00 @ GMT-3
-  private final Instant epoch;
-
-  private final RandomGenerator randomGenerator;
-
-  AppReservation(Clock clock, Instant epoch, RandomGenerator randomGenerator) {
-    this.clock = clock;
-
-    this.epoch = epoch;
-
-    this.randomGenerator = randomGenerator;
+  static AppReservation parse(Http.Exchange http) {
+    return new AppReservation(
+        http.queryParamAsLong("reservationId", 0)
+    );
   }
 
-  public final long next() {
-    final Instant now;
-    now = clock.instant();
+  public final boolean isEmpty() {
+    return id == 0;
+  }
 
-    final Duration duration;
-    duration = Duration.between(epoch, now);
+  public final String to(AppView view) {
+    return "/demo.landing/" + view.slug + this;
+  }
 
-    final long epochTime;
-    epochTime = duration.toMillis();
+  public final String to(AppView view, int id) {
+    return "/demo.landing/" + view.slug + "/" + id + this;
+  }
 
-    final long timestamp;
-    timestamp = epochTime << RANDOM_BITS;
-
-    final long randomBits;
-    randomBits = randomGenerator.nextLong(MAX_RANDOM);
-
-    return timestamp | randomBits;
+  @Override
+  public final String toString() {
+    return "?reservationId=" + id;
   }
 
 }
@@ -452,12 +434,12 @@ import objectos.script.JsAction;
 /// currently playing.
 final class HomeView extends UiShell {
 
-  private final AppUrl url;
+  private final AppReservation reservation;
 
   private final List<HomeModel> movies;
 
-  HomeView(AppUrl url, List<HomeModel> movies) {
-    this.url = url;
+  HomeView(AppReservation reservation, List<HomeModel> movies) {
+    this.reservation = reservation;
 
     this.movies = movies;
   }
@@ -502,11 +484,11 @@ final class HomeView extends UiShell {
   }
 
   private void renderMovie(HomeModel movie) {
-    final String movieUrl;
-    movieUrl = url.to(AppView.MOVIE, movie.id());
+    final String clickUrl;
+    clickUrl = reservation.to(AppView.MOVIE, movie.id());
 
-    final JsAction movieClick;
-    movieClick = follow(movieUrl);
+    final JsAction clickAction;
+    clickAction = follow(clickUrl);
 
     li(
         css(\"""
@@ -519,7 +501,7 @@ final class HomeView extends UiShell {
             hover/cursor:pointer
             \"""),
 
-            onclick(movieClick),
+            onclick(clickAction),
 
             img(
                 css(\"""
@@ -873,14 +855,8 @@ package demo.landing.app;
 
 import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
-import java.time.Clock;
-import objectos.script.Js;
-import objectos.script.JsAction;
-import objectos.way.App;
-import objectos.way.Css;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /**
  * Demo entry point.
@@ -925,10 +901,12 @@ public final class Kino implements LandingDemo {
 
           opts.putInstance(Clock.class, config.clock);
 
-          final AppReservation reservation;
-          reservation = new AppReservation(config.clock, config.reservationEpoch, config.reservationRandom);
+          opts.putInstance(Note.Sink.class, config.noteSink);
 
-          opts.putInstance(AppReservation.class, reservation);
+          final AppReservationGen reservation;
+          reservation = new AppReservationGen(config.clock, config.reservationEpoch, config.reservationRandom);
+
+          opts.putInstance(AppReservationGen.class, reservation);
         })
     );
   }
@@ -964,6 +942,68 @@ public final class Kino implements LandingDemo {
 }
 """);
 
+  static final SourceModel SeatsAlert = SourceModel.create("SeatsAlert.java", """
+/*
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import objectos.way.Http;
+
+enum SeatsAlert {
+
+  EMPTY(\"""
+  Kindly choose at least 1 seat.\"""),
+
+  LIMIT(\"""
+  We regret to inform you that we limit purchases to 6 tickets per person. \
+  Kindly choose at most 6 seats.\"""),
+
+  BOOKED(\"""
+  We regret to inform you that another customer has already reserved one or more of the selected seats. \
+  Kindly choose alternative seats.\""");
+
+  final String msg;
+
+  private SeatsAlert(String msg) {
+    this.msg = msg;
+  }
+
+  private static final SeatsAlert[] VALUES = SeatsAlert.values();
+
+  static SeatsAlert parse(Http.Exchange http) {
+    final int ordinal;
+    ordinal = http.pathParamAsInt("alert", Integer.MIN_VALUE);
+
+    if (0 <= ordinal && ordinal < VALUES.length) {
+      return VALUES[ordinal];
+    } else {
+      return null;
+    }
+  }
+
+  final String query(String url) {
+    final char separator;
+    separator = url.indexOf('?') != -1 ? '?' : '&';
+
+    return url + separator + "alert=" + ordinal();
+  }
+
+}
+""");
+
   static final SourceModel Home = SourceModel.create("Home.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -994,14 +1034,14 @@ final class Home extends AppTransactional {
 
   @Override
   final void handle(Http.Exchange http, Sql.Transaction trx) {
-    final AppUrl url;
-    url = AppUrl.parse(http);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
     final List<HomeModel> movies;
     movies = HomeModel.query(trx);
 
     final HomeView view;
-    view = new HomeView(url, movies);
+    view = new HomeView(reservation, movies);
 
     http.ok(view);
   }
@@ -1093,7 +1133,7 @@ abstract class AppTransactional implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public void handle(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = db.beginTransaction(Sql.READ_COMMITED);
 
@@ -1339,11 +1379,11 @@ final class Movie extends AppTransactional {
 
   @Override
   final void handle(Http.Exchange http, Sql.Transaction trx) {
-    final AppUrl url;
-    url = AppUrl.parse(http);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
     final int movieId;
-    movieId = url.aux();
+    movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
@@ -1359,7 +1399,7 @@ final class Movie extends AppTransactional {
       screenings = MovieScreening.query(trx, movieId, now);
 
       final MovieView view;
-      view = new MovieView(url, details, screenings);
+      view = new MovieView(reservation, details, screenings);
 
       http.ok(view);
     } else {
@@ -1397,28 +1437,36 @@ import module objectos.way;
 /// The "/seats/{id}" controller.
 final class Seats extends AppTransactional {
 
-  private final AppReservation reservation;
+  private final AppReservationGen reservationGen;
 
   Seats(App.Injector injector) {
     super(injector);
 
-    reservation = injector.getInstance(AppReservation.class);
+    reservationGen = injector.getInstance(AppReservationGen.class);
   }
 
   @Override
   final void handle(Http.Exchange http, Sql.Transaction trx) {
-    final AppUrl url;
-    url = AppUrl.parse(http);
-
     final int showId;
-    showId = url.aux();
+    showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
 
-    final Optional<SeatsShow> maybeDetails;
-    maybeDetails = SeatsShow.byId(trx, showId);
+    final Optional<SeatsDetails> maybeDetails;
+    maybeDetails = SeatsDetails.byId(trx, showId);
 
-    if (maybeDetails.isPresent()) {
-      final long reservationId;
-      reservationId = reservation.next();
+    if (maybeDetails.isEmpty()) {
+      final NotFoundView view;
+      view = new NotFoundView();
+
+      http.notFound(view);
+
+      return;
+    }
+
+    AppReservation reservation;
+    reservation = AppReservation.parse(http);
+
+    if (reservation.isEmpty()) {
+      reservation = reservationGen.next();
 
       trx.sql(\"""
       insert into
@@ -1427,28 +1475,27 @@ final class Seats extends AppTransactional {
         (?, ?)
       \""");
 
-      trx.param(reservationId);
+      trx.param(reservation.id());
 
       trx.param(showId);
 
       trx.update();
 
-      final SeatsShow details;
+      final SeatsDetails details;
       details = maybeDetails.get();
 
       final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, reservationId);
+      grid = SeatsGrid.query(trx, reservation.id());
 
       final SeatsView view;
-      view = new SeatsView(url, details, grid, reservationId);
+      view = new SeatsView(reservation, details, grid);
 
       http.ok(view);
-    } else {
-      final NotFoundView view;
-      view = new NotFoundView();
 
-      http.notFound(view);
+      return;
     }
+
+    throw new UnsupportedOperationException("Implement me");
   }
 
 }
@@ -1534,98 +1581,6 @@ enum UiIcon {
 
 }
 
-""");
-
-  static final SourceModel AppUrl = SourceModel.create("AppUrl.java", """
-/*
- * Copyright (C) 2024-2026 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import objectos.way.Http;
-
-/// Decoded value of the URL's fragment.
-record AppUrl(AppView page, long id, int aux) {
-
-  static final Http.HeaderName DEMO_HASH = Http.HeaderName.of("Demo-Hash");
-
-  static AppUrl parse(Http.Exchange http) {
-    final String demoHash;
-    demoHash = http.header(DEMO_HASH);
-
-    final AppUrl state;
-
-    if (demoHash != null) {
-      throw new UnsupportedOperationException("Implement me");
-    } else {
-
-      final long reservationId;
-      reservationId = http.queryParamAsLong("reservationId", 0L);
-
-      final int id;
-      id = http.pathParamAsInt("id", Integer.MIN_VALUE);
-
-      state = new AppUrl(null, reservationId, id);
-    }
-
-    return state;
-  }
-
-  final int idAsInt() {
-    return (int) id;
-  }
-
-  final String to(AppView view) {
-    final StringBuilder url;
-    url = new StringBuilder();
-
-    url.append("/demo.landing/");
-
-    url.append(view.slug);
-
-    if (id != 0) {
-      url.append("?reservationId=");
-
-      url.append(id);
-    }
-
-    return url.toString();
-  }
-
-  final String to(AppView view, int viewId) {
-    final StringBuilder url;
-    url = new StringBuilder();
-
-    url.append("/demo.landing/");
-
-    url.append(view.slug);
-
-    url.append("/");
-
-    url.append(viewId);
-
-    if (id != 0) {
-      url.append("?reservationId=");
-
-      url.append(id);
-    }
-
-    return url.toString();
-  }
-
-}
 """);
 
   static final SourceModel MovieShowtime = SourceModel.create("MovieShowtime.java", """
@@ -1778,25 +1733,23 @@ final class NotFoundView extends UiShell {
  */
 package demo.landing.app;
 
-import java.util.Optional;
 import module objectos.way;
 
 /// The seats selection form controller.
-final class SeatsForm implements Http.Handler {
+final class SeatsForm extends AppTransactional {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
   private final Note.Sink noteSink;
 
-  SeatsForm(Note.Sink noteSink) {
-    this.noteSink = noteSink;
+  SeatsForm(App.Injector injector) {
+    super(injector);
+
+    noteSink = injector.getInstance(Note.Sink.class);
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
+  final void handle(Http.Exchange http, Sql.Transaction trx) {
     final SeatsData data;
     data = SeatsData.parse(http);
 
@@ -1804,14 +1757,14 @@ final class SeatsForm implements Http.Handler {
 
     if (data.seats() == 0) {
       // no seats were selected...
-      handleAlert(http, trx, data, SeatsView.Alert.EMPTY);
+      handleAlert(http, trx, data, SeatsAlert.EMPTY);
 
       return;
     }
 
     if (data.seats() > 6) {
       // too many seats were selected...
-      handleAlert(http, trx, data, SeatsView.Alert.LIMIT);
+      handleAlert(http, trx, data, SeatsAlert.LIMIT);
 
       return;
     }
@@ -1826,28 +1779,23 @@ final class SeatsForm implements Http.Handler {
     }
   }
 
-  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, SeatsView.Alert alert) {
-    final long reservationId;
-    reservationId = data.reservationId();
+  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
+    // just in case, clear this user's selection
+    data.clearUserSelection(trx);
 
-    final Optional<SeatsShow> maybe;
-    maybe = SeatsShow.byReservationId(trx, reservationId);
+    final AppReservation reservation;
+    reservation = data.reservation();
 
-    final Media view;
+    final int showId;
+    showId = data.showId();
 
-    if (maybe.isPresent()) {
-      final SeatsShow details;
-      details = maybe.get();
+    final String seatsUrl;
+    seatsUrl = reservation.to(AppView.SEATS, showId);
 
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, reservationId);
+    final String withAlertUrl;
+    withAlertUrl = alert.query(seatsUrl);
 
-      view = new SeatsView(null, alert, details, grid, reservationId);
-    } else {
-      view = new NotFoundView();
-    }
-
-    http.badRequest(view);
+    http.seeOther(withAlertUrl);
   }
 
   private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
@@ -1889,35 +1837,161 @@ final class SeatsForm implements Http.Handler {
           // all seats were persisted.
           // render next screen.
 
-          final long reservationId;
-          reservationId = data.reservationId();
+          final AppReservation reservation;
+          reservation = data.reservation();
 
-          final Optional<ConfirmDetails> maybe;
-          maybe = ConfirmDetails.queryOptional(trx, reservationId);
+          final String redirectUrl;
+          redirectUrl = reservation.to(AppView.CONFIRM);
 
-          if (maybe.isPresent()) {
-            // renders the confirmation view
-            final ConfirmDetails details;
-            details = maybe.get();
-
-            final ConfirmView view;
-            view = new ConfirmView(details);
-
-            http.ok(view);
-          } else {
-            // unlikely? in any case, we assume bad data
-            final NotFoundView view;
-            view = new NotFoundView();
-
-            http.badRequest(view);
-          }
+          http.seeOther(redirectUrl);
 
         }
 
       }
 
-      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, SeatsView.Alert.BOOKED);
+      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, SeatsAlert.BOOKED);
     }
+  }
+
+}
+""");
+
+  static final SourceModel SeatsDetails = SourceModel.create("SeatsDetails.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.Optional;
+import objectos.way.Sql;
+
+record SeatsDetails(
+    int showId,
+    String date,
+    String time,
+
+    int screenId,
+    String screen,
+    int capacity,
+
+    int movieId,
+    String title
+) {
+
+  private SeatsDetails(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getString(idx++),
+
+        rs.getInt(idx++),
+        rs.getString(idx++),
+        rs.getInt(idx++),
+
+        rs.getInt(idx++),
+        rs.getString(idx++)
+    );
+  }
+
+  public static Optional<SeatsDetails> byId(Sql.Transaction trx, int id) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      SHOW.SHOW_ID = ?
+    \""");
+
+    trx.param(id);
+
+    return trx.queryOptional(SeatsDetails::new);
+  }
+
+  public static Optional<SeatsDetails> byReservationId(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      RESERVATION
+      natural join SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+    \""");
+
+    trx.param(reservationId);
+
+    return trx.queryOptional(SeatsDetails::new);
+  }
+
+  public static SeatsDetails queryReservation(Sql.Transaction trx, long reservationId) {
+    reservation(trx, reservationId);
+
+    return trx.querySingle(SeatsDetails::new);
+  }
+
+  private static void reservation(Sql.Transaction trx, long reservationId) {
+    trx.sql(\"""
+    select
+      SHOW.SHOW_ID,
+      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
+      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
+
+      SCREEN.SCREEN_ID,
+      SCREEN.NAME,
+      SCREEN.SEATING_CAPACITY,
+
+      MOVIE.MOVIE_ID,
+      MOVIE.TITLE
+    from
+      RESERVATION
+      natural join SHOW
+      natural join SCREENING
+      natural join MOVIE
+      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
+    where
+      RESERVATION.RESERVATION_ID = ?
+    \""");
+
+    trx.param(reservationId);
   }
 
 }
@@ -2143,147 +2217,6 @@ record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 }
 """);
 
-  static final SourceModel SeatsShow = SourceModel.create("SeatsShow.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
-
-record SeatsShow(
-    int showId,
-    String date,
-    String time,
-
-    int screenId,
-    String screen,
-    int capacity,
-
-    int movieId,
-    String title
-) {
-
-  private SeatsShow(ResultSet rs, int idx) throws SQLException {
-    this(
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getString(idx++),
-
-        rs.getInt(idx++),
-        rs.getString(idx++),
-        rs.getInt(idx++),
-
-        rs.getInt(idx++),
-        rs.getString(idx++)
-    );
-  }
-
-  public static Optional<SeatsShow> byId(Sql.Transaction trx, int id) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      SHOW.SHOW_ID = ?
-    \""");
-
-    trx.param(id);
-
-    return trx.queryOptional(SeatsShow::new);
-  }
-
-  public static Optional<SeatsShow> byReservationId(Sql.Transaction trx, long reservationId) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      RESERVATION
-      natural join SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-    \""");
-
-    trx.param(reservationId);
-
-    return trx.queryOptional(SeatsShow::new);
-  }
-
-  public static SeatsShow queryReservation(Sql.Transaction trx, long reservationId) {
-    reservation(trx, reservationId);
-
-    return trx.querySingle(SeatsShow::new);
-  }
-
-  private static void reservation(Sql.Transaction trx, long reservationId) {
-    trx.sql(\"""
-    select
-      SHOW.SHOW_ID,
-      formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
-      formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
-
-      SCREEN.SCREEN_ID,
-      SCREEN.NAME,
-      SCREEN.SEATING_CAPACITY,
-
-      MOVIE.MOVIE_ID,
-      MOVIE.TITLE
-    from
-      RESERVATION
-      natural join SHOW
-      natural join SCREENING
-      natural join MOVIE
-      join SCREEN on SCREENING.SCREEN_ID = SCREEN.SCREEN_ID
-    where
-      RESERVATION.RESERVATION_ID = ?
-    \""");
-
-    trx.param(reservationId);
-  }
-
-}
-""");
-
   static final SourceModel ConfirmDetails = SourceModel.create("ConfirmDetails.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2311,7 +2244,7 @@ import java.util.Optional;
 import objectos.way.Sql;
 
 final record ConfirmDetails(
-    long reservationId,
+    int showId,
     String title,
     String screen,
     String date,
@@ -2357,7 +2290,7 @@ final record ConfirmDetails(
 
   private ConfirmDetails(ResultSet rs, int idx) throws SQLException {
     this(
-        rs.getLong(idx++),
+        rs.getInt(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
@@ -2370,7 +2303,7 @@ final record ConfirmDetails(
   public static Optional<ConfirmDetails> queryOptional(Sql.Transaction trx, long reservationId) {
     trx.sql(\"""
     select
-      RESERVATION.RESERVATION_ID,
+      SHOW.SHOW_ID,
       MOVIE.TITLE,
       SCREEN.NAME,
       formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
@@ -2420,6 +2353,8 @@ final record ConfirmDetails(
 package demo.landing.app;
 
 import static objectos.way.Http.Method.GET;
+import static objectos.way.Http.Method.POST;
+
 import module objectos.way;
 
 /// Declares the application routes.
@@ -2442,10 +2377,83 @@ public final class AppRoutes implements Http.Routing.Module {
     routing.path("/demo.landing/movie/{id}", GET, new Movie(injector));
 
     routing.path("/demo.landing/seats/{id}", GET, new Seats(injector));
+
+    routing.path("/demo.landing/seats", POST, new SeatsForm(injector));
   }
 
 }
 
+""");
+
+  static final SourceModel AppReservationGen = SourceModel.create("AppReservationGen.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module java.base;
+import java.time.Duration;
+
+/// Generates a 64-bit Snowflake ID to uniquely identify an user making
+/// seat reservations.
+final class AppReservationGen {
+
+  private static final long TIMESTAMP_BITS = 41;
+
+  private static final long RANDOM_BITS = 64 - TIMESTAMP_BITS;
+
+  private static final long MAX_RANDOM = (1L << RANDOM_BITS) - 1;
+
+  private final Clock clock;
+
+  // January 1st, 2025 @ 00:00 @ GMT-3
+  private final Instant epoch;
+
+  private final RandomGenerator randomGenerator;
+
+  AppReservationGen(Clock clock, Instant epoch, RandomGenerator randomGenerator) {
+    this.clock = clock;
+
+    this.epoch = epoch;
+
+    this.randomGenerator = randomGenerator;
+  }
+
+  public final AppReservation next() {
+    final Instant now;
+    now = clock.instant();
+
+    final Duration duration;
+    duration = Duration.between(epoch, now);
+
+    final long epochTime;
+    epochTime = duration.toMillis();
+
+    final long timestamp;
+    timestamp = epochTime << RANDOM_BITS;
+
+    final long randomBits;
+    randomBits = randomGenerator.nextLong(MAX_RANDOM);
+
+    final long id;
+    id = timestamp | randomBits;
+
+    return new AppReservation(id);
+  }
+
+}
 """);
 
   static final SourceModel SeatsView = SourceModel.create("SeatsView.java", """
@@ -2471,53 +2479,28 @@ import module objectos.way;
 
 final class SeatsView extends UiShell {
 
-  enum Alert {
-
-    EMPTY(\"""
-    Kindly choose at least 1 seat.\"""),
-
-    LIMIT(\"""
-    We regret to inform you that we limit purchases to 6 tickets per person. \
-    Kindly choose at most 6 seats.\"""),
-
-    BOOKED(\"""
-    We regret to inform you that another customer has already reserved one or more of the selected seats. \
-    Kindly choose alternative seats.\""");
-
-    private final String msg;
-
-    private Alert(String msg) {
-      this.msg = msg;
-    }
-
-  }
-
   private static final String FORM_ID = "seats-form";
 
-  private final AppUrl url;
+  private final AppReservation reservation;
 
-  private final Alert alert;
+  private final SeatsAlert alert;
 
-  private final SeatsShow details;
+  private final SeatsDetails details;
 
   private final SeatsGrid grid;
 
-  private final long reservationId;
-
-  SeatsView(AppUrl url, SeatsShow details, SeatsGrid grid, long reservationId) {
-    this(url, null, details, grid, reservationId);
+  SeatsView(AppReservation reservation, SeatsDetails details, SeatsGrid grid) {
+    this(reservation, null, details, grid);
   }
 
-  SeatsView(AppUrl url, SeatsView.Alert alert, SeatsShow details, SeatsGrid grid, long reservationId) {
-    this.url = url;
+  SeatsView(AppReservation reservation, SeatsAlert alert, SeatsDetails details, SeatsGrid grid) {
+    this.reservation = reservation;
 
     this.alert = alert;
 
     this.details = details;
 
     this.grid = grid;
-
-    this.reservationId = reservationId;
   }
 
   @Override
@@ -2529,7 +2512,7 @@ final class SeatsView extends UiShell {
   @Override
   final void renderMain() {
     final String backUrl;
-    backUrl = url.to(AppView.MOVIE, details.movieId());
+    backUrl = reservation.to(AppView.MOVIE, details.movieId());
 
     backLink(backUrl);
 
@@ -2712,7 +2695,12 @@ final class SeatsView extends UiShell {
         input(
             type("hidden"),
             name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservationId)))),
+            value(testableField("reservationId", Long.toString(reservation.id())))),
+
+        input(
+            type("hidden"),
+            name("showId"),
+            value(testableField("showId", Integer.toString(details.showId())))),
 
         input(
             type("hidden"),
@@ -2811,7 +2799,7 @@ final class AppCodec {
 
   private static final int LENGTH = 17;
 
-  private final AppUrl badRequest = AppView.NOT_FOUND.query();
+  private final AppReservation badRequest = AppView.NOT_FOUND.query();
 
   private final Clock clock;
 
@@ -2851,7 +2839,7 @@ final class AppCodec {
   
    */
 
-  public final AppUrl decode(String raw) {
+  public final AppReservation decode(String raw) {
     if (raw == null) {
       // a null value means a request with no query parameters
       // => we should present the first view
@@ -2913,7 +2901,7 @@ final class AppCodec {
     return page.query(id, aux);
   }
 
-  public final String encode(AppUrl query) {
+  public final String encode(AppReservation query) {
     Objects.requireNonNull(query, "query == null");
 
     final byte[] bytes;
@@ -3195,13 +3183,15 @@ import objectos.way.Sql;
 /**
  * Represents the user submitted data.
  */
-record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] selection) {
+record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
   public static SeatsData parse(Http.Exchange http) {
     return new SeatsData(
-        wayRequest(http),
+        new AppReservation(
+            http.formParamAsLong("reservationId", 0)
+        ),
 
-        http.formParamAsInt("reservationId", Integer.MIN_VALUE),
+        http.formParamAsInt("showId", Integer.MIN_VALUE),
 
         http.formParamAsInt("screenId", Integer.MIN_VALUE),
 
@@ -3209,18 +3199,11 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     );
   }
 
-  private static boolean wayRequest(Http.Exchange http) {
-    final String maybe;
-    maybe = http.header(Http.HeaderName.WAY_REQUEST);
-
-    return "true".equals(maybe);
-  }
-
   @Override
   public final String toString() {
     return String.format(
-        "SeatsData[wayRequest=%s, reservationId=%d, screenId=%d, selection=%s]",
-        wayRequest, reservationId, screenId, Arrays.toString(selection)
+        "SeatsData[reservation=%s, screenId=%d, selection=%s]",
+        reservation, screenId, Arrays.toString(selection)
     );
   }
 
@@ -3234,7 +3217,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
       RESERVATION_ID = ?
     \""");
 
-    trx.param(reservationId);
+    trx.param(reservation.id());
 
     trx.update();
   }
@@ -3257,7 +3240,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     \""");
 
     for (int seatId : selection) {
-      trx.param(reservationId);
+      trx.param(reservation.id());
 
       trx.param(seatId);
 
@@ -3286,7 +3269,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     )
     \""");
 
-    trx.param(reservationId);
+    trx.param(reservation.id());
 
     trx.update();
   }
@@ -3321,7 +3304,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
       and SCREENING.SCREEN_ID = SEAT.SCREEN_ID
     \""");
 
-    trx.param(reservationId);
+    trx.param(reservation.id());
 
     return trx.updateWithResult();
   }
@@ -3374,8 +3357,8 @@ final class Ticket {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final AppUrl query;
-    query = http.get(AppUrl.class);
+    final AppReservation query;
+    query = http.get(AppReservation.class);
 
     final long ticketId;
     ticketId = query.id();
@@ -3421,18 +3404,19 @@ final class Ticket {
 package demo.landing.app;
 
 import java.util.List;
+import objectos.script.JsAction;
 
 /// Renders the details of a movie and lists its available screenings.
 final class MovieView extends UiShell {
 
-  private final AppUrl url;
+  private final AppReservation reservation;
 
   private final MovieDetails details;
 
   private final List<MovieScreening> screenings;
 
-  MovieView(AppUrl url, MovieDetails details, List<MovieScreening> screenings) {
-    this.url = url;
+  MovieView(AppReservation reservation, MovieDetails details, List<MovieScreening> screenings) {
+    this.reservation = reservation;
 
     this.details = details;
 
@@ -3452,7 +3436,7 @@ final class MovieView extends UiShell {
   @Override
   final void renderMain() {
     final String backUrl;
-    backUrl = url.to(AppView.HOME);
+    backUrl = reservation.to(AppView.HOME);
 
     backLink(backUrl);
 
@@ -3648,6 +3632,12 @@ final class MovieView extends UiShell {
 
       testableCell(Integer.toString(showId), 2);
 
+      final String showUrl;
+      showUrl = reservation.to(AppView.SEATS, showId);
+
+      final JsAction showClick;
+      showClick = follow(showUrl);
+
       final String time;
       time = showtime.time();
 
@@ -3664,7 +3654,7 @@ final class MovieView extends UiShell {
               hover/cursor:pointer
               \"""),
 
-              onclick(follow("/demo.landing/show/" + showId)),
+              onclick(showClick),
 
               span(testableCell(time, 5))
           ),
@@ -4139,7 +4129,6 @@ abstract class UiShell extends Html.Template {
 package demo.landing.app;
 
 import module java.base;
-import module objectos.way;
 
 /// The views of this application.
 enum AppView {
@@ -4156,54 +4145,7 @@ enum AppView {
 
   NOT_FOUND;
 
-  private static final Map<String, AppView> Q = Map.of(
-      "N", HOME,
-      "M", MOVIE,
-      "S", SEATS,
-      "C", CONFIRM,
-      "T", TICKET,
-      "B", NOT_FOUND
-  );
-
-  final String key = name().substring(0, 1);
-
   final String slug = name().toLowerCase(Locale.US);
-
-  static AppView parse(Http.Exchange http) {
-    AppView res;
-    res = HOME;
-
-    final String q;
-    q = http.queryParam("page");
-
-    if (q != null) {
-      res = Q.getOrDefault(q, NOT_FOUND);
-    }
-
-    return res;
-  }
-
-  final String href() {
-    return this == HOME
-        ? "/index.html"
-        : "/index.html?page=" + key;
-  }
-
-  final String hrefId(int value) {
-    return href() + "&id=" + value;
-  }
-
-  final AppUrl query() {
-    return new AppUrl(this, 0L, 0);
-  }
-
-  final AppUrl query(long id) {
-    return new AppUrl(this, id, 0);
-  }
-
-  final AppUrl query(long id, int aux) {
-    return new AppUrl(this, id, aux);
-  }
 
 }
 """);

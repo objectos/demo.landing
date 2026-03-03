@@ -22,13 +22,15 @@ import objectos.way.Sql;
 /**
  * Represents the user submitted data.
  */
-record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] selection) {
+record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
   public static SeatsData parse(Http.Exchange http) {
     return new SeatsData(
-        wayRequest(http),
+        new AppReservation(
+            http.formParamAsLong("reservationId", 0)
+        ),
 
-        http.formParamAsInt("reservationId", Integer.MIN_VALUE),
+        http.formParamAsInt("showId", Integer.MIN_VALUE),
 
         http.formParamAsInt("screenId", Integer.MIN_VALUE),
 
@@ -36,18 +38,11 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     );
   }
 
-  private static boolean wayRequest(Http.Exchange http) {
-    final String maybe;
-    maybe = http.header(Http.HeaderName.WAY_REQUEST);
-
-    return "true".equals(maybe);
-  }
-
   @Override
   public final String toString() {
     return String.format(
-        "SeatsData[wayRequest=%s, reservationId=%d, screenId=%d, selection=%s]",
-        wayRequest, reservationId, screenId, Arrays.toString(selection)
+        "SeatsData[reservation=%s, screenId=%d, selection=%s]",
+        reservation, screenId, Arrays.toString(selection)
     );
   }
 
@@ -61,7 +56,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
       RESERVATION_ID = ?
     """);
 
-    trx.param(reservationId);
+    trx.param(reservation.id());
 
     trx.update();
   }
@@ -84,7 +79,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     """);
 
     for (int seatId : selection) {
-      trx.param(reservationId);
+      trx.param(reservation.id());
 
       trx.param(seatId);
 
@@ -113,7 +108,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
     )
     """);
 
-    trx.param(reservationId);
+    trx.param(reservation.id());
 
     trx.update();
   }
@@ -148,7 +143,7 @@ record SeatsData(boolean wayRequest, long reservationId, int screenId, int[] sel
       and SCREENING.SCREEN_ID = SEAT.SCREEN_ID
     """);
 
-    trx.param(reservationId);
+    trx.param(reservation.id());
 
     return trx.updateWithResult();
   }

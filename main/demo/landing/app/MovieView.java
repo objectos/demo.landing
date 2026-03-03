@@ -21,14 +21,14 @@ import objectos.script.JsAction;
 /// Renders the details of a movie and lists its available screenings.
 final class MovieView extends UiShell {
 
-  private final AppUrl url;
+  private final AppReservation reservation;
 
   private final MovieDetails details;
 
   private final List<MovieScreening> screenings;
 
-  MovieView(AppUrl url, MovieDetails details, List<MovieScreening> screenings) {
-    this.url = url;
+  MovieView(AppReservation reservation, MovieDetails details, List<MovieScreening> screenings) {
+    this.reservation = reservation;
 
     this.details = details;
 
@@ -48,7 +48,7 @@ final class MovieView extends UiShell {
   @Override
   final void renderMain() {
     final String backUrl;
-    backUrl = url.to(AppView.HOME);
+    backUrl = reservation.to(AppView.HOME);
 
     backLink(backUrl);
 
@@ -245,7 +245,7 @@ final class MovieView extends UiShell {
       testableCell(Integer.toString(showId), 2);
 
       final String showUrl;
-      showUrl = url.to(AppView.SEATS, showId);
+      showUrl = reservation.to(AppView.SEATS, showId);
 
       final JsAction showClick;
       showClick = follow(showUrl);

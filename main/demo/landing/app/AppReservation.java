@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,51 +15,32 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import java.time.Duration;
+import objectos.way.Http;
 
-/// Generates a 64-bit Snowflake ID to uniquely identify an user making
-/// seat reservations.
-final class AppReservation {
+/// The ID of an user making seat reservation.
+record AppReservation(long id) {
 
-  private static final long TIMESTAMP_BITS = 41;
-
-  private static final long RANDOM_BITS = 64 - TIMESTAMP_BITS;
-
-  private static final long MAX_RANDOM = (1L << RANDOM_BITS) - 1;
-
-  private final Clock clock;
-
-  // January 1st, 2025 @ 00:00 @ GMT-3
-  private final Instant epoch;
-
-  private final RandomGenerator randomGenerator;
-
-  AppReservation(Clock clock, Instant epoch, RandomGenerator randomGenerator) {
-    this.clock = clock;
-
-    this.epoch = epoch;
-
-    this.randomGenerator = randomGenerator;
+  static AppReservation parse(Http.Exchange http) {
+    return new AppReservation(
+        http.queryParamAsLong("reservationId", 0)
+    );
   }
 
-  public final long next() {
-    final Instant now;
-    now = clock.instant();
+  public final boolean isEmpty() {
+    return id == 0;
+  }
 
-    final Duration duration;
-    duration = Duration.between(epoch, now);
+  public final String to(AppView view) {
+    return "/demo.landing/" + view.slug + this;
+  }
 
-    final long epochTime;
-    epochTime = duration.toMillis();
+  public final String to(AppView view, int id) {
+    return "/demo.landing/" + view.slug + "/" + id + this;
+  }
 
-    final long timestamp;
-    timestamp = epochTime << RANDOM_BITS;
-
-    final long randomBits;
-    randomBits = randomGenerator.nextLong(MAX_RANDOM);
-
-    return timestamp | randomBits;
+  @Override
+  public final String toString() {
+    return "?reservationId=" + id;
   }
 
 }

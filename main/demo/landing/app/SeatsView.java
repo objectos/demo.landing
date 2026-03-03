@@ -20,53 +20,28 @@ import module objectos.way;
 
 final class SeatsView extends UiShell {
 
-  enum Alert {
-
-    EMPTY("""
-    Kindly choose at least 1 seat."""),
-
-    LIMIT("""
-    We regret to inform you that we limit purchases to 6 tickets per person. \
-    Kindly choose at most 6 seats."""),
-
-    BOOKED("""
-    We regret to inform you that another customer has already reserved one or more of the selected seats. \
-    Kindly choose alternative seats.""");
-
-    private final String msg;
-
-    private Alert(String msg) {
-      this.msg = msg;
-    }
-
-  }
-
   private static final String FORM_ID = "seats-form";
 
-  private final AppUrl url;
+  private final AppReservation reservation;
 
-  private final Alert alert;
+  private final SeatsAlert alert;
 
-  private final SeatsShow details;
+  private final SeatsDetails details;
 
   private final SeatsGrid grid;
 
-  private final long reservationId;
-
-  SeatsView(AppUrl url, SeatsShow details, SeatsGrid grid, long reservationId) {
-    this(url, null, details, grid, reservationId);
+  SeatsView(AppReservation reservation, SeatsDetails details, SeatsGrid grid) {
+    this(reservation, null, details, grid);
   }
 
-  SeatsView(AppUrl url, SeatsView.Alert alert, SeatsShow details, SeatsGrid grid, long reservationId) {
-    this.url = url;
+  SeatsView(AppReservation reservation, SeatsAlert alert, SeatsDetails details, SeatsGrid grid) {
+    this.reservation = reservation;
 
     this.alert = alert;
 
     this.details = details;
 
     this.grid = grid;
-
-    this.reservationId = reservationId;
   }
 
   @Override
@@ -78,7 +53,7 @@ final class SeatsView extends UiShell {
   @Override
   final void renderMain() {
     final String backUrl;
-    backUrl = url.to(AppView.MOVIE, details.movieId());
+    backUrl = reservation.to(AppView.MOVIE, details.movieId());
 
     backLink(backUrl);
 
@@ -261,7 +236,12 @@ final class SeatsView extends UiShell {
         input(
             type("hidden"),
             name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservationId)))),
+            value(testableField("reservationId", Long.toString(reservation.id())))),
+
+        input(
+            type("hidden"),
+            name("showId"),
+            value(testableField("showId", Integer.toString(details.showId())))),
 
         input(
             type("hidden"),

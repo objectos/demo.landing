@@ -17,14 +17,8 @@ package demo.landing.app;
 
 import demo.landing.LandingDemo;
 import demo.landing.LandingDemoConfig;
-import java.time.Clock;
-import objectos.script.Js;
-import objectos.script.JsAction;
-import objectos.way.App;
-import objectos.way.Css;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /**
  * Demo entry point.
@@ -69,10 +63,12 @@ public final class Kino implements LandingDemo {
 
           opts.putInstance(Clock.class, config.clock);
 
-          final AppReservation reservation;
-          reservation = new AppReservation(config.clock, config.reservationEpoch, config.reservationRandom);
+          opts.putInstance(Note.Sink.class, config.noteSink);
 
-          opts.putInstance(AppReservation.class, reservation);
+          final AppReservationGen reservation;
+          reservation = new AppReservationGen(config.clock, config.reservationEpoch, config.reservationRandom);
+
+          opts.putInstance(AppReservationGen.class, reservation);
         })
     );
   }

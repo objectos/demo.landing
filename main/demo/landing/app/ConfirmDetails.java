@@ -24,7 +24,7 @@ import java.util.Optional;
 import objectos.way.Sql;
 
 final record ConfirmDetails(
-    long reservationId,
+    int showId,
     String title,
     String screen,
     String date,
@@ -70,7 +70,7 @@ final record ConfirmDetails(
 
   private ConfirmDetails(ResultSet rs, int idx) throws SQLException {
     this(
-        rs.getLong(idx++),
+        rs.getInt(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
@@ -83,7 +83,7 @@ final record ConfirmDetails(
   public static Optional<ConfirmDetails> queryOptional(Sql.Transaction trx, long reservationId) {
     trx.sql("""
     select
-      RESERVATION.RESERVATION_ID,
+      SHOW.SHOW_ID,
       MOVIE.TITLE,
       SCREEN.NAME,
       formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),

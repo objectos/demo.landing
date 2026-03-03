@@ -16,7 +16,6 @@
 package demo.landing.app;
 
 import module java.base;
-import module objectos.way;
 
 /// The views of this application.
 enum AppView {
@@ -33,53 +32,6 @@ enum AppView {
 
   NOT_FOUND;
 
-  private static final Map<String, AppView> Q = Map.of(
-      "N", HOME,
-      "M", MOVIE,
-      "S", SEATS,
-      "C", CONFIRM,
-      "T", TICKET,
-      "B", NOT_FOUND
-  );
-
-  final String key = name().substring(0, 1);
-
   final String slug = name().toLowerCase(Locale.US);
-
-  static AppView parse(Http.Exchange http) {
-    AppView res;
-    res = HOME;
-
-    final String q;
-    q = http.queryParam("page");
-
-    if (q != null) {
-      res = Q.getOrDefault(q, NOT_FOUND);
-    }
-
-    return res;
-  }
-
-  final String href() {
-    return this == HOME
-        ? "/index.html"
-        : "/index.html?page=" + key;
-  }
-
-  final String hrefId(int value) {
-    return href() + "&id=" + value;
-  }
-
-  final AppUrl query() {
-    return new AppUrl(this, 0L, 0);
-  }
-
-  final AppUrl query(long id) {
-    return new AppUrl(this, id, 0);
-  }
-
-  final AppUrl query(long id, int aux) {
-    return new AppUrl(this, id, aux);
-  }
 
 }

@@ -24,12 +24,12 @@ import objectos.script.JsAction;
 /// currently playing.
 final class HomeView extends UiShell {
 
-  private final AppUrl url;
+  private final AppReservation reservation;
 
   private final List<HomeModel> movies;
 
-  HomeView(AppUrl url, List<HomeModel> movies) {
-    this.url = url;
+  HomeView(AppReservation reservation, List<HomeModel> movies) {
+    this.reservation = reservation;
 
     this.movies = movies;
   }
@@ -74,11 +74,11 @@ final class HomeView extends UiShell {
   }
 
   private void renderMovie(HomeModel movie) {
-    final String movieUrl;
-    movieUrl = url.to(AppView.MOVIE, movie.id());
+    final String clickUrl;
+    clickUrl = reservation.to(AppView.MOVIE, movie.id());
 
-    final JsAction movieClick;
-    movieClick = follow(movieUrl);
+    final JsAction clickAction;
+    clickAction = follow(clickUrl);
 
     li(
         css("""
@@ -91,7 +91,7 @@ final class HomeView extends UiShell {
             hover/cursor:pointer
             """),
 
-            onclick(movieClick),
+            onclick(clickAction),
 
             img(
                 css("""

@@ -21,7 +21,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class ShowGridTest {
+public class SeatsGridTest {
 
   private final String data = """
   insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)

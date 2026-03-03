@@ -31,11 +31,11 @@ final class Movie extends AppTransactional {
 
   @Override
   final void handle(Http.Exchange http, Sql.Transaction trx) {
-    final AppUrl url;
-    url = AppUrl.parse(http);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
     final int movieId;
-    movieId = url.aux();
+    movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
@@ -51,7 +51,7 @@ final class Movie extends AppTransactional {
       screenings = MovieScreening.query(trx, movieId, now);
 
       final MovieView view;
-      view = new MovieView(url, details, screenings);
+      view = new MovieView(reservation, details, screenings);
 
       http.ok(view);
     } else {

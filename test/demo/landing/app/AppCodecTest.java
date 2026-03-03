@@ -40,7 +40,7 @@ public class AppCodecTest {
 
   @Test
   public void testCase01() {
-    AppUrl q;
+    AppReservation q;
     q = codec.decode(null);
 
     assertEquals(q.page(), AppView.HOME);
@@ -52,7 +52,7 @@ public class AppCodecTest {
 
   @Test
   public void testCase02() {
-    AppUrl q;
+    AppReservation q;
     q = AppView.HOME.query();
 
     String result;
@@ -63,7 +63,7 @@ public class AppCodecTest {
 
   @Test
   public void testCase03() {
-    AppUrl q;
+    AppReservation q;
     q = codec.decode("3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
 
     assertEquals(q.page(), AppView.HOME);
@@ -73,7 +73,7 @@ public class AppCodecTest {
 
   @Test
   public void testCase04() {
-    AppUrl q;
+    AppReservation q;
     q = AppView.CONFIRM.query(40306685673624018L);
 
     String result;
@@ -84,7 +84,7 @@ public class AppCodecTest {
 
   @Test
   public void testCase05() {
-    AppUrl q;
+    AppReservation q;
     q = codec.decode("3c8c9095881ab06eca0fad2a4c2a4f6c8d");
 
     assertEquals(q.page(), AppView.CONFIRM);
@@ -100,7 +100,7 @@ public class AppCodecTest {
     final int screenId;
     screenId = 1031;
 
-    final AppUrl q;
+    final AppReservation q;
     q = AppView.SEATS.query(reservationId, screenId);
 
     final String result;
@@ -108,7 +108,7 @@ public class AppCodecTest {
 
     assertEquals(result, "3c8c9095891a3f5c7d9e0b51082a4f688a");
 
-    final AppUrl decode;
+    final AppReservation decode;
     decode = codec.decode(result);
 
     assertEquals(decode.page(), AppView.SEATS);

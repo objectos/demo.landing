@@ -23,11 +23,15 @@ import objectos.way.Html;
 
 final class ConfirmView extends UiShell {
 
+  private final AppReservation reservation;
+
   private final ConfirmDetails details;
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  ConfirmView(ConfirmDetails details) {
+  ConfirmView(AppReservation reservation, ConfirmDetails details) {
+    this.reservation = reservation;
+
     this.details = details;
   }
 
@@ -38,15 +42,15 @@ final class ConfirmView extends UiShell {
 
   @Override
   final void renderMain() {
-    final long reservationId;
-    reservationId = details.reservationId();
+    final String backUrl;
+    backUrl = reservation.to(AppView.SEATS, details.showId());
 
-    backLink("/demo.landing/seats/0?reservationId=" + reservationId);
+    backLink(backUrl);
 
     h2("Your Order");
 
     // testable node only
-    testableH1("Order #" + reservationId);
+    testableH1("Order #" + reservation.id());
 
     p("Please review and confirm your order");
 
@@ -203,9 +207,6 @@ final class ConfirmView extends UiShell {
 
     testableNewLine();
 
-    final long reservationId;
-    reservationId = details.reservationId();
-
     form(
         css("""
         display:flex
@@ -222,7 +223,7 @@ final class ConfirmView extends UiShell {
         input(
             type("hidden"),
             name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservationId)))),
+            value(testableField("reservationId", Long.toString(reservation.id())))),
 
         button(
             PRIMARY,

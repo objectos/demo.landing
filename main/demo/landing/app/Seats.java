@@ -21,28 +21,36 @@ import module objectos.way;
 /// The "/seats/{id}" controller.
 final class Seats extends AppTransactional {
 
-  private final AppReservation reservation;
+  private final AppReservationGen reservationGen;
 
   Seats(App.Injector injector) {
     super(injector);
 
-    reservation = injector.getInstance(AppReservation.class);
+    reservationGen = injector.getInstance(AppReservationGen.class);
   }
 
   @Override
   final void handle(Http.Exchange http, Sql.Transaction trx) {
-    final AppUrl url;
-    url = AppUrl.parse(http);
-
     final int showId;
-    showId = url.aux();
+    showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
 
-    final Optional<SeatsShow> maybeDetails;
-    maybeDetails = SeatsShow.byId(trx, showId);
+    final Optional<SeatsDetails> maybeDetails;
+    maybeDetails = SeatsDetails.byId(trx, showId);
 
-    if (maybeDetails.isPresent()) {
-      final long reservationId;
-      reservationId = reservation.next();
+    if (maybeDetails.isEmpty()) {
+      final NotFoundView view;
+      view = new NotFoundView();
+
+      http.notFound(view);
+
+      return;
+    }
+
+    AppReservation reservation;
+    reservation = AppReservation.parse(http);
+
+    if (reservation.isEmpty()) {
+      reservation = reservationGen.next();
 
       trx.sql("""
       insert into
@@ -51,28 +59,27 @@ final class Seats extends AppTransactional {
         (?, ?)
       """);
 
-      trx.param(reservationId);
+      trx.param(reservation.id());
 
       trx.param(showId);
 
       trx.update();
 
-      final SeatsShow details;
+      final SeatsDetails details;
       details = maybeDetails.get();
 
       final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, reservationId);
+      grid = SeatsGrid.query(trx, reservation.id());
 
       final SeatsView view;
-      view = new SeatsView(url, details, grid, reservationId);
+      view = new SeatsView(reservation, details, grid);
 
       http.ok(view);
-    } else {
-      final NotFoundView view;
-      view = new NotFoundView();
 
-      http.notFound(view);
+      return;
     }
+
+    throw new UnsupportedOperationException("Implement me");
   }
 
 }

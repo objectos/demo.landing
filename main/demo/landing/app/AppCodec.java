@@ -23,7 +23,7 @@ final class AppCodec {
 
   private static final int LENGTH = 17;
 
-  private final AppUrl badRequest = AppView.NOT_FOUND.query();
+  private final AppReservation badRequest = AppView.NOT_FOUND.query();
 
   private final Clock clock;
 
@@ -63,7 +63,7 @@ final class AppCodec {
   
    */
 
-  public final AppUrl decode(String raw) {
+  public final AppReservation decode(String raw) {
     if (raw == null) {
       // a null value means a request with no query parameters
       // => we should present the first view
@@ -125,7 +125,7 @@ final class AppCodec {
     return page.query(id, aux);
   }
 
-  public final String encode(AppUrl query) {
+  public final String encode(AppReservation query) {
     Objects.requireNonNull(query, "query == null");
 
     final byte[] bytes;

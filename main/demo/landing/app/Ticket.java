@@ -38,8 +38,8 @@ final class Ticket {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final AppUrl query;
-    query = http.get(AppUrl.class);
+    final AppReservation query;
+    query = http.get(AppReservation.class);
 
     final long ticketId;
     ticketId = query.id();

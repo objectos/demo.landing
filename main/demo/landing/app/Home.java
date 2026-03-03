@@ -27,14 +27,14 @@ final class Home extends AppTransactional {
 
   @Override
   final void handle(Http.Exchange http, Sql.Transaction trx) {
-    final AppUrl url;
-    url = AppUrl.parse(http);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
     final List<HomeModel> movies;
     movies = HomeModel.query(trx);
 
     final HomeView view;
-    view = new HomeView(url, movies);
+    view = new HomeView(reservation, movies);
 
     http.ok(view);
   }

@@ -24,7 +24,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class SeatsTestConcurrent {
+public class SeatsFormTestConcurrent {
 
   @BeforeClass
   public void beforeClass() {

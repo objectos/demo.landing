@@ -28,7 +28,7 @@ abstract class AppTransactional implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public void handle(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = db.beginTransaction(Sql.READ_COMMITED);
 
