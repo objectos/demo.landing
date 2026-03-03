@@ -17,13 +17,11 @@ package demo.landing.app;
 
 import module java.base;
 
-final class AppCodec {
+final class AppHashGen {
 
   private static final int BYTE_MASK = 0xFF;
 
   private static final int LENGTH = 17;
-
-  private final AppReservation badRequest = AppView.NOT_FOUND.query();
 
   private final Clock clock;
 
@@ -33,7 +31,7 @@ final class AppCodec {
 
   private final AppView[] views = AppView.values();
 
-  AppCodec(Clock clock, byte[] key) {
+  AppHashGen(Clock clock, byte[] key) {
     this.clock = Objects.requireNonNull(clock, "clock == null");
 
     if (key.length < LENGTH) {
@@ -43,31 +41,29 @@ final class AppCodec {
     this.key = key;
   }
 
-  public static AppCodec create(Clock clock, byte[] key) {
-    return new AppCodec(clock, key);
+  public static AppHashGen create(Clock clock, byte[] key) {
+    return new AppHashGen(clock, key);
   }
 
   /*
   
-   to simplify we assume the ID is always a long
-  
    random = 4 bytes
   
-   page = 1 byte
+   view = 1 byte
   
-   id = 8 bytes
+   rid = 8 bytes
   
-   aux = 4 byte
+   id = 4 byte
    ------------------
    total = 17 bytes
   
    */
 
-  public final AppReservation decode(String raw) {
+  public final AppHash decode(String raw) {
     if (raw == null) {
-      // a null value means a request with no query parameters
+      // a null value means a request with no URL fragment
       // => we should present the first view
-      return AppView.HOME.query();
+      return AppHash.of(AppView.HOME);
     }
 
     final byte[] bytes;
@@ -75,12 +71,12 @@ final class AppCodec {
     try {
       bytes = hexFormat.parseHex(raw);
     } catch (IllegalArgumentException expected) {
-      return badRequest;
+      return AppHash.of(AppView.NOT_FOUND);
     }
 
     if (bytes.length != LENGTH) {
       // wrong length
-      return badRequest;
+      return AppHash.of(AppView.NOT_FOUND);
     }
 
     int index;
@@ -98,34 +94,34 @@ final class AppCodec {
     pageOrdinal = bytes[index++] & BYTE_MASK;
 
     if (pageOrdinal < 0 || pageOrdinal >= views.length) {
-      return badRequest;
+      return AppHash.of(AppView.NOT_FOUND);
     }
 
-    AppView page;
-    page = views[pageOrdinal];
+    final AppView view;
+    view = views[pageOrdinal];
 
-    // next 8 bytes = id (big endian)
-    long id = 0L;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 56;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 48;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 40;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 32;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 24;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 16;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 8;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 0;
+    // next 8 bytes = rid (big endian)
+    long rid = 0L;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 56;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 48;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 40;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 32;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 24;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 16;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 8;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 0;
 
-    // next 4 byte = aux
-    int aux = 0;
-    aux |= (bytes[index++] & BYTE_MASK) << 24;
-    aux |= (bytes[index++] & BYTE_MASK) << 16;
-    aux |= (bytes[index++] & BYTE_MASK) << 8;
-    aux |= (bytes[index++] & BYTE_MASK) << 0;
+    // next 4 byte = id
+    int id = 0;
+    id |= (bytes[index++] & BYTE_MASK) << 24;
+    id |= (bytes[index++] & BYTE_MASK) << 16;
+    id |= (bytes[index++] & BYTE_MASK) << 8;
+    id |= (bytes[index++] & BYTE_MASK) << 0;
 
-    return page.query(id, aux);
+    return AppHash.of(view, rid, id);
   }
 
-  public final String encode(AppReservation query) {
+  public final String encode(AppHash query) {
     Objects.requireNonNull(query, "query == null");
 
     final byte[] bytes;
@@ -147,32 +143,35 @@ final class AppCodec {
 
     // first byte = view
     final AppView view;
-    view = query.page();
+    view = query.view();
 
     bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
 
-    // next 8 bytes = id (big endian)
+    // next 8 bytes = rid (big endian)
 
-    final long id;
+    final AppReservation reservation;
+    reservation = query.reservation();
+
+    final long rid;
+    rid = reservation.id();
+
+    bytes[index++] = (byte) ((rid >>> 56) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 48) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 40) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 32) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) (rid & BYTE_MASK);
+
+    // next 4 bytes = id
+    int id;
     id = query.id();
 
-    bytes[index++] = (byte) ((id >>> 56) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 48) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 40) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 32) & BYTE_MASK);
     bytes[index++] = (byte) ((id >>> 24) & BYTE_MASK);
     bytes[index++] = (byte) ((id >>> 16) & BYTE_MASK);
     bytes[index++] = (byte) ((id >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) (id & BYTE_MASK);
-
-    // next 4 bytes = aux
-    int aux;
-    aux = query.aux();
-
-    bytes[index++] = (byte) ((aux >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 0) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 0) & BYTE_MASK);
 
     obfuscate(bytes, random);
 

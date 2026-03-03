@@ -21,11 +21,11 @@ import java.util.HexFormat;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
-public class AppCodecTest {
+public class AppHashGenTest {
 
   private final FixedClock clock = new FixedClock(2025, 2, 25);
 
-  private AppCodec codec;
+  private AppHashGen gen;
 
   @BeforeClass
   public void beforeClass() {
@@ -35,61 +35,61 @@ public class AppCodecTest {
     byte[] key; // actual value is not important as long it is the same for encode/decode
     key = hexFormat.parseHex("7b9e2a4f6c8d1e3b5a0f7d9c4e2b6a8f1d3c5e7b9a0f2d4c6e8b1a3f5c7d9e0b");
 
-    codec = new AppCodec(clock, key);
+    gen = new AppHashGen(clock, key);
   }
 
   @Test
   public void testCase01() {
-    AppReservation q;
-    q = codec.decode(null);
+    AppHash q;
+    q = gen.decode(null);
 
-    assertEquals(q.page(), AppView.HOME);
-    assertEquals(q.id(), 0L);
-    assertEquals(q.aux(), 0);
+    assertEquals(q.view(), AppView.HOME);
+    assertEquals(q.reservation().id(), 0L);
+    assertEquals(q.id(), 0);
 
-    assertEquals(codec.encode(q), "3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
+    assertEquals(gen.encode(q), "3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
   }
 
   @Test
   public void testCase02() {
-    AppReservation q;
-    q = AppView.HOME.query();
+    AppHash q;
+    q = AppHash.of(AppView.HOME);
 
     String result;
-    result = codec.encode(q);
+    result = gen.encode(q);
 
     assertEquals(result, "3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
   }
 
   @Test
   public void testCase03() {
-    AppReservation q;
-    q = codec.decode("3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
+    AppHash q;
+    q = gen.decode("3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
 
-    assertEquals(q.page(), AppView.HOME);
-    assertEquals(q.id(), 0L);
-    assertEquals(q.aux(), 0);
+    assertEquals(q.view(), AppView.HOME);
+    assertEquals(q.reservation().id(), 0L);
+    assertEquals(q.id(), 0);
   }
 
   @Test
   public void testCase04() {
-    AppReservation q;
-    q = AppView.CONFIRM.query(40306685673624018L);
+    AppHash q;
+    q = AppHash.of(AppView.CONFIRM, 40306685673624018L);
 
     String result;
-    result = codec.encode(q);
+    result = gen.encode(q);
 
     assertEquals(result, "3c8c9095881ab06eca0fad2a4c2a4f6c8d");
   }
 
   @Test
   public void testCase05() {
-    AppReservation q;
-    q = codec.decode("3c8c9095881ab06eca0fad2a4c2a4f6c8d");
+    AppHash q;
+    q = gen.decode("3c8c9095881ab06eca0fad2a4c2a4f6c8d");
 
-    assertEquals(q.page(), AppView.CONFIRM);
-    assertEquals(q.id(), 40306685673624018L);
-    assertEquals(q.aux(), 0);
+    assertEquals(q.view(), AppView.CONFIRM);
+    assertEquals(q.reservation().id(), 40306685673624018L);
+    assertEquals(q.id(), 0);
   }
 
   @Test
@@ -100,20 +100,20 @@ public class AppCodecTest {
     final int screenId;
     screenId = 1031;
 
-    final AppReservation q;
-    q = AppView.SEATS.query(reservationId, screenId);
+    final AppHash q;
+    q = AppHash.of(AppView.SEATS, reservationId, screenId);
 
     final String result;
-    result = codec.encode(q);
+    result = gen.encode(q);
 
     assertEquals(result, "3c8c9095891a3f5c7d9e0b51082a4f688a");
 
-    final AppReservation decode;
-    decode = codec.decode(result);
+    final AppHash decode;
+    decode = gen.decode(result);
 
-    assertEquals(decode.page(), AppView.SEATS);
-    assertEquals(decode.id(), reservationId);
-    assertEquals(decode.aux(), screenId);
+    assertEquals(decode.view(), AppView.SEATS);
+    assertEquals(decode.reservation().id(), reservationId);
+    assertEquals(decode.id(), screenId);
   }
 
 }

@@ -20,14 +20,16 @@ import objectos.way.Http;
 /// The ID of an user making seat reservation.
 record AppReservation(long id) {
 
+  static final AppReservation EMPTY = new AppReservation(0L);
+
   static AppReservation parse(Http.Exchange http) {
     return new AppReservation(
-        http.queryParamAsLong("reservationId", 0)
+        http.queryParamAsLong("reservationId", 0L)
     );
   }
 
   public final boolean isEmpty() {
-    return id == 0;
+    return id == 0L;
   }
 
   public final String to(AppView view) {

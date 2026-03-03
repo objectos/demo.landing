@@ -135,13 +135,13 @@ public class Testing implements ISuiteListener {
 
   private static final class CodecHolder {
 
-    static AppCodec INSTANCE = create();
+    static AppHashGen INSTANCE = create();
 
-    private static AppCodec create() {
+    private static AppHashGen create() {
       final LandingDemoConfig config;
       config = INJECTOR.getInstance(LandingDemoConfig.class);
 
-      return new AppCodec(config.clock, config.codecKey());
+      return new AppHashGen(config.clock, config.codecKey());
     }
 
   }
