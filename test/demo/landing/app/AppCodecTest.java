@@ -19,13 +19,14 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.HexFormat;
 import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-public class AppHashGenTest {
+public class AppCodecTest {
 
   private final FixedClock clock = new FixedClock(2025, 2, 25);
 
-  private AppHashGen gen;
+  private AppCodec codec;
 
   @BeforeClass
   public void beforeClass() {
@@ -35,36 +36,63 @@ public class AppHashGenTest {
     byte[] key; // actual value is not important as long it is the same for encode/decode
     key = hexFormat.parseHex("7b9e2a4f6c8d1e3b5a0f7d9c4e2b6a8f1d3c5e7b9a0f2d4c6e8b1a3f5c7d9e0b");
 
-    gen = new AppHashGen(clock, key);
+    codec = new AppCodec(clock, key);
+  }
+
+  @DataProvider
+  public Object[][] parseProvider() {
+    return new Object[][] {
+        // no value
+        {null, null, "Request without Demo-Location-Hash header value"},
+        {"", null, "Request without hash"},
+
+        // valid
+        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d;", AppUrl.of(AppView.HOME), "valid"},
+
+        // invalid
+        {"demo=foo;", null, "no initial hash"},
+        {"#demox=foo;", null, "name should be 4 chars long"},
+        {"#sort=foo;", null, "name should be 'demo'"},
+        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d", null, "no trailing semicolon"},
+        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6cd;", null, "hash has incorrent length"}
+    };
+  }
+
+  @Test(dataProvider = "parseProvider")
+  public void parse(String headerValue, AppUrl expected, String description) {
+    final AppUrl result;
+    result = codec.parse(headerValue);
+
+    assertEquals(result, expected, description);
   }
 
   @Test
   public void testCase01() {
-    AppHash q;
-    q = gen.decode(null);
+    AppUrl q;
+    q = codec.decode(null);
 
     assertEquals(q.view(), AppView.HOME);
     assertEquals(q.reservation().id(), 0L);
     assertEquals(q.id(), 0);
 
-    assertEquals(gen.encode(q), "3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
+    assertEquals(codec.encode(q), "3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
   }
 
   @Test
   public void testCase02() {
-    AppHash q;
-    q = AppHash.of(AppView.HOME);
+    AppUrl q;
+    q = AppUrl.of(AppView.HOME);
 
     String result;
-    result = gen.encode(q);
+    result = codec.encode(q);
 
     assertEquals(result, "3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
   }
 
   @Test
   public void testCase03() {
-    AppHash q;
-    q = gen.decode("3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
+    AppUrl q;
+    q = codec.decode("3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d");
 
     assertEquals(q.view(), AppView.HOME);
     assertEquals(q.reservation().id(), 0L);
@@ -73,19 +101,19 @@ public class AppHashGenTest {
 
   @Test
   public void testCase04() {
-    AppHash q;
-    q = AppHash.of(AppView.CONFIRM, 40306685673624018L);
+    AppUrl q;
+    q = AppUrl.of(AppView.CONFIRM, 40306685673624018L);
 
     String result;
-    result = gen.encode(q);
+    result = codec.encode(q);
 
     assertEquals(result, "3c8c9095881ab06eca0fad2a4c2a4f6c8d");
   }
 
   @Test
   public void testCase05() {
-    AppHash q;
-    q = gen.decode("3c8c9095881ab06eca0fad2a4c2a4f6c8d");
+    AppUrl q;
+    q = codec.decode("3c8c9095881ab06eca0fad2a4c2a4f6c8d");
 
     assertEquals(q.view(), AppView.CONFIRM);
     assertEquals(q.reservation().id(), 40306685673624018L);
@@ -100,16 +128,16 @@ public class AppHashGenTest {
     final int screenId;
     screenId = 1031;
 
-    final AppHash q;
-    q = AppHash.of(AppView.SEATS, reservationId, screenId);
+    final AppUrl q;
+    q = AppUrl.of(AppView.SEATS, reservationId, screenId);
 
     final String result;
-    result = gen.encode(q);
+    result = codec.encode(q);
 
     assertEquals(result, "3c8c9095891a3f5c7d9e0b51082a4f688a");
 
-    final AppHash decode;
-    decode = gen.decode(result);
+    final AppUrl decode;
+    decode = codec.decode(result);
 
     assertEquals(decode.view(), AppView.SEATS);
     assertEquals(decode.reservation().id(), reservationId);

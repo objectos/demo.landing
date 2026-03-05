@@ -15,62 +15,6 @@
  */
 package demo.landing.app;
 
-import static org.testng.Assert.assertEquals;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import org.testng.annotations.Test;
-
 public class AppReservationGenTest {
-
-  @Test
-  public void testCase01() {
-    final FixedClock clock;
-    clock = new FixedClock(2025, 1, 13);
-
-    final LocalDateTime dateTime;
-    dateTime = LocalDateTime.of(2025, 1, 1, 0, 0);
-
-    final ZoneOffset offset;
-    offset = ZoneOffset.UTC;
-
-    final Instant epoch;
-    epoch = dateTime.toInstant(offset);
-
-    final FixedGenerator generator;
-    generator = new FixedGenerator(12345L);
-
-    final AppReservationGen r;
-    r = new AppReservationGen(clock, epoch, generator);
-
-    test(r, "11111111110001101000010000000000000000011000000111001");
-
-    clock.offset = Duration.ofMillis(1);
-
-    test(r, "11111111110001101000010000000100000000011000000111001");
-
-    clock.offset = Duration.ofMillis(2);
-
-    test(r, "11111111110001101000010000001000000000011000000111001");
-
-    clock.offset = Duration.ofMillis(3);
-
-    test(r, "11111111110001101000010000001100000000011000000111001");
-  }
-
-  private void test(AppReservationGen r, String expected) {
-    final AppReservation res;
-    res = r.next();
-
-    final long value;
-    value = res.id();
-
-    final String result;
-    result = Long.toBinaryString(value);
-
-    assertEquals(result, expected);
-  }
 
 }

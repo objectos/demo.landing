@@ -19,24 +19,60 @@ import module java.base;
 import module objectos.way;
 
 /// The "/home" controller.
-final class Home extends AppTransactional {
+final class Home implements Http.Handler {
 
-  Home(App.Injector injector) {
-    super(injector);
+  private final AppCtx kino;
+
+  Home(AppCtx kino) {
+    this.kino = kino;
   }
 
   @Override
-  final void handle(Http.Exchange http, Sql.Transaction trx) {
+  public final void handle(Http.Exchange http) {
+    final String hashValue;
+    hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
+
+    final String hashRedirect;
+    hashRedirect = kino.decodeHash(hashValue);
+
+    if (hashRedirect != null) {
+      http.found(hashRedirect);
+
+      return;
+    }
+
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final List<HomeModel> rows;
+    rows = HomeModel.query(trx);
+
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 
-    final List<HomeModel> movies;
-    movies = HomeModel.query(trx);
+    final List<HomeView.Movie> movies;
+    movies = rows.stream().map(row -> toUi(reservation, row)).toList();
 
     final HomeView view;
-    view = new HomeView(reservation, movies);
+    view = new HomeView(movies);
 
     http.ok(view);
+  }
+
+  private HomeView.Movie toUi(AppReservation reservation, HomeModel row) {
+    final String title;
+    title = row.title();
+
+    final int id;
+    id = row.id();
+
+    final JsAction onclick;
+    onclick = kino.clickAction(AppView.MOVIE, id, reservation);
+
+    final String imgsrc;
+    imgsrc = "/demo.landing/poster" + id + ".jpg";
+
+    return new HomeView.Movie(title, onclick, imgsrc);
   }
 
 }

@@ -104,11 +104,11 @@ abstract class Start extends App.Bootstrap {
 
     ctx.putInstance(Web.Resources.class, webResources);
 
-    // Application Config
-    final LandingDemoConfig config;
-    config = config(ctx);
+    // Application
+    final LandingDemo demo;
+    demo = demo(ctx);
 
-    ctx.putInstance(LandingDemoConfig.class, config);
+    ctx.putInstance(LandingDemo.class, demo);
 
     // Head component
     final Html.Component headComponent;
@@ -165,7 +165,7 @@ abstract class Start extends App.Bootstrap {
     return JdbcConnectionPool.create(url, "sa", "");
   }
 
-  abstract LandingDemoConfig config(App.Injector injector);
+  abstract LandingDemo demo(App.Injector injector);
 
   private Web.Resources webResources(App.Injector injector) {
     try {

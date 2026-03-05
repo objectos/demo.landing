@@ -486,7 +486,7 @@ public final class LandingDemoDb {
     }
 
     public final String path() {
-      return "/demo/landing/poster" + id + ".jpg";
+      return "/demo.landing/poster" + id + ".jpg";
     }
 
     @Override

@@ -376,32 +376,27 @@ final class KinoStyles implements Css.Library {
  */
 package demo.landing.app;
 
-import objectos.way.Http;
+import module objectos.way;
 
 /// The ID of an user making seat reservation.
 record AppReservation(long id) {
 
+  private static final String PARAM_NAME = "reservationId";
+
   static AppReservation parse(Http.Exchange http) {
-    return new AppReservation(
-        http.queryParamAsLong("reservationId", 0)
-    );
+    final long id;
+    id = http.queryParamAsLong(PARAM_NAME, 0L);
+
+    return new AppReservation(id);
   }
 
   public final boolean isEmpty() {
-    return id == 0;
-  }
-
-  public final String to(AppView view) {
-    return "/demo.landing/" + view.slug + this;
-  }
-
-  public final String to(AppView view, int id) {
-    return "/demo.landing/" + view.slug + "/" + id + this;
+    return id == 0L;
   }
 
   @Override
   public final String toString() {
-    return "?reservationId=" + id;
+    return PARAM_NAME + "=" + id;
   }
 
 }
@@ -426,7 +421,7 @@ record AppReservation(long id) {
 package demo.landing.app;
 
 import module java.base;
-import objectos.script.JsAction;
+import module objectos.way;
 
 /// Renders the home page view. More specifically, it renders:
 ///
@@ -434,13 +429,12 @@ import objectos.script.JsAction;
 /// currently playing.
 final class HomeView extends UiShell {
 
-  private final AppReservation reservation;
+  /// A movie to be displayed in this view
+  record Movie(String title, JsAction onclick, String imgsrc) {}
 
-  private final List<HomeModel> movies;
+  private final List<Movie> movies;
 
-  HomeView(AppReservation reservation, List<HomeModel> movies) {
-    this.reservation = reservation;
-
+  HomeView(List<Movie> movies) {
     this.movies = movies;
   }
 
@@ -478,18 +472,12 @@ final class HomeView extends UiShell {
   }
 
   private void renderMovies() {
-    for (HomeModel movie : movies) {
+    for (Movie movie : movies) {
       renderMovie(movie);
     }
   }
 
-  private void renderMovie(HomeModel movie) {
-    final String clickUrl;
-    clickUrl = reservation.to(AppView.MOVIE, movie.id());
-
-    final JsAction clickAction;
-    clickAction = follow(clickUrl);
-
+  private void renderMovie(Movie movie) {
     li(
         css(\"""
         flex:0_0_128rx
@@ -501,7 +489,7 @@ final class HomeView extends UiShell {
             hover/cursor:pointer
             \"""),
 
-            onclick(clickAction),
+            onclick(movie.onclick),
 
             img(
                 css(\"""
@@ -512,7 +500,7 @@ final class HomeView extends UiShell {
                 &:is(:where(.group):hover_*)/outline:2px_solid_var(--color-gray-500)
                 \"""),
 
-                src("/demo/landing/poster" + movie.id() + ".jpg")
+                src(movie.imgsrc)
             ),
 
             h3(
@@ -835,113 +823,6 @@ final class NotFound implements Http.Handler {
 }
 """);
 
-  static final SourceModel Kino = SourceModel.create("Kino.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import demo.landing.LandingDemo;
-import demo.landing.LandingDemoConfig;
-import module java.base;
-import module objectos.way;
-
-/**
- * Demo entry point.
- */
-public final class Kino implements LandingDemo {
-
-  public static final Html.Id SHELL = Html.Id.of("demo.landing");
-
-  /// The default `follow` action.
-  ///
-  /// As this demo will be embedded in another application, we:
-  ///
-  /// - disable history; so the browser location is not updated on navigation - -
-  /// - disable scroll; so the browse scroll position is not reset on navigation
-  static final JsAction FOLLOW = Js.follow(opts -> {
-    // disable history
-    opts.history(false);
-
-    // disable scroll
-    opts.scroll(false);
-
-    // update only the demo shell
-    opts.update(SHELL);
-  });
-
-  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home");
-
-  private Kino() {
-  }
-
-  /**
-   * Creates a new {@code Kino} instance with the specified configuration.
-   */
-  public static Kino create(LandingDemoConfig config) {
-    throw new UnsupportedOperationException("Implement me");
-  }
-
-  public static Http.Routing.Module routes(LandingDemoConfig config) {
-    return new AppRoutes(
-        App.Injector.create(opts -> {
-          opts.putInstance(Sql.Database.class, config.database);
-
-          opts.putInstance(Clock.class, config.clock);
-
-          opts.putInstance(Note.Sink.class, config.noteSink);
-
-          final AppReservationGen reservation;
-          reservation = new AppReservationGen(config.clock, config.reservationEpoch, config.reservationRandom);
-
-          opts.putInstance(AppReservationGen.class, reservation);
-        })
-    );
-  }
-
-  /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
-  ///
-  /// @return a new instance of the demo's `Css.StyleSheet` configuration
-  public static Css.Library styles() {
-    return new KinoStyles();
-  }
-
-  /**
-   * Handles a GET request.
-   *
-   * <p>
-   * Typically this would be a {@code Http.Handler} instance. However, as this
-   * will be embedded in another application, we return a HTML component
-   * instead.
-   */
-  @Override
-  public final Html.Component get(Http.Exchange http) {
-    throw new UnsupportedOperationException("Implement me");
-  }
-
-  /**
-   * Handles a POST request.
-   */
-  @Override
-  public final Kino.PostResult post(Http.Exchange http) {
-    throw new UnsupportedOperationException("Implement me");
-  }
-
-}
-""");
-
   static final SourceModel SeatsAlert = SourceModel.create("SeatsAlert.java", """
 /*
  * Copyright (C) 2024-2026 Objectos Software LTDA.
@@ -1026,24 +907,183 @@ import module java.base;
 import module objectos.way;
 
 /// The "/home" controller.
-final class Home extends AppTransactional {
+final class Home implements Http.Handler {
 
-  Home(App.Injector injector) {
-    super(injector);
+  private final AppCtx kino;
+
+  Home(AppCtx kino) {
+    this.kino = kino;
   }
 
   @Override
-  final void handle(Http.Exchange http, Sql.Transaction trx) {
+  public final void handle(Http.Exchange http) {
+    final String hashValue;
+    hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
+
+    final String hashRedirect;
+    hashRedirect = kino.decodeHash(hashValue);
+
+    if (hashRedirect != null) {
+      http.found(hashRedirect);
+
+      return;
+    }
+
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final List<HomeModel> rows;
+    rows = HomeModel.query(trx);
+
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 
-    final List<HomeModel> movies;
-    movies = HomeModel.query(trx);
+    final List<HomeView.Movie> movies;
+    movies = rows.stream().map(row -> toUi(reservation, row)).toList();
 
     final HomeView view;
-    view = new HomeView(reservation, movies);
+    view = new HomeView(movies);
 
     http.ok(view);
+  }
+
+  private HomeView.Movie toUi(AppReservation reservation, HomeModel row) {
+    final String title;
+    title = row.title();
+
+    final int id;
+    id = row.id();
+
+    final JsAction onclick;
+    onclick = kino.clickAction(AppView.MOVIE, id, reservation);
+
+    final String imgsrc;
+    imgsrc = "/demo.landing/poster" + id + ".jpg";
+
+    return new HomeView.Movie(title, onclick, imgsrc);
+  }
+
+}
+""");
+
+  static final SourceModel LocalCreate = SourceModel.create("LocalCreate.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import static objectos.way.Media.Bytes.textPlain;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import objectos.way.Http;
+import objectos.way.Note;
+import objectos.way.Sql;
+
+final class LocalCreate implements Http.Handler {
+
+  private static final Note.Int1 CREATE_SHOW = Note.Int1.create(LocalCreate.class, "Create Show", Note.INFO);
+
+  private final AppCtx ctx;
+
+  LocalCreate(AppCtx ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    final int localId;
+    localId = 2;
+
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final LocalDate today;
+    today = ctx.today();
+
+    trx.sql(\"""
+    select
+      count(*)
+    from
+      LOCAL_LOG
+    where
+      LOCAL_ID = ?
+      and cast(LOCAL_TIME as date) = ?
+    \""");
+
+    trx.param(localId);
+
+    trx.param(today);
+
+    Integer _executions;
+    _executions = trx.querySingle((rs, idx) -> rs.getInt(idx++));
+
+    int executions;
+    executions = _executions.intValue();
+
+    if (executions > 0) {
+      http.ok(
+          textPlain("Skipped: already executed\\\\n")
+      );
+
+      return;
+    }
+
+    trx.sql(\"""
+    insert into
+      SHOW (SCREENING_ID, SHOWDATE, SHOWTIME, SEAT_PRICE)
+    select
+      SCREENING_ID,
+      dateadd (day, 2, '%1$s'),
+      SCREENING_TIME,
+      SEAT_PRICE
+    from
+      SCREENING_TIME
+    order by
+      1,
+      2,
+      3
+    \""");
+
+    trx.format(today);
+
+    int count;
+    count = trx.update();
+
+    ctx.send(CREATE_SHOW, count);
+
+    log(trx, localId);
+
+    http.ok(
+        textPlain("OK\\n")
+    );
+  }
+
+  private void log(Sql.Transaction trx, int id) {
+    final LocalDateTime now;
+    now = ctx.now();
+
+    trx.sql(\"""
+    insert into LOCAL_LOG (LOCAL_ID, LOCAL_TIME) values (?, ?)
+    \""");
+
+    trx.param(id);
+
+    trx.param(now);
+
+    trx.update();
   }
 
 }
@@ -1070,7 +1110,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-/// A movie that is now showing at the theater.
+/// A movie that is now showing at the theater (raw DB data).
 record HomeModel(
     int id,
     String title
@@ -1098,61 +1138,6 @@ record HomeModel(
 
     return trx.query(HomeModel::new);
   }
-
-}
-""");
-
-  static final SourceModel AppTransactional = SourceModel.create("AppTransactional.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import module objectos.way;
-
-/// Filters HTTP requests around a SQL transaction and performs a no-op in
-/// testing environments.
-abstract class AppTransactional implements Http.Handler {
-
-  private final Sql.Database db;
-
-  AppTransactional(App.Injector injector) {
-    db = injector.getInstance(Sql.Database.class);
-  }
-
-  @Override
-  public void handle(Http.Exchange http) {
-    final Sql.Transaction trx;
-    trx = db.beginTransaction(Sql.READ_COMMITED);
-
-    try {
-      trx.sql("set schema CINEMA");
-
-      trx.update();
-
-      handle(http, trx);
-
-      trx.commit();
-    } catch (Throwable e) {
-      throw trx.rollbackAndWrap(e);
-    } finally {
-      trx.close();
-    }
-  }
-
-  abstract void handle(Http.Exchange http, Sql.Transaction trx);
 
 }
 """);
@@ -1856,6 +1841,449 @@ final class SeatsForm extends AppTransactional {
 }
 """);
 
+  static final SourceModel AppCtx = SourceModel.create("AppCtx.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import static objectos.way.Http.Method.GET;
+import static objectos.way.Http.Method.POST;
+
+import demo.landing.LandingDemo;
+import module java.base;
+import module objectos.way;
+
+/// Application entry point and system-wide context.
+public final class AppCtx implements LandingDemo {
+
+  public static final class Builder implements LandingDemo.Options {
+
+    private Clock clock = Clock.systemDefaultZone();
+
+    private byte[] codecKey;
+
+    private Sql.Database database;
+
+    private Note.Sink noteSink = Note.NoOpSink.create();
+
+    private Instant reservationEpoch;
+
+    private RandomGenerator reservationRandom;
+
+    @Override
+    public final void clock(Clock value) {
+      clock = Objects.requireNonNull(value, "value == null");
+    }
+
+    @Override
+    public final void codecKey(byte[] value) {
+      final byte[] notNull;
+      notNull = Objects.requireNonNull(value, "value == null");
+
+      codecKey = notNull.clone();
+    }
+
+    @Override
+    public final void database(Sql.Database value) {
+      database = Objects.requireNonNull(value, "value == null");
+    }
+
+    @Override
+    public final void noteSink(Note.Sink value) {
+      noteSink = Objects.requireNonNull(value, "value == null");
+    }
+
+    @Override
+    public final void reservationEpoch(Instant value) {
+      reservationEpoch = Objects.requireNonNull(value, "value == null");
+    }
+
+    @Override
+    public final void reservationRandom(RandomGenerator value) {
+      reservationRandom = Objects.requireNonNull(value, "value == null");
+    }
+
+    final AppCtx build() {
+      Objects.requireNonNull(codecKey, "codecKey == null");
+      Objects.requireNonNull(database, "database == null");
+
+      if (reservationEpoch == null) {
+        final LocalDateTime dateTime;
+        dateTime = LocalDateTime.of(2025, 1, 1, 0, 0);
+
+        final ZoneOffset offset;
+        offset = ZoneOffset.UTC;
+
+        reservationEpoch = dateTime.toInstant(offset);
+      }
+
+      if (reservationRandom == null) {
+        reservationRandom = new SecureRandom();
+      }
+
+      return new AppCtx(this);
+    }
+
+  }
+
+  private static final Note.Ref1<Throwable> TRANSACTIONAL = Note.Ref1.create(AppCtx.class, "Transactional", Note.ERROR);
+
+  private final Clock clock;
+
+  private final byte[] codecKey;
+
+  private final Sql.Database database;
+
+  private final HexFormat hexFormat = HexFormat.of();
+
+  private final Note.Sink noteSink;
+
+  private final Instant reservationEpoch;
+
+  private final RandomGenerator reservationRandom;
+
+  private AppCtx(Builder builder) {
+    clock = builder.clock;
+
+    codecKey = builder.codecKey;
+
+    database = builder.database;
+
+    noteSink = builder.noteSink;
+
+    reservationEpoch = builder.reservationEpoch;
+
+    reservationRandom = builder.reservationRandom;
+  }
+
+  /// Creates a new instance with the specified configuration.
+  public static AppCtx create(Consumer<? super Builder> opts) {
+    final Builder builder;
+    builder = new Builder();
+
+    opts.accept(builder);
+
+    return builder.build();
+  }
+
+  /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
+  ///
+  /// @return a new instance of the demo's `Css.StyleSheet` configuration
+  public static Css.Library styles() {
+    return new KinoStyles();
+  }
+
+  // ##################################################################
+  // # BEGIN: Routes
+  // ##################################################################
+
+  @Override
+  public final Http.Routing.Module localRoutes() {
+    return local -> {
+      local.path("/demo.landing/clear-reservation", POST, trx(new LocalClear(this)));
+
+      local.path("/demo.landing/create-show", POST, trx(new LocalCreate(this)));
+    };
+  }
+
+  @Override
+  public final Http.Routing.Module publicRoutes() {
+    return www -> {
+      www.path("/demo.landing/home", GET, trx(new Home(this)));
+    };
+  }
+
+  private Http.Handler trx(Http.Handler handler) {
+    return http -> {
+
+      final Sql.Transaction trx;
+      trx = database.beginTransaction(Sql.READ_COMMITED);
+
+      try {
+        trx.sql("set schema CINEMA");
+
+        trx.update();
+
+        http.set(Sql.Transaction.class, trx);
+
+        handler.handle(http);
+
+        trx.commit();
+      } catch (Throwable t) {
+        noteSink.send(TRANSACTIONAL, t);
+
+        throw trx.rollbackAndWrap(t);
+      } finally {
+        trx.close();
+      }
+
+    };
+  }
+
+  // ##################################################################
+  // # END: Routes
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: UI
+  // ##################################################################
+
+  public static final Html.Id SHELL = Html.Id.of("demo.landing");
+
+  public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
+
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home", opts -> {
+    opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().href());
+  });
+
+  public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
+    final String href;
+    href = href(view, id, reservation.id());
+
+    final String hash;
+    hash = encodeHash(view, id, reservation);
+
+    return Js.byId(SHELL).render(href, opts -> {
+      opts.history("/index.html#demo=" + hash + ";");
+    });
+  }
+
+  private String href(AppView view, int id, long reservationId) {
+    return "/demo.landing/" + view.slug + "/" + id + "?reservationId" + reservationId;
+  }
+
+  // ##################################################################
+  // # END: UI
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: History/Hash
+  // ##################################################################
+
+  /*
+  
+  random = 4 bytes
+  
+  view = 1 byte
+  
+  id = 4 byte
+  
+  rid = 8 bytes
+  ------------------
+  total = 17 bytes
+  
+  */
+
+  public final String decodeHash(String hash) {
+    if (hash == null) {
+      return null;
+    }
+
+    final int length;
+    length = hash.length();
+
+    // '#' + 'demo' + '=' + (17 * 2) + ';'
+    if (length != 41) {
+      return null;
+    }
+
+    if (!hash.startsWith("#demo=")) {
+      return null;
+    }
+
+    final char last;
+    last = hash.charAt(41 - 1);
+
+    if (last != ';') {
+      return null;
+    }
+
+    final String value;
+    value = hash.substring(6, 41 - 1);
+
+    return decodeHash0(value);
+  }
+
+  private static final int BYTE_MASK = 0xFF;
+
+  private static final int HASH_LENGTH = 17;
+
+  private final AppView[] views = AppView.values();
+
+  private String decodeHash0(String raw) {
+    if (raw == null) {
+      // a null value means a request with no URL fragment
+      // => we should present the first view
+      return href(AppView.HOME, 0, 0);
+    }
+
+    final byte[] bytes;
+
+    try {
+      bytes = hexFormat.parseHex(raw);
+    } catch (IllegalArgumentException expected) {
+      return href(AppView.NOT_FOUND, 0, 0);
+    }
+
+    if (bytes.length != HASH_LENGTH) {
+      // wrong length
+      return href(AppView.NOT_FOUND, 0, 0);
+    }
+
+    int index;
+    index = 0;
+
+    int random = 0;
+    random |= (bytes[index++] & BYTE_MASK) << 24;
+    random |= (bytes[index++] & BYTE_MASK) << 16;
+    random |= (bytes[index++] & BYTE_MASK) << 8;
+    random |= (bytes[index++] & BYTE_MASK) << 0;
+
+    obfuscate(bytes, random);
+
+    int viewOrdinal;
+    viewOrdinal = bytes[index++] & BYTE_MASK;
+
+    if (viewOrdinal < 0 || viewOrdinal >= views.length) {
+      // invalid view ordinal
+      return href(AppView.NOT_FOUND, 0, 0);
+    }
+
+    final AppView view;
+    view = views[viewOrdinal];
+
+    // next 4 bytes = id
+    int id = 0;
+    id |= (bytes[index++] & BYTE_MASK) << 24;
+    id |= (bytes[index++] & BYTE_MASK) << 16;
+    id |= (bytes[index++] & BYTE_MASK) << 8;
+    id |= (bytes[index++] & BYTE_MASK) << 0;
+
+    // next 8 bytes = rid (big endian)
+    long rid = 0L;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 56;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 48;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 40;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 32;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 24;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 16;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 8;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 0;
+
+    return href(view, id, rid);
+  }
+
+  private void obfuscate(byte[] bytes, int random) {
+    final int offset;
+    offset = random == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(random);
+
+    for (int idx = 4, len = bytes.length; idx < len; idx++) {
+      byte b;
+      b = bytes[idx];
+
+      int keyIndex;
+      keyIndex = (idx + offset) % codecKey.length;
+
+      byte k;
+      k = codecKey[keyIndex];
+
+      bytes[idx] = (byte) (b ^ k);
+    }
+  }
+
+  public final String encodeHash(AppView view, int id, AppReservation reservation) {
+    final byte[] bytes;
+    bytes = new byte[HASH_LENGTH];
+
+    int index;
+    index = 0;
+
+    final long millis;
+    millis = clock.millis();
+
+    final int random;
+    random = (int) millis ^ (int) (millis >>> 32);
+
+    bytes[index++] = (byte) ((random >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) ((random >>> 0) & BYTE_MASK);
+
+    // first byte = view
+    bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
+
+    // next 4 bytes = id
+    bytes[index++] = (byte) ((id >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 0) & BYTE_MASK);
+
+    // next 8 bytes = rid (big endian)
+    final long rid;
+    rid = reservation.id();
+
+    bytes[index++] = (byte) ((rid >>> 56) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 48) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 40) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 32) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 0) & BYTE_MASK);
+
+    obfuscate(bytes, random);
+
+    return hexFormat.formatHex(bytes);
+  }
+
+  // ##################################################################
+  // # END: History/Hash
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Date/Time
+  // ##################################################################
+
+  public final LocalDateTime now() {
+    return LocalDateTime.now(clock);
+  }
+
+  public final LocalDate today() {
+    return LocalDate.now(clock);
+  }
+
+  // ##################################################################
+  // # END: Date/Time
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Notes
+  // ##################################################################
+
+  public final void send(Note.Int1 note, int value) {
+    noteSink.send(note, value);
+  }
+
+  // ##################################################################
+  // # END: Notes
+  // ##################################################################
+
+}
+""");
+
   static final SourceModel SeatsDetails = SourceModel.create("SeatsDetails.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2175,6 +2603,89 @@ final class TicketView extends UiShell {
 }
 """);
 
+  static final SourceModel LocalClear = SourceModel.create("LocalClear.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import static objectos.way.Media.Bytes.textPlain;
+
+import module java.base;
+import module objectos.way;
+
+final class LocalClear implements Http.Handler {
+
+  private static final Note.Int1 CLEAR_RESERVATION = Note.Int1.create(LocalClear.class, "Clear Reservation", Note.INFO);
+
+  private final AppCtx ctx;
+
+  LocalClear(AppCtx ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    final int localId;
+    localId = 1;
+
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final LocalDateTime now;
+    now = ctx.now();
+
+    trx.sql(\"""
+    delete from RESERVATION
+    where
+      datediff(minute, RESERVATION_TIME, ?) > 5
+      and TICKET_TIME is null
+    \""");
+
+    trx.param(now);
+
+    final int count;
+    count = trx.update();
+
+    ctx.send(CLEAR_RESERVATION, count);
+
+    log(trx, localId);
+
+    http.ok(
+        textPlain("OK\\n")
+    );
+  }
+
+  private void log(Sql.Transaction trx, int id) {
+    final LocalDateTime now;
+    now = ctx.now();
+
+    trx.sql(\"""
+    insert into LOCAL_LOG (LOCAL_ID, LOCAL_TIME) values (?, ?)
+    \""");
+
+    trx.param(id);
+
+    trx.param(now);
+
+    trx.update();
+  }
+
+}
+""");
+
   static final SourceModel SourceModel_ = SourceModel.create("SourceModel.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -2332,57 +2843,6 @@ final record ConfirmDetails(
   }
 
 }
-""");
-
-  static final SourceModel AppRoutes = SourceModel.create("AppRoutes.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import static objectos.way.Http.Method.GET;
-import static objectos.way.Http.Method.POST;
-
-import module objectos.way;
-
-/// Declares the application routes.
-public final class AppRoutes implements Http.Routing.Module {
-
-  static final Html.Id ID = Html.Id.of("demo.landing");
-
-  public static final JsAction ONLOAD = Js.byId(ID).render("/demo.landing/home");
-
-  private final App.Injector injector;
-
-  public AppRoutes(App.Injector injector) {
-    this.injector = injector;
-  }
-
-  @Override
-  public final void configure(Http.Routing routing) {
-    routing.path("/demo.landing/home", GET, new Home(injector));
-
-    routing.path("/demo.landing/movie/{id}", GET, new Movie(injector));
-
-    routing.path("/demo.landing/seats/{id}", GET, new Seats(injector));
-
-    routing.path("/demo.landing/seats", POST, new SeatsForm(injector));
-  }
-
-}
-
 """);
 
   static final SourceModel AppReservationGen = SourceModel.create("AppReservationGen.java", """
@@ -2799,8 +3259,6 @@ final class AppCodec {
 
   private static final int LENGTH = 17;
 
-  private final AppReservation badRequest = AppView.NOT_FOUND.query();
-
   private final Clock clock;
 
   private final HexFormat hexFormat = HexFormat.of();
@@ -2823,27 +3281,41 @@ final class AppCodec {
     return new AppCodec(clock, key);
   }
 
-  /*
-  
-   to simplify we assume the ID is always a long
-  
-   random = 4 bytes
-  
-   page = 1 byte
-  
-   id = 8 bytes
-  
-   aux = 4 byte
-   ------------------
-   total = 17 bytes
-  
-   */
+  public final AppUrl parse(String hash) {
+    if (hash == null) {
+      return null;
+    }
 
-  public final AppReservation decode(String raw) {
+    final int length;
+    length = hash.length();
+
+    // '#' + 'demo' + '=' + (17 * 2) + ';'
+    if (length != 41) {
+      return null;
+    }
+
+    if (!hash.startsWith("#demo=")) {
+      return null;
+    }
+
+    final char last;
+    last = hash.charAt(41 - 1);
+
+    if (last != ';') {
+      return null;
+    }
+
+    final String value;
+    value = hash.substring(6, 41 - 1);
+
+    return decode(value);
+  }
+
+  public final AppUrl decode(String raw) {
     if (raw == null) {
-      // a null value means a request with no query parameters
+      // a null value means a request with no URL fragment
       // => we should present the first view
-      return AppView.HOME.query();
+      return AppUrl.of(AppView.HOME);
     }
 
     final byte[] bytes;
@@ -2851,12 +3323,12 @@ final class AppCodec {
     try {
       bytes = hexFormat.parseHex(raw);
     } catch (IllegalArgumentException expected) {
-      return badRequest;
+      return AppUrl.of(AppView.NOT_FOUND);
     }
 
     if (bytes.length != LENGTH) {
       // wrong length
-      return badRequest;
+      return AppUrl.of(AppView.NOT_FOUND);
     }
 
     int index;
@@ -2874,35 +3346,35 @@ final class AppCodec {
     pageOrdinal = bytes[index++] & BYTE_MASK;
 
     if (pageOrdinal < 0 || pageOrdinal >= views.length) {
-      return badRequest;
+      return AppUrl.of(AppView.NOT_FOUND);
     }
 
-    AppView page;
-    page = views[pageOrdinal];
+    final AppView view;
+    view = views[pageOrdinal];
 
-    // next 8 bytes = id (big endian)
-    long id = 0L;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 56;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 48;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 40;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 32;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 24;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 16;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 8;
-    id |= (long) (bytes[index++] & BYTE_MASK) << 0;
+    // next 8 bytes = rid (big endian)
+    long rid = 0L;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 56;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 48;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 40;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 32;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 24;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 16;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 8;
+    rid |= (long) (bytes[index++] & BYTE_MASK) << 0;
 
-    // next 4 byte = aux
-    int aux = 0;
-    aux |= (bytes[index++] & BYTE_MASK) << 24;
-    aux |= (bytes[index++] & BYTE_MASK) << 16;
-    aux |= (bytes[index++] & BYTE_MASK) << 8;
-    aux |= (bytes[index++] & BYTE_MASK) << 0;
+    // next 4 byte = id
+    int id = 0;
+    id |= (bytes[index++] & BYTE_MASK) << 24;
+    id |= (bytes[index++] & BYTE_MASK) << 16;
+    id |= (bytes[index++] & BYTE_MASK) << 8;
+    id |= (bytes[index++] & BYTE_MASK) << 0;
 
-    return page.query(id, aux);
+    return AppUrl.of(view, rid, id);
   }
 
-  public final String encode(AppReservation query) {
-    Objects.requireNonNull(query, "query == null");
+  public final String encode(AppUrl url) {
+    Objects.requireNonNull(url, "query == null");
 
     final byte[] bytes;
     bytes = new byte[LENGTH];
@@ -2923,32 +3395,35 @@ final class AppCodec {
 
     // first byte = view
     final AppView view;
-    view = query.page();
+    view = url.view();
 
     bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
 
-    // next 8 bytes = id (big endian)
+    // next 8 bytes = rid (big endian)
 
-    final long id;
-    id = query.id();
+    final AppReservation reservation;
+    reservation = url.reservation();
 
-    bytes[index++] = (byte) ((id >>> 56) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 48) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 40) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 32) & BYTE_MASK);
+    final long rid;
+    rid = reservation.id();
+
+    bytes[index++] = (byte) ((rid >>> 56) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 48) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 40) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 32) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 24) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 16) & BYTE_MASK);
+    bytes[index++] = (byte) ((rid >>> 8) & BYTE_MASK);
+    bytes[index++] = (byte) (rid & BYTE_MASK);
+
+    // next 4 bytes = id
+    int id;
+    id = url.id();
+
     bytes[index++] = (byte) ((id >>> 24) & BYTE_MASK);
     bytes[index++] = (byte) ((id >>> 16) & BYTE_MASK);
     bytes[index++] = (byte) ((id >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) (id & BYTE_MASK);
-
-    // next 4 bytes = aux
-    int aux;
-    aux = query.aux();
-
-    bytes[index++] = (byte) ((aux >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) ((aux >>> 0) & BYTE_MASK);
+    bytes[index++] = (byte) ((id >>> 0) & BYTE_MASK);
 
     obfuscate(bytes, random);
 
@@ -3710,11 +4185,6 @@ abstract class UiShell extends Html.Template {
     hover/background-color:var(--color-btn-primary-hover)
     \""");
 
-  /// The default 'follow' action.
-  protected final JsAction follow(String url) {
-    return Js.byId(AppRoutes.ID).render(url);
-  }
-
   /// The default 'submit' action.
   protected final JsAction submit() {
     return Js.submit(opts -> {
@@ -3725,7 +4195,7 @@ abstract class UiShell extends Html.Template {
       opts.scroll(false);
 
       // update only the demo shell
-      opts.update(AppRoutes.ID);
+      opts.update(AppCtx.SHELL);
     });
   }
 
@@ -3735,7 +4205,7 @@ abstract class UiShell extends Html.Template {
     sources = combineSources();
 
     div(
-        AppRoutes.ID,
+        AppCtx.SHELL,
 
         css(\"""
         display:grid
@@ -3763,8 +4233,8 @@ abstract class UiShell extends Html.Template {
 
     combined.addAll(sources);
 
-    combined.add(Source.AppRoutes);
-    combined.add(Source.AppTransactional);
+    combined.add(Source.AppCtx);
+    combined.add(Source.AppView);
     combined.add(Source.UiIcon);
     combined.add(Source.UiShell);
 
@@ -3809,11 +4279,7 @@ abstract class UiShell extends Html.Template {
                 display:flex
                 gap:6rx
                 height:100%
-
-                hover/cursor:pointer
                 \"""),
-
-                onclick(follow("/demo.landing/home")),
 
                 objectosLogo(),
 
@@ -4034,9 +4500,7 @@ abstract class UiShell extends Html.Template {
   // # BEGIN: Back Link
   // ##################################################################
 
-  final void backLink(String url) {
-    testableField("back-link", url);
-
+  final void backLink(JsAction onclick) {
     div(
         css(\"""
         border-radius:9999px
@@ -4049,7 +4513,7 @@ abstract class UiShell extends Html.Template {
         hover/cursor:pointer
         \"""),
 
-        onclick(follow(url)),
+        onclick(onclick),
 
         c(
             UiIcon.ARROW_LEFT.css(\"""
@@ -4146,6 +4610,14 @@ enum AppView {
   NOT_FOUND;
 
   final String slug = name().toLowerCase(Locale.US);
+
+  final String href(int id, AppReservation reservation) {
+    return switch (this) {
+      case HOME, NOT_FOUND -> "/demo.landing/" + slug + reservation;
+
+      default -> "/demo.landing/" + slug + "/" + id + reservation;
+    };
+  }
 
 }
 """);

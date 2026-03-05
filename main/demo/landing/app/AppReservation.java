@@ -15,34 +15,27 @@
  */
 package demo.landing.app;
 
-import objectos.way.Http;
+import module objectos.way;
 
 /// The ID of an user making seat reservation.
 record AppReservation(long id) {
 
-  static final AppReservation EMPTY = new AppReservation(0L);
+  private static final String PARAM_NAME = "reservationId";
 
   static AppReservation parse(Http.Exchange http) {
-    return new AppReservation(
-        http.queryParamAsLong("reservationId", 0L)
-    );
+    final long id;
+    id = http.queryParamAsLong(PARAM_NAME, 0L);
+
+    return new AppReservation(id);
   }
 
   public final boolean isEmpty() {
     return id == 0L;
   }
 
-  public final String to(AppView view) {
-    return "/demo.landing/" + view.slug + this;
-  }
-
-  public final String to(AppView view, int id) {
-    return "/demo.landing/" + view.slug + "/" + id + this;
-  }
-
   @Override
   public final String toString() {
-    return "?reservationId=" + id;
+    return PARAM_NAME + "=" + id;
   }
 
 }

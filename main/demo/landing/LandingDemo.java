@@ -15,109 +15,40 @@
  */
 package demo.landing;
 
-import demo.landing.app.Kino;
-import java.util.Objects;
-import objectos.way.App;
-import objectos.way.Css;
-import objectos.way.Html;
-import objectos.way.Http;
+import demo.landing.app.AppCtx;
+import module java.base;
+import module objectos.way;
 
-/**
- * Exposes the demo application to the host application.
- */
+/// Exposes the demo application to the host application.
 @App.DoNotReload
 public interface LandingDemo {
 
-  /**
-   * Represents the stage this demo is running on.
-   */
-  @App.DoNotReload
-  public enum Stage {
+  interface Options {
 
-    DEFAULT,
+    void clock(Clock value);
 
-    TESTING;
+    void codecKey(byte[] value);
 
-  }
+    void database(Sql.Database value);
 
-  /**
-   * The result of a POST request in the context of the demo application.
-   */
-  @App.DoNotReload
-  sealed interface PostResult {}
+    void noteSink(Note.Sink value);
 
-  /**
-   * Indicates that the host application should embed this result.
-   */
-  @App.DoNotReload
-  static final class Embed implements PostResult {
+    void reservationEpoch(Instant value);
 
-    private final Http.Status status;
-
-    private final Html.Component component;
-
-    private Embed(Http.Status status, Html.Component component) {
-      this.status = status;
-
-      this.component = component;
-    }
-
-    public final Http.Status status() { return status; }
-
-    public final Html.Component get() { return component; }
+    void reservationRandom(RandomGenerator value);
 
   }
 
-  static Embed embedOk(Html.Component component) {
-    return embed(Http.Status.OK, component);
-  }
-
-  static Embed embedBadRequest(Html.Component component) {
-    return embed(Http.Status.BAD_REQUEST, component);
-  }
-
-  private static Embed embed(Http.Status status, Html.Component component) {
-    Objects.requireNonNull(status, "status == null");
-    Objects.requireNonNull(component, "component == null");
-
-    return new Embed(status, component);
-  }
-
-  /**
-   * Indicates that the host application should perform a redirect to the
-   * specified location.
-   */
-  @App.DoNotReload
-  static final class Redirect implements PostResult {
-
-    private final String location;
-
-    private Redirect(String location) {
-      this.location = location;
-    }
-
-    public final String get() {
-      return location;
-    }
-
-  }
-
-  static Redirect redirect(String location) {
-    Objects.requireNonNull(location, "location == null");
-
-    return new Redirect(location);
-  }
-
-  static LandingDemo create(LandingDemoConfig config) {
-    return Kino.create(config);
+  static LandingDemo create(Consumer<? super Options> opts) {
+    return AppCtx.create(opts);
   }
 
   static Css.Library styles() {
-    return Kino.styles();
+    return AppCtx.styles();
   }
 
-  Html.Component get(Http.Exchange http);
+  Http.Routing.Module localRoutes();
 
-  PostResult post(Http.Exchange http);
+  Http.Routing.Module publicRoutes();
 
 }

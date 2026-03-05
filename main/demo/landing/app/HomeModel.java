@@ -18,7 +18,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-/// A movie that is now showing at the theater.
+/// A movie that is now showing at the theater (raw DB data).
 record HomeModel(
     int id,
     String title

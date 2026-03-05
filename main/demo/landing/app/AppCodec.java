@@ -17,7 +17,7 @@ package demo.landing.app;
 
 import module java.base;
 
-final class AppHashGen {
+final class AppCodec {
 
   private static final int BYTE_MASK = 0xFF;
 
@@ -31,7 +31,7 @@ final class AppHashGen {
 
   private final AppView[] views = AppView.values();
 
-  AppHashGen(Clock clock, byte[] key) {
+  AppCodec(Clock clock, byte[] key) {
     this.clock = Objects.requireNonNull(clock, "clock == null");
 
     if (key.length < LENGTH) {
@@ -41,29 +41,45 @@ final class AppHashGen {
     this.key = key;
   }
 
-  public static AppHashGen create(Clock clock, byte[] key) {
-    return new AppHashGen(clock, key);
+  public static AppCodec create(Clock clock, byte[] key) {
+    return new AppCodec(clock, key);
   }
 
-  /*
-  
-   random = 4 bytes
-  
-   view = 1 byte
-  
-   rid = 8 bytes
-  
-   id = 4 byte
-   ------------------
-   total = 17 bytes
-  
-   */
+  public final AppUrl parse(String hash) {
+    if (hash == null) {
+      return null;
+    }
 
-  public final AppHash decode(String raw) {
+    final int length;
+    length = hash.length();
+
+    // '#' + 'demo' + '=' + (17 * 2) + ';'
+    if (length != 41) {
+      return null;
+    }
+
+    if (!hash.startsWith("#demo=")) {
+      return null;
+    }
+
+    final char last;
+    last = hash.charAt(41 - 1);
+
+    if (last != ';') {
+      return null;
+    }
+
+    final String value;
+    value = hash.substring(6, 41 - 1);
+
+    return decode(value);
+  }
+
+  public final AppUrl decode(String raw) {
     if (raw == null) {
       // a null value means a request with no URL fragment
       // => we should present the first view
-      return AppHash.of(AppView.HOME);
+      return AppUrl.of(AppView.HOME);
     }
 
     final byte[] bytes;
@@ -71,12 +87,12 @@ final class AppHashGen {
     try {
       bytes = hexFormat.parseHex(raw);
     } catch (IllegalArgumentException expected) {
-      return AppHash.of(AppView.NOT_FOUND);
+      return AppUrl.of(AppView.NOT_FOUND);
     }
 
     if (bytes.length != LENGTH) {
       // wrong length
-      return AppHash.of(AppView.NOT_FOUND);
+      return AppUrl.of(AppView.NOT_FOUND);
     }
 
     int index;
@@ -94,7 +110,7 @@ final class AppHashGen {
     pageOrdinal = bytes[index++] & BYTE_MASK;
 
     if (pageOrdinal < 0 || pageOrdinal >= views.length) {
-      return AppHash.of(AppView.NOT_FOUND);
+      return AppUrl.of(AppView.NOT_FOUND);
     }
 
     final AppView view;
@@ -118,11 +134,11 @@ final class AppHashGen {
     id |= (bytes[index++] & BYTE_MASK) << 8;
     id |= (bytes[index++] & BYTE_MASK) << 0;
 
-    return AppHash.of(view, rid, id);
+    return AppUrl.of(view, rid, id);
   }
 
-  public final String encode(AppHash query) {
-    Objects.requireNonNull(query, "query == null");
+  public final String encode(AppUrl url) {
+    Objects.requireNonNull(url, "query == null");
 
     final byte[] bytes;
     bytes = new byte[LENGTH];
@@ -143,14 +159,14 @@ final class AppHashGen {
 
     // first byte = view
     final AppView view;
-    view = query.view();
+    view = url.view();
 
     bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
 
     // next 8 bytes = rid (big endian)
 
     final AppReservation reservation;
-    reservation = query.reservation();
+    reservation = url.reservation();
 
     final long rid;
     rid = reservation.id();
@@ -166,7 +182,7 @@ final class AppHashGen {
 
     // next 4 bytes = id
     int id;
-    id = query.id();
+    id = url.id();
 
     bytes[index++] = (byte) ((id >>> 24) & BYTE_MASK);
     bytes[index++] = (byte) ((id >>> 16) & BYTE_MASK);

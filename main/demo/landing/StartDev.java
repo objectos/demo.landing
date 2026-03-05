@@ -40,25 +40,25 @@ public final class StartDev extends Start {
   }
 
   @Override
-  final LandingDemoConfig config(App.Injector injector) {
-    return LandingDemoConfig.create(config -> {
+  final LandingDemo demo(App.Injector injector) {
+    return LandingDemo.create(opts -> {
       final HexFormat hexFormat;
       hexFormat = HexFormat.of();
 
       final byte[] codecKey;
       codecKey = hexFormat.parseHex("7b9e2a4f6c8d1e3b5a0f7d9c4e2b6a8f1d3c5e7b9a0f2d4c6e8b1a3f5c7d9e0b");
 
-      config.codecKey(codecKey);
+      opts.codecKey(codecKey);
 
       final Sql.Database database;
       database = injector.getInstance(Sql.Database.class);
 
-      config.database(database);
+      opts.database(database);
 
       final Note.Sink noteSink;
       noteSink = injector.getInstance(Note.Sink.class);
 
-      config.noteSink(noteSink);
+      opts.noteSink(noteSink);
     });
   }
 

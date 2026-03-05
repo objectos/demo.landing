@@ -15,8 +15,7 @@
  */
 package demo.landing.dev;
 
-import demo.landing.app.AppRoutes;
-import demo.landing.app.Kino;
+import demo.landing.app.AppCtx;
 import objectos.way.Css;
 import objectos.way.Html;
 
@@ -65,7 +64,7 @@ final class DevView extends Html.Template {
         width:100%
         """),
 
-        onload(AppRoutes.ONLOAD),
+        onload(AppCtx.ONLOAD),
 
         hero(),
 
@@ -168,7 +167,7 @@ final class DevView extends Html.Template {
             ),
 
             div(
-                Kino.SHELL,
+                AppCtx.SHELL,
 
                 text("Loading")
             )

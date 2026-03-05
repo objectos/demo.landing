@@ -16,7 +16,6 @@
 package demo.landing;
 
 import demo.landing.dev.DevModule;
-import demo.landing.local.LocalModule;
 import objectos.way.App;
 import objectos.way.Http;
 
@@ -42,16 +41,10 @@ public final class BootModule implements Http.Routing.Module {
 
   @Override
   public final void configure(Http.Routing routing) {
-    routing.install(
-        new DevModule(injector)
-    );
+    final DevModule dev;
+    dev = new DevModule(injector);
 
-    final LandingDemoConfig config;
-    config = injector.getInstance(LandingDemoConfig.class);
-
-    routing.install(
-        new LocalModule(config)
-    );
+    routing.install(dev);
 
     routing.handler(Http.Handler.notFound());
   }

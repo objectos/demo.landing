@@ -16,7 +16,7 @@
 package demo.landing.app;
 
 import module java.base;
-import objectos.script.JsAction;
+import module objectos.way;
 
 /// Renders the home page view. More specifically, it renders:
 ///
@@ -24,13 +24,12 @@ import objectos.script.JsAction;
 /// currently playing.
 final class HomeView extends UiShell {
 
-  private final AppReservation reservation;
+  /// A movie to be displayed in this view
+  record Movie(String title, JsAction onclick, String imgsrc) {}
 
-  private final List<HomeModel> movies;
+  private final List<Movie> movies;
 
-  HomeView(AppReservation reservation, List<HomeModel> movies) {
-    this.reservation = reservation;
-
+  HomeView(List<Movie> movies) {
     this.movies = movies;
   }
 
@@ -68,18 +67,12 @@ final class HomeView extends UiShell {
   }
 
   private void renderMovies() {
-    for (HomeModel movie : movies) {
+    for (Movie movie : movies) {
       renderMovie(movie);
     }
   }
 
-  private void renderMovie(HomeModel movie) {
-    final String clickUrl;
-    clickUrl = reservation.to(AppView.MOVIE, movie.id());
-
-    final JsAction clickAction;
-    clickAction = follow(clickUrl);
-
+  private void renderMovie(Movie movie) {
     li(
         css("""
         flex:0_0_128rx
@@ -91,7 +84,7 @@ final class HomeView extends UiShell {
             hover/cursor:pointer
             """),
 
-            onclick(clickAction),
+            onclick(movie.onclick),
 
             img(
                 css("""
@@ -102,7 +95,7 @@ final class HomeView extends UiShell {
                 &:is(:where(.group):hover_*)/outline:2px_solid_var(--color-gray-500)
                 """),
 
-                src("/demo/landing/poster" + movie.id() + ".jpg")
+                src(movie.imgsrc)
             ),
 
             h3(

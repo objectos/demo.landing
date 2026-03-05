@@ -36,11 +36,6 @@ abstract class UiShell extends Html.Template {
     hover/background-color:var(--color-btn-primary-hover)
     """);
 
-  /// The default 'follow' action.
-  protected final JsAction follow(String url) {
-    return Js.byId(AppRoutes.ID).render(url);
-  }
-
   /// The default 'submit' action.
   protected final JsAction submit() {
     return Js.submit(opts -> {
@@ -51,7 +46,7 @@ abstract class UiShell extends Html.Template {
       opts.scroll(false);
 
       // update only the demo shell
-      opts.update(AppRoutes.ID);
+      opts.update(AppCtx.SHELL);
     });
   }
 
@@ -61,7 +56,7 @@ abstract class UiShell extends Html.Template {
     sources = combineSources();
 
     div(
-        AppRoutes.ID,
+        AppCtx.SHELL,
 
         css("""
         display:grid
@@ -89,8 +84,8 @@ abstract class UiShell extends Html.Template {
 
     combined.addAll(sources);
 
-    combined.add(Source.AppRoutes);
-    combined.add(Source.AppTransactional);
+    combined.add(Source.AppCtx);
+    combined.add(Source.AppView);
     combined.add(Source.UiIcon);
     combined.add(Source.UiShell);
 
@@ -135,11 +130,7 @@ abstract class UiShell extends Html.Template {
                 display:flex
                 gap:6rx
                 height:100%
-
-                hover/cursor:pointer
                 """),
-
-                onclick(follow("/demo.landing/home")),
 
                 objectosLogo(),
 
@@ -360,9 +351,7 @@ abstract class UiShell extends Html.Template {
   // # BEGIN: Back Link
   // ##################################################################
 
-  final void backLink(String url) {
-    testableField("back-link", url);
-
+  final void backLink(JsAction onclick) {
     div(
         css("""
         border-radius:9999px
@@ -375,7 +364,7 @@ abstract class UiShell extends Html.Template {
         hover/cursor:pointer
         """),
 
-        onclick(follow(url)),
+        onclick(onclick),
 
         c(
             UiIcon.ARROW_LEFT.css("""

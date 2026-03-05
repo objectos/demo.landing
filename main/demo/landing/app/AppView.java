@@ -34,4 +34,12 @@ enum AppView {
 
   final String slug = name().toLowerCase(Locale.US);
 
+  final String href(int id, AppReservation reservation) {
+    return switch (this) {
+      case HOME, NOT_FOUND -> "/demo.landing/" + slug + reservation;
+
+      default -> "/demo.landing/" + slug + "/" + id + reservation;
+    };
+  }
+
 }

@@ -15,58 +15,48 @@
  */
 package demo.landing.dev;
 
+import static objectos.way.Http.Method.GET;
+
 import demo.landing.LandingDemo;
-import demo.landing.LandingDemoConfig;
-import demo.landing.app.Kino;
-import java.nio.file.Path;
-import objectos.way.App;
-import objectos.way.Css;
-import objectos.way.Html;
-import objectos.way.Http;
-import objectos.way.Note;
-import objectos.way.Web;
+import module java.base;
+import module objectos.way;
 
 public final class DevModule implements Http.Routing.Module {
 
-  private final App.Injector injector;
+  private final LandingDemo ctx;
+
+  private final Html.Component head;
+
+  private final Note.Sink noteSink;
+
+  private final Web.Resources webResources;
 
   public DevModule(App.Injector injector) {
-    this.injector = injector;
+    ctx = injector.getInstance(LandingDemo.class);
+
+    head = injector.getInstance(Html.Component.class);
+
+    noteSink = injector.getInstance(Note.Sink.class);
+
+    webResources = injector.getInstance(Web.Resources.class);
   }
 
   @Override
   public final void configure(Http.Routing routing) {
-    routing.install(appRoutes());
+    routing.install(ctx.publicRoutes());
 
-    routing.path("/", path -> {
-      path.allow(Http.Method.GET, http -> http.movedPermanently("/index.html"));
-    });
+    routing.install(ctx.localRoutes());
 
-    routing.path("/index.html", path -> {
-      path.allow(Http.Method.GET, this::index);
-    });
+    routing.path("/", GET, http -> http.movedPermanently("/index.html"));
 
-    routing.path("/ui/styles.css", path -> {
-      path.allow(Http.Method.GET, this::styles);
-    });
+    routing.path("/index.html", GET, this::index);
 
-    final Web.Resources webResources;
-    webResources = injector.getInstance(Web.Resources.class);
+    routing.path("/ui/styles.css", GET, this::styles);
 
     routing.handler(webResources);
   }
 
-  private Http.Routing.Module appRoutes() {
-    final LandingDemoConfig config;
-    config = injector.getInstance(LandingDemoConfig.class);
-
-    return Kino.routes(config);
-  }
-
   private void index(Http.Exchange http) {
-    final Html.Component head;
-    head = injector.getInstance(Html.Component.class);
-
     final DevView object;
     object = new DevView(head);
 
@@ -75,9 +65,6 @@ public final class DevModule implements Http.Routing.Module {
 
   private void styles(Http.Exchange http) {
     http.ok(Css.StyleSheet.create(opts -> {
-      final Note.Sink noteSink;
-      noteSink = injector.getInstance(Note.Sink.class);
-
       opts.noteSink(noteSink);
 
       opts.include(LandingDemo.styles());
