@@ -41,22 +41,32 @@ final class Home implements Http.Handler {
       return;
     }
 
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
+
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
     final List<HomeModel> rows;
     rows = HomeModel.query(trx);
 
-    final AppReservation reservation;
-    reservation = AppReservation.parse(http);
-
     final List<HomeView.Movie> movies;
     movies = rows.stream().map(row -> toUi(reservation, row)).toList();
 
-    final HomeView view;
-    view = new HomeView(movies);
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = ctx.homeAction(reservation);
 
-    http.ok(view);
+      opts.main = new HomeView(movies);
+
+      opts.sources = List.of(
+          Source.Home,
+          Source.HomeModel,
+          Source.HomeView
+      );
+    });
+
+    http.ok(shell);
   }
 
   private HomeView.Movie toUi(AppReservation reservation, HomeModel row) {

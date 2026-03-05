@@ -20,21 +20,46 @@ import module objectos.way;
 
 /// The demo UI shell responsible for displaying the application on the
 /// top/right and the source code on the bottom/left.
-abstract class UiShell extends Html.Template {
+final class UiShell extends Html.Template {
 
-  static final Html.ClassName PRIMARY = Html.ClassName.ofText("""
-    appearance:none
-    background-color:var(--color-btn-primary)
-    color:var(--color-btn-primary-text)
-    cursor:pointer
-    display:flex
-    font-size:14rx
-    min-height:48rx
-    padding:14rx_63rx_14rx_15rx
+  static final class Builder {
 
-    active/background-color:var(--color-btn-primary-active)
-    hover/background-color:var(--color-btn-primary-hover)
-    """);
+    JsAction homeAction;
+
+    Html.Component main;
+
+    List<SourceModel> sources;
+
+  }
+
+  private final JsAction homeAction;
+
+  private final Html.Component main;
+
+  private final List<SourceModel> sources;
+
+  private UiShell(JsAction homeAction, Html.Component main, List<SourceModel> sources) {
+    this.homeAction = homeAction;
+
+    this.main = main;
+
+    this.sources = sources;
+  }
+
+  public static UiShell of(Consumer<Builder> opts) {
+    final Builder builder;
+    builder = new Builder();
+
+    opts.accept(builder);
+
+    return new UiShell(
+        builder.homeAction,
+
+        builder.main,
+
+        builder.sources
+    );
+  }
 
   /// The default 'submit' action.
   protected final JsAction submit() {
@@ -79,9 +104,6 @@ abstract class UiShell extends Html.Template {
     final List<SourceModel> combined;
     combined = new ArrayList<>();
 
-    final List<SourceModel> sources;
-    sources = viewSources();
-
     combined.addAll(sources);
 
     combined.add(Source.AppCtx);
@@ -91,8 +113,6 @@ abstract class UiShell extends Html.Template {
 
     return combined;
   }
-
-  abstract List<SourceModel> viewSources();
 
   // ##################################################################
   // # BEGIN: Main contents
@@ -130,7 +150,11 @@ abstract class UiShell extends Html.Template {
                 display:flex
                 gap:6rx
                 height:100%
+
+                hover/cursor:pointer
                 """),
+
+                onclick(homeAction),
 
                 objectosLogo(),
 
@@ -173,12 +197,10 @@ abstract class UiShell extends Html.Template {
             &_h2/padding:48rx_0_8rx
             """),
 
-            f(this::renderMain)
+            c(main)
         )
     );
   }
-
-  abstract void renderMain();
 
   // ##################################################################
   // # END: Main contents

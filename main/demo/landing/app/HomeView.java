@@ -22,7 +22,7 @@ import module objectos.way;
 ///
 /// - a top header with the "Now Showing" title. - a list of the movies that are
 /// currently playing.
-final class HomeView extends UiShell {
+final class HomeView extends Html.Template {
 
   /// A movie to be displayed in this view
   record Movie(String title, JsAction onclick, String imgsrc) {}
@@ -34,16 +34,7 @@ final class HomeView extends UiShell {
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-        Source.Home,
-        Source.HomeModel,
-        Source.HomeView
-    );
-  }
-
-  @Override
-  final void renderMain() {
+  protected final void render() {
     div(
         css("""
         margin-bottom:32rx

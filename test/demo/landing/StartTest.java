@@ -117,6 +117,8 @@ public final class StartTest extends Start {
       demo.reservationEpoch(epoch.toInstant());
 
       demo.reservationRandom(fixedGenerator);
+
+      demo.testing();
     });
   }
 

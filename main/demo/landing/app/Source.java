@@ -265,99 +265,6 @@ final class ConfirmView extends UiShell {
 }
 """);
 
-  static final SourceModel KinoStyles = SourceModel.create("KinoStyles.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import objectos.way.Css;
-
-final class KinoStyles implements Css.Library {
-
-  @Override
-  public final void configure(Css.Library.Options opts) {
-    opts.scanClasses(
-        HomeView.class,
-        MovieView.class,
-        SeatsView.class,
-        UiIcon.class,
-        UiShell.class
-    );
-
-    opts.theme(\"""
-    :root {
-      --font-sans: 'InterVariable', var(--default-font-sans);
-      --font-mono: 'Hack', var(--default-font-mono);
-      --color-body: var(--color-white);
-      --color-border: var(--color-gray-200);
-      --color-btn-ghost: var(--color-body);
-      --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, black 15%);
-      --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, black 10%);
-      --color-btn-ghost-text: var(--color-text);
-      --color-btn-primary: var(--color-blue-600);
-      --color-btn-primary-active: color-mix(in oklab, var(--color-btn-primary) 70%, black 30%);
-      --color-btn-primary-hover: color-mix(in oklab, var(--color-btn-primary) 85%, black 15%);
-      --color-btn-primary-text: var(--color-gray-50);
-      --color-focus: var(--color-blue-600);
-      --color-footer: var(--color-gray-700);
-      --color-footer-text: var(--color-gray-100);
-      --color-high-comment: var(--color-gray-500);
-      --color-high-keyword: var(--color-blue-700);
-      --color-high-literal: var(--color-red-600);
-      --color-high-meta: var(--color-yellow-600);
-      --color-high-string: var(--color-green-700);
-      --color-html: var(--color-gray-50);
-      --color-icon: var(--color-gray-800);
-      --color-layer: var(--color-stone-100);
-      --color-link: var(--color-blue-600);
-      --color-link-hover: color-mix(in oklab, var(--color-link) 85%, black 15%);
-      --color-logo: var(--color-gray-800);
-      --color-logo-hover: var(--color-link);
-      --color-text: var(--color-gray-800);
-      --color-text-secondary: var(--color-gray-600);
-    }
-    \""");
-
-    opts.theme(\"""
-    :root { @media (prefers-color-scheme: dark) {
-      --color-body: var(--color-neutral-800);
-      --color-border: var(--color-neutral-600);
-      --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, white 15%);
-      --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, white 10%);
-      --color-focus: var(--color-white);
-      --color-high-comment: var(--color-fuchsia-400);
-      --color-high-keyword: var(--color-blue-400);
-      --color-high-literal: var(--color-red-400);
-      --color-high-meta: var(--color-pink-400);
-      --color-high-string: var(--color-green-300);
-      --color-icon: var(--color-gray-200);
-      --color-layer: var(--color-stone-900);
-      --color-link: var(--color-blue-400);
-      --color-link-hover: color-mix(in oklab, var(--color-link) 85%, white 15%);
-      --color-logo: var(--color-neutral-100);
-      --color-text: var(--color-neutral-100);
-      --color-text-secondary: var(--color-neutral-300);
-    }}
-    \""");
-  }
-
-}
-
-""");
-
   static final SourceModel AppReservation = SourceModel.create("AppReservation.java", """
 /*
  * Copyright (C) 2024-2026 Objectos Software LTDA.
@@ -427,7 +334,7 @@ import module objectos.way;
 ///
 /// - a top header with the "Now Showing" title. - a list of the movies that are
 /// currently playing.
-final class HomeView extends UiShell {
+final class HomeView extends Html.Template {
 
   /// A movie to be displayed in this view
   record Movie(String title, JsAction onclick, String imgsrc) {}
@@ -439,16 +346,7 @@ final class HomeView extends UiShell {
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-        Source.Home,
-        Source.HomeModel,
-        Source.HomeView
-    );
-  }
-
-  @Override
-  final void renderMain() {
+  protected final void render() {
     div(
         css(\"""
         margin-bottom:32rx
@@ -909,10 +807,10 @@ import module objectos.way;
 /// The "/home" controller.
 final class Home implements Http.Handler {
 
-  private final AppCtx kino;
+  private final AppCtx ctx;
 
-  Home(AppCtx kino) {
-    this.kino = kino;
+  Home(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
@@ -921,7 +819,7 @@ final class Home implements Http.Handler {
     hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
 
     final String hashRedirect;
-    hashRedirect = kino.decodeHash(hashValue);
+    hashRedirect = ctx.decodeHash(hashValue);
 
     if (hashRedirect != null) {
       http.found(hashRedirect);
@@ -929,22 +827,32 @@ final class Home implements Http.Handler {
       return;
     }
 
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
+
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
     final List<HomeModel> rows;
     rows = HomeModel.query(trx);
 
-    final AppReservation reservation;
-    reservation = AppReservation.parse(http);
-
     final List<HomeView.Movie> movies;
     movies = rows.stream().map(row -> toUi(reservation, row)).toList();
 
-    final HomeView view;
-    view = new HomeView(movies);
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = ctx.homeAction(reservation);
 
-    http.ok(view);
+      opts.main = new HomeView(movies);
+
+      opts.sources = List.of(
+          Source.Home,
+          Source.HomeModel,
+          Source.HomeView
+      );
+    });
+
+    http.ok(shell);
   }
 
   private HomeView.Movie toUi(AppReservation reservation, HomeModel row) {
@@ -955,7 +863,7 @@ final class Home implements Http.Handler {
     id = row.id();
 
     final JsAction onclick;
-    onclick = kino.clickAction(AppView.MOVIE, id, reservation);
+    onclick = ctx.clickAction(AppView.MOVIE, id, reservation);
 
     final String imgsrc;
     imgsrc = "/demo.landing/poster" + id + ".jpg";
@@ -1979,13 +1887,6 @@ public final class AppCtx implements LandingDemo {
     return builder.build();
   }
 
-  /// Creates a new instance of the demo's `Css.StyleSheet` configuration.
-  ///
-  /// @return a new instance of the demo's `Css.StyleSheet` configuration
-  public static Css.Library styles() {
-    return new KinoStyles();
-  }
-
   // ##################################################################
   // # BEGIN: Routes
   // ##################################################################
@@ -2038,35 +1939,80 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   // ##################################################################
-  // # BEGIN: UI
+  // # BEGIN: CSS
   // ##################################################################
 
-  public static final Html.Id SHELL = Html.Id.of("demo.landing");
+  @Override
+  public final Css.Library styles() {
+    return opts -> {
+      opts.scanClasses(
+          HomeView.class,
+          MovieView.class,
+          SeatsView.class,
+          UiIcon.class,
+          UiShell.class
+      );
 
-  public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
+      opts.theme(\"""
+      :root {
+        --font-sans: 'InterVariable', var(--default-font-sans);
+        --font-mono: 'Hack', var(--default-font-mono);
+        --color-body: var(--color-white);
+        --color-border: var(--color-gray-200);
+        --color-btn-ghost: var(--color-body);
+        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, black 15%);
+        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, black 10%);
+        --color-btn-ghost-text: var(--color-text);
+        --color-btn-primary: var(--color-blue-600);
+        --color-btn-primary-active: color-mix(in oklab, var(--color-btn-primary) 70%, black 30%);
+        --color-btn-primary-hover: color-mix(in oklab, var(--color-btn-primary) 85%, black 15%);
+        --color-btn-primary-text: var(--color-gray-50);
+        --color-focus: var(--color-blue-600);
+        --color-footer: var(--color-gray-700);
+        --color-footer-text: var(--color-gray-100);
+        --color-high-comment: var(--color-gray-500);
+        --color-high-keyword: var(--color-blue-700);
+        --color-high-literal: var(--color-red-600);
+        --color-high-meta: var(--color-yellow-600);
+        --color-high-string: var(--color-green-700);
+        --color-html: var(--color-gray-50);
+        --color-icon: var(--color-gray-800);
+        --color-layer: var(--color-stone-100);
+        --color-link: var(--color-blue-600);
+        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, black 15%);
+        --color-logo: var(--color-gray-800);
+        --color-logo-hover: var(--color-link);
+        --color-text: var(--color-gray-800);
+        --color-text-secondary: var(--color-gray-600);
+      }
+      \""");
 
-  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home", opts -> {
-    opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().href());
-  });
-
-  public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
-    final String href;
-    href = href(view, id, reservation.id());
-
-    final String hash;
-    hash = encodeHash(view, id, reservation);
-
-    return Js.byId(SHELL).render(href, opts -> {
-      opts.history("/index.html#demo=" + hash + ";");
-    });
-  }
-
-  private String href(AppView view, int id, long reservationId) {
-    return "/demo.landing/" + view.slug + "/" + id + "?reservationId" + reservationId;
+      opts.theme(\"""
+      :root { @media (prefers-color-scheme: dark) {
+        --color-body: var(--color-neutral-800);
+        --color-border: var(--color-neutral-600);
+        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, white 15%);
+        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, white 10%);
+        --color-focus: var(--color-white);
+        --color-high-comment: var(--color-fuchsia-400);
+        --color-high-keyword: var(--color-blue-400);
+        --color-high-literal: var(--color-red-400);
+        --color-high-meta: var(--color-pink-400);
+        --color-high-string: var(--color-green-300);
+        --color-icon: var(--color-gray-200);
+        --color-layer: var(--color-stone-900);
+        --color-link: var(--color-blue-400);
+        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, white 15%);
+        --color-logo: var(--color-neutral-100);
+        --color-text: var(--color-neutral-100);
+        --color-text-secondary: var(--color-neutral-300);
+      }}
+      \""");
+    };
   }
 
   // ##################################################################
-  // # END: UI
+  // # END: CSS
   // ##################################################################
 
   // ##################################################################
@@ -2074,17 +2020,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {
@@ -2127,7 +2073,7 @@ public final class AppCtx implements LandingDemo {
     if (raw == null) {
       // a null value means a request with no URL fragment
       // => we should present the first view
-      return href(AppView.HOME, 0, 0);
+      return href(AppView.HOME);
     }
 
     final byte[] bytes;
@@ -2135,12 +2081,12 @@ public final class AppCtx implements LandingDemo {
     try {
       bytes = hexFormat.parseHex(raw);
     } catch (IllegalArgumentException expected) {
-      return href(AppView.NOT_FOUND, 0, 0);
+      return href(AppView.NOT_FOUND);
     }
 
     if (bytes.length != HASH_LENGTH) {
       // wrong length
-      return href(AppView.NOT_FOUND, 0, 0);
+      return href(AppView.NOT_FOUND);
     }
 
     int index;
@@ -2159,7 +2105,7 @@ public final class AppCtx implements LandingDemo {
 
     if (viewOrdinal < 0 || viewOrdinal >= views.length) {
       // invalid view ordinal
-      return href(AppView.NOT_FOUND, 0, 0);
+      return href(AppView.NOT_FOUND);
     }
 
     final AppView view;
@@ -2204,7 +2150,7 @@ public final class AppCtx implements LandingDemo {
     }
   }
 
-  public final String encodeHash(AppView view, int id, AppReservation reservation) {
+  public final String encodeHash(AppView view, int id, long rid) {
     final byte[] bytes;
     bytes = new byte[HASH_LENGTH];
 
@@ -2232,9 +2178,6 @@ public final class AppCtx implements LandingDemo {
     bytes[index++] = (byte) ((id >>> 0) & BYTE_MASK);
 
     // next 8 bytes = rid (big endian)
-    final long rid;
-    rid = reservation.id();
-
     bytes[index++] = (byte) ((rid >>> 56) & BYTE_MASK);
     bytes[index++] = (byte) ((rid >>> 48) & BYTE_MASK);
     bytes[index++] = (byte) ((rid >>> 40) & BYTE_MASK);
@@ -2251,6 +2194,82 @@ public final class AppCtx implements LandingDemo {
 
   // ##################################################################
   // # END: History/Hash
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: UI
+  // ##################################################################
+
+  public static final Html.Id SHELL = Html.Id.of("demo.landing");
+
+  public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
+
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home", opts -> {
+    opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().href());
+  });
+
+  static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""
+    appearance:none
+    background-color:var(--color-btn-primary)
+    color:var(--color-btn-primary-text)
+    cursor:pointer
+    display:flex
+    font-size:14rx
+    min-height:48rx
+    padding:14rx_63rx_14rx_15rx
+
+    active/background-color:var(--color-btn-primary-active)
+    hover/background-color:var(--color-btn-primary-hover)
+    \""");
+
+  public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
+    final long rid;
+    rid = reservation.id();
+
+    final String href;
+    href = href(view, id, rid);
+
+    final String hash;
+    hash = encodeHash(view, id, rid);
+
+    return Js.byId(SHELL).render(href, opts -> {
+      opts.history("/index.html#demo=" + hash + ";");
+    });
+  }
+
+  public final JsAction homeAction(AppReservation reservation) {
+    return clickAction(AppView.HOME, 0, reservation);
+  }
+
+  private String href(AppView view) {
+    return "/demo.landing/" + view.slug;
+  }
+
+  private String href(AppView view, int id, long reservationId) {
+    final StringBuilder href;
+    href = new StringBuilder();
+
+    href.append("/demo.landing/");
+
+    href.append(view.slug);
+
+    if (id > 0) {
+      href.append('/');
+
+      href.append(id);
+    }
+
+    if (reservationId != 0) {
+      href.append("?reservationId=");
+
+      href.append(reservationId);
+    }
+
+    return href.toString();
+  }
+
+  // ##################################################################
+  // # END: UI
   // ##################################################################
 
   // ##################################################################
@@ -3233,225 +3252,6 @@ final class SeatsView extends UiShell {
 }
 """);
 
-  static final SourceModel AppCodec = SourceModel.create("AppCodec.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import module java.base;
-
-final class AppCodec {
-
-  private static final int BYTE_MASK = 0xFF;
-
-  private static final int LENGTH = 17;
-
-  private final Clock clock;
-
-  private final HexFormat hexFormat = HexFormat.of();
-
-  private final byte[] key;
-
-  private final AppView[] views = AppView.values();
-
-  AppCodec(Clock clock, byte[] key) {
-    this.clock = Objects.requireNonNull(clock, "clock == null");
-
-    if (key.length < LENGTH) {
-      throw new IllegalArgumentException("Key should have at least " + LENGTH + " bytes");
-    }
-
-    this.key = key;
-  }
-
-  public static AppCodec create(Clock clock, byte[] key) {
-    return new AppCodec(clock, key);
-  }
-
-  public final AppUrl parse(String hash) {
-    if (hash == null) {
-      return null;
-    }
-
-    final int length;
-    length = hash.length();
-
-    // '#' + 'demo' + '=' + (17 * 2) + ';'
-    if (length != 41) {
-      return null;
-    }
-
-    if (!hash.startsWith("#demo=")) {
-      return null;
-    }
-
-    final char last;
-    last = hash.charAt(41 - 1);
-
-    if (last != ';') {
-      return null;
-    }
-
-    final String value;
-    value = hash.substring(6, 41 - 1);
-
-    return decode(value);
-  }
-
-  public final AppUrl decode(String raw) {
-    if (raw == null) {
-      // a null value means a request with no URL fragment
-      // => we should present the first view
-      return AppUrl.of(AppView.HOME);
-    }
-
-    final byte[] bytes;
-
-    try {
-      bytes = hexFormat.parseHex(raw);
-    } catch (IllegalArgumentException expected) {
-      return AppUrl.of(AppView.NOT_FOUND);
-    }
-
-    if (bytes.length != LENGTH) {
-      // wrong length
-      return AppUrl.of(AppView.NOT_FOUND);
-    }
-
-    int index;
-    index = 0;
-
-    int random = 0;
-    random |= (bytes[index++] & BYTE_MASK) << 24;
-    random |= (bytes[index++] & BYTE_MASK) << 16;
-    random |= (bytes[index++] & BYTE_MASK) << 8;
-    random |= (bytes[index++] & BYTE_MASK) << 0;
-
-    obfuscate(bytes, random);
-
-    int pageOrdinal;
-    pageOrdinal = bytes[index++] & BYTE_MASK;
-
-    if (pageOrdinal < 0 || pageOrdinal >= views.length) {
-      return AppUrl.of(AppView.NOT_FOUND);
-    }
-
-    final AppView view;
-    view = views[pageOrdinal];
-
-    // next 8 bytes = rid (big endian)
-    long rid = 0L;
-    rid |= (long) (bytes[index++] & BYTE_MASK) << 56;
-    rid |= (long) (bytes[index++] & BYTE_MASK) << 48;
-    rid |= (long) (bytes[index++] & BYTE_MASK) << 40;
-    rid |= (long) (bytes[index++] & BYTE_MASK) << 32;
-    rid |= (long) (bytes[index++] & BYTE_MASK) << 24;
-    rid |= (long) (bytes[index++] & BYTE_MASK) << 16;
-    rid |= (long) (bytes[index++] & BYTE_MASK) << 8;
-    rid |= (long) (bytes[index++] & BYTE_MASK) << 0;
-
-    // next 4 byte = id
-    int id = 0;
-    id |= (bytes[index++] & BYTE_MASK) << 24;
-    id |= (bytes[index++] & BYTE_MASK) << 16;
-    id |= (bytes[index++] & BYTE_MASK) << 8;
-    id |= (bytes[index++] & BYTE_MASK) << 0;
-
-    return AppUrl.of(view, rid, id);
-  }
-
-  public final String encode(AppUrl url) {
-    Objects.requireNonNull(url, "query == null");
-
-    final byte[] bytes;
-    bytes = new byte[LENGTH];
-
-    int index;
-    index = 0;
-
-    final long millis;
-    millis = clock.millis();
-
-    final int random;
-    random = (int) millis ^ (int) (millis >>> 32);
-
-    bytes[index++] = (byte) ((random >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) ((random >>> 0) & BYTE_MASK);
-
-    // first byte = view
-    final AppView view;
-    view = url.view();
-
-    bytes[index++] = (byte) (view.ordinal() & BYTE_MASK);
-
-    // next 8 bytes = rid (big endian)
-
-    final AppReservation reservation;
-    reservation = url.reservation();
-
-    final long rid;
-    rid = reservation.id();
-
-    bytes[index++] = (byte) ((rid >>> 56) & BYTE_MASK);
-    bytes[index++] = (byte) ((rid >>> 48) & BYTE_MASK);
-    bytes[index++] = (byte) ((rid >>> 40) & BYTE_MASK);
-    bytes[index++] = (byte) ((rid >>> 32) & BYTE_MASK);
-    bytes[index++] = (byte) ((rid >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((rid >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((rid >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) (rid & BYTE_MASK);
-
-    // next 4 bytes = id
-    int id;
-    id = url.id();
-
-    bytes[index++] = (byte) ((id >>> 24) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 16) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 8) & BYTE_MASK);
-    bytes[index++] = (byte) ((id >>> 0) & BYTE_MASK);
-
-    obfuscate(bytes, random);
-
-    return hexFormat.formatHex(bytes);
-  }
-
-  private void obfuscate(byte[] bytes, int random) {
-    final int offset;
-    offset = random == Integer.MIN_VALUE ? Integer.MAX_VALUE : Math.abs(random);
-
-    for (int idx = 4, len = bytes.length; idx < len; idx++) {
-      byte b;
-      b = bytes[idx];
-
-      int keyIndex;
-      keyIndex = (idx + offset) % key.length;
-
-      byte k;
-      k = key[keyIndex];
-
-      bytes[idx] = (byte) (b ^ k);
-    }
-  }
-
-}
-
-""");
-
   static final SourceModel MovieScreening = SourceModel.create("MovieScreening.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -4169,21 +3969,46 @@ import module objectos.way;
 
 /// The demo UI shell responsible for displaying the application on the
 /// top/right and the source code on the bottom/left.
-abstract class UiShell extends Html.Template {
+final class UiShell extends Html.Template {
 
-  static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""
-    appearance:none
-    background-color:var(--color-btn-primary)
-    color:var(--color-btn-primary-text)
-    cursor:pointer
-    display:flex
-    font-size:14rx
-    min-height:48rx
-    padding:14rx_63rx_14rx_15rx
+  static final class Builder {
 
-    active/background-color:var(--color-btn-primary-active)
-    hover/background-color:var(--color-btn-primary-hover)
-    \""");
+    JsAction homeAction;
+
+    Html.Component main;
+
+    List<SourceModel> sources;
+
+  }
+
+  private final JsAction homeAction;
+
+  private final Html.Component main;
+
+  private final List<SourceModel> sources;
+
+  private UiShell(JsAction homeAction, Html.Component main, List<SourceModel> sources) {
+    this.homeAction = homeAction;
+
+    this.main = main;
+
+    this.sources = sources;
+  }
+
+  public static UiShell of(Consumer<Builder> opts) {
+    final Builder builder;
+    builder = new Builder();
+
+    opts.accept(builder);
+
+    return new UiShell(
+        builder.homeAction,
+
+        builder.main,
+
+        builder.sources
+    );
+  }
 
   /// The default 'submit' action.
   protected final JsAction submit() {
@@ -4228,9 +4053,6 @@ abstract class UiShell extends Html.Template {
     final List<SourceModel> combined;
     combined = new ArrayList<>();
 
-    final List<SourceModel> sources;
-    sources = viewSources();
-
     combined.addAll(sources);
 
     combined.add(Source.AppCtx);
@@ -4240,8 +4062,6 @@ abstract class UiShell extends Html.Template {
 
     return combined;
   }
-
-  abstract List<SourceModel> viewSources();
 
   // ##################################################################
   // # BEGIN: Main contents
@@ -4279,7 +4099,11 @@ abstract class UiShell extends Html.Template {
                 display:flex
                 gap:6rx
                 height:100%
+
+                hover/cursor:pointer
                 \"""),
+
+                onclick(homeAction),
 
                 objectosLogo(),
 
@@ -4322,12 +4146,10 @@ abstract class UiShell extends Html.Template {
             &_h2/padding:48rx_0_8rx
             \"""),
 
-            f(this::renderMain)
+            c(main)
         )
     );
   }
-
-  abstract void renderMain();
 
   // ##################################################################
   // # END: Main contents

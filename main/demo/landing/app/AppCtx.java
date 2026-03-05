@@ -39,6 +39,8 @@ public final class AppCtx implements LandingDemo {
 
     private RandomGenerator reservationRandom;
 
+    private boolean testing;
+
     @Override
     public final void clock(Clock value) {
       clock = Objects.requireNonNull(value, "value == null");
@@ -70,6 +72,11 @@ public final class AppCtx implements LandingDemo {
     @Override
     public final void reservationRandom(RandomGenerator value) {
       reservationRandom = Objects.requireNonNull(value, "value == null");
+    }
+
+    @Override
+    public final void testing() {
+      testing = true;
     }
 
     final AppCtx build() {
@@ -111,6 +118,8 @@ public final class AppCtx implements LandingDemo {
 
   private final RandomGenerator reservationRandom;
 
+  private final boolean testing;
+
   private AppCtx(Builder builder) {
     clock = builder.clock;
 
@@ -123,6 +132,8 @@ public final class AppCtx implements LandingDemo {
     reservationEpoch = builder.reservationEpoch;
 
     reservationRandom = builder.reservationRandom;
+
+    testing = builder.testing;
   }
 
   /// Creates a new instance with the specified configuration.
@@ -156,30 +167,32 @@ public final class AppCtx implements LandingDemo {
   }
 
   private Http.Handler trx(Http.Handler handler) {
-    return http -> {
+    return testing
+        ? http -> handler.handle(http)
+        : http -> {
 
-      final Sql.Transaction trx;
-      trx = database.beginTransaction(Sql.READ_COMMITED);
+          final Sql.Transaction trx;
+          trx = database.beginTransaction(Sql.READ_COMMITED);
 
-      try {
-        trx.sql("set schema CINEMA");
+          try {
+            trx.sql("set schema CINEMA");
 
-        trx.update();
+            trx.update();
 
-        http.set(Sql.Transaction.class, trx);
+            http.set(Sql.Transaction.class, trx);
 
-        handler.handle(http);
+            handler.handle(http);
 
-        trx.commit();
-      } catch (Throwable t) {
-        noteSink.send(TRANSACTIONAL, t);
+            trx.commit();
+          } catch (Throwable t) {
+            noteSink.send(TRANSACTIONAL, t);
 
-        throw trx.rollbackAndWrap(t);
-      } finally {
-        trx.close();
-      }
+            throw trx.rollbackAndWrap(t);
+          } finally {
+            trx.close();
+          }
 
-    };
+        };
   }
 
   // ##################################################################
@@ -268,17 +281,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {
@@ -456,6 +469,20 @@ public final class AppCtx implements LandingDemo {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().href());
   });
 
+  static final Html.ClassName PRIMARY = Html.ClassName.ofText("""
+    appearance:none
+    background-color:var(--color-btn-primary)
+    color:var(--color-btn-primary-text)
+    cursor:pointer
+    display:flex
+    font-size:14rx
+    min-height:48rx
+    padding:14rx_63rx_14rx_15rx
+
+    active/background-color:var(--color-btn-primary-active)
+    hover/background-color:var(--color-btn-primary-hover)
+    """);
+
   public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
     final long rid;
     rid = reservation.id();
@@ -469,6 +496,10 @@ public final class AppCtx implements LandingDemo {
     return Js.byId(SHELL).render(href, opts -> {
       opts.history("/index.html#demo=" + hash + ";");
     });
+  }
+
+  public final JsAction homeAction(AppReservation reservation) {
+    return clickAction(AppView.HOME, 0, reservation);
   }
 
   private String href(AppView view) {

@@ -38,6 +38,8 @@ public interface LandingDemo {
 
     void reservationRandom(RandomGenerator value);
 
+    void testing();
+
   }
 
   /// Creates a new demo instance with the specified options.
