@@ -67,7 +67,7 @@ public final class DevModule implements Http.Routing.Module {
     http.ok(Css.StyleSheet.create(opts -> {
       opts.noteSink(noteSink);
 
-      opts.include(LandingDemo.styles());
+      opts.include(ctx.styles());
 
       opts.scanDirectory(Path.of("work", "main"));
     }));

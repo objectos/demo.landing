@@ -43,12 +43,10 @@ public interface LandingDemo {
     return AppCtx.create(opts);
   }
 
-  static Css.Library styles() {
-    return AppCtx.styles();
-  }
-
   Http.Routing.Module localRoutes();
 
   Http.Routing.Module publicRoutes();
+
+  Css.Library styles();
 
 }
