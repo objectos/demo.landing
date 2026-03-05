@@ -17,16 +17,81 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
+import demo.landing.LandingDemo;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import objectos.way.Http;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class KinoTest {
+public class AppCtxTest {
+
+  private AppCtx ctx;
+
+  @BeforeClass
+  public void beforeClass() {
+    final LandingDemo demo;
+    demo = Testing.INJECTOR.getInstance(LandingDemo.class);
+
+    ctx = (AppCtx) demo;
+  }
+
+  // ##################################################################
+  // # BEGIN: History/Hash
+  // ##################################################################
+
+  @DataProvider
+  public Object[][] decodeHashProvider() {
+    return new Object[][] {
+        // no value
+        {null, null, "Request without Demo-Location-Hash header value"},
+        {"", null, "Request without hash"},
+
+        // valid
+        {"#demo=9d8c39141d3c5e7b9a0f2d4c6e8b1a3f5c;", "/demo.landing/home", "valid"},
+
+        // invalid
+        {"demo=foo;", null, "no initial hash"},
+        {"#demox=foo;", null, "name should be 4 chars long"},
+        {"#sort=foo;", null, "name should be 'demo'"},
+        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d", null, "no trailing semicolon"},
+        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6cd;", null, "hash has incorrent length"}
+    };
+  }
+
+  @Test(dataProvider = "decodeHashProvider")
+  public void decodeHash(String headerValue, String expected, String description) {
+    final String result;
+    result = ctx.decodeHash(headerValue);
+
+    assertEquals(result, expected, description);
+  }
+
+  @DataProvider
+  public Object[][] encodeHashProvider() {
+    return new Object[][] {
+        {AppView.HOME, 0, 0L, "9d8c39141d3c5e7b9a0f2d4c6e8b1a3f5c"},
+        {AppView.CONFIRM, 0, 40306685673624018L, "9d8c39141e3c5e7b9a0fa27ed91abc6e8e"},
+        {AppView.SEATS, 1031, 10902L, "9d8c39141f3c5e7f9d0f2d4c6e8b1a15ca"}
+    };
+  }
+
+  @Test(dataProvider = "encodeHashProvider")
+  public void encodeHash(AppView view, int id, long reservationId, String expected) {
+    final String result;
+    result = ctx.encodeHash(view, id, reservationId);
+
+    assertEquals(result, expected);
+  }
+
+  // ##################################################################
+  // # END: History/Hash
+  // ##################################################################
 
   @Test
   public void nextRegistration01() {

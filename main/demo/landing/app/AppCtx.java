@@ -264,53 +264,21 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   // ##################################################################
-  // # BEGIN: UI
-  // ##################################################################
-
-  public static final Html.Id SHELL = Html.Id.of("demo.landing");
-
-  public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
-
-  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home", opts -> {
-    opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().href());
-  });
-
-  public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
-    final String href;
-    href = href(view, id, reservation.id());
-
-    final String hash;
-    hash = encodeHash(view, id, reservation);
-
-    return Js.byId(SHELL).render(href, opts -> {
-      opts.history("/index.html#demo=" + hash + ";");
-    });
-  }
-
-  private String href(AppView view, int id, long reservationId) {
-    return "/demo.landing/" + view.slug + "/" + id + "?reservationId" + reservationId;
-  }
-
-  // ##################################################################
-  // # END: UI
-  // ##################################################################
-
-  // ##################################################################
   // # BEGIN: History/Hash
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -353,7 +321,7 @@ public final class AppCtx implements LandingDemo {
     if (raw == null) {
       // a null value means a request with no URL fragment
       // => we should present the first view
-      return href(AppView.HOME, 0, 0);
+      return href(AppView.HOME);
     }
 
     final byte[] bytes;
@@ -361,12 +329,12 @@ public final class AppCtx implements LandingDemo {
     try {
       bytes = hexFormat.parseHex(raw);
     } catch (IllegalArgumentException expected) {
-      return href(AppView.NOT_FOUND, 0, 0);
+      return href(AppView.NOT_FOUND);
     }
 
     if (bytes.length != HASH_LENGTH) {
       // wrong length
-      return href(AppView.NOT_FOUND, 0, 0);
+      return href(AppView.NOT_FOUND);
     }
 
     int index;
@@ -385,7 +353,7 @@ public final class AppCtx implements LandingDemo {
 
     if (viewOrdinal < 0 || viewOrdinal >= views.length) {
       // invalid view ordinal
-      return href(AppView.NOT_FOUND, 0, 0);
+      return href(AppView.NOT_FOUND);
     }
 
     final AppView view;
@@ -430,7 +398,7 @@ public final class AppCtx implements LandingDemo {
     }
   }
 
-  public final String encodeHash(AppView view, int id, AppReservation reservation) {
+  public final String encodeHash(AppView view, int id, long rid) {
     final byte[] bytes;
     bytes = new byte[HASH_LENGTH];
 
@@ -458,9 +426,6 @@ public final class AppCtx implements LandingDemo {
     bytes[index++] = (byte) ((id >>> 0) & BYTE_MASK);
 
     // next 8 bytes = rid (big endian)
-    final long rid;
-    rid = reservation.id();
-
     bytes[index++] = (byte) ((rid >>> 56) & BYTE_MASK);
     bytes[index++] = (byte) ((rid >>> 48) & BYTE_MASK);
     bytes[index++] = (byte) ((rid >>> 40) & BYTE_MASK);
@@ -477,6 +442,64 @@ public final class AppCtx implements LandingDemo {
 
   // ##################################################################
   // # END: History/Hash
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: UI
+  // ##################################################################
+
+  public static final Html.Id SHELL = Html.Id.of("demo.landing");
+
+  public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
+
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home", opts -> {
+    opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().href());
+  });
+
+  public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
+    final long rid;
+    rid = reservation.id();
+
+    final String href;
+    href = href(view, id, rid);
+
+    final String hash;
+    hash = encodeHash(view, id, rid);
+
+    return Js.byId(SHELL).render(href, opts -> {
+      opts.history("/index.html#demo=" + hash + ";");
+    });
+  }
+
+  private String href(AppView view) {
+    return "/demo.landing/" + view.slug;
+  }
+
+  private String href(AppView view, int id, long reservationId) {
+    final StringBuilder href;
+    href = new StringBuilder();
+
+    href.append("/demo.landing/");
+
+    href.append(view.slug);
+
+    if (id > 0) {
+      href.append('/');
+
+      href.append(id);
+    }
+
+    if (reservationId != 0) {
+      href.append("?reservationId=");
+
+      href.append(reservationId);
+    }
+
+    return href.toString();
+  }
+
+  // ##################################################################
+  // # END: UI
   // ##################################################################
 
   // ##################################################################

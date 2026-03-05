@@ -23,6 +23,7 @@ import module objectos.way;
 @App.DoNotReload
 public interface LandingDemo {
 
+  /// Configures the creation of a demo application.
   interface Options {
 
     void clock(Clock value);
@@ -39,6 +40,11 @@ public interface LandingDemo {
 
   }
 
+  /// Creates a new demo instance with the specified options.
+  ///
+  /// @param opts allows for setting the options
+  ///
+  /// @return a newly created demo instance
   static LandingDemo create(Consumer<? super Options> opts) {
     return AppCtx.create(opts);
   }

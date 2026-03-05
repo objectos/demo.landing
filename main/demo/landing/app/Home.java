@@ -21,10 +21,10 @@ import module objectos.way;
 /// The "/home" controller.
 final class Home implements Http.Handler {
 
-  private final AppCtx kino;
+  private final AppCtx ctx;
 
-  Home(AppCtx kino) {
-    this.kino = kino;
+  Home(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
@@ -33,7 +33,7 @@ final class Home implements Http.Handler {
     hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
 
     final String hashRedirect;
-    hashRedirect = kino.decodeHash(hashValue);
+    hashRedirect = ctx.decodeHash(hashValue);
 
     if (hashRedirect != null) {
       http.found(hashRedirect);
@@ -67,7 +67,7 @@ final class Home implements Http.Handler {
     id = row.id();
 
     final JsAction onclick;
-    onclick = kino.clickAction(AppView.MOVIE, id, reservation);
+    onclick = ctx.clickAction(AppView.MOVIE, id, reservation);
 
     final String imgsrc;
     imgsrc = "/demo.landing/poster" + id + ".jpg";

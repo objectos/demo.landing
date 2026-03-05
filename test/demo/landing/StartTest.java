@@ -81,7 +81,7 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final LandingDemoConfig config(App.Injector injector) {
+  final LandingDemo demo(App.Injector injector) {
     fixedGenerator = new FixedGenerator(1L);
 
     final LocalDateTime startTime;
@@ -105,20 +105,18 @@ public final class StartTest extends Start {
     final Note.Sink noteSink;
     noteSink = injector.getInstance(Note.Sink.class);
 
-    return LandingDemoConfig.create(config -> {
-      config.clock(clock);
+    return LandingDemo.create(demo -> {
+      demo.clock(clock);
 
-      config.codecKey(codecKey);
+      demo.codecKey(codecKey);
 
-      config.database(database);
+      demo.database(database);
 
-      config.noteSink(noteSink);
+      demo.noteSink(noteSink);
 
-      config.reservationEpoch(epoch.toInstant());
+      demo.reservationEpoch(epoch.toInstant());
 
-      config.reservationRandom(fixedGenerator);
-
-      config.stage(LandingDemo.Stage.TESTING);
+      demo.reservationRandom(fixedGenerator);
     });
   }
 
@@ -131,7 +129,10 @@ public final class StartTest extends Start {
 
       opts.noteSink(noteSink);
 
-      opts.include(LandingDemo.styles());
+      final LandingDemo demo;
+      demo = injector.getInstance(LandingDemo.class);
+
+      opts.include(demo.styles());
     });
 
     final String css;
