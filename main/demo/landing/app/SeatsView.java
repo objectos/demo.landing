@@ -15,10 +15,9 @@
  */
 package demo.landing.app;
 
-import module java.base;
 import module objectos.way;
 
-final class SeatsView extends UiShell {
+final class SeatsView extends Html.Template {
 
   private static final String FORM_ID = "seats-form";
 
@@ -45,17 +44,13 @@ final class SeatsView extends UiShell {
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-    );
-  }
-
-  @Override
-  final void renderMain() {
+  protected final void render() {
+    /*
     final String backUrl;
     backUrl = reservation.to(AppView.MOVIE, details.movieId());
-
+    
     backLink(backUrl);
+    */
 
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
@@ -231,7 +226,7 @@ final class SeatsView extends UiShell {
 
         method("post"),
 
-        onsubmit(submit()),
+        //onsubmit(submit()),
 
         input(
             type("hidden"),
@@ -300,7 +295,7 @@ final class SeatsView extends UiShell {
         """),
 
         button(
-            PRIMARY,
+            AppCtx.PRIMARY,
 
             form(FORM_ID),
 

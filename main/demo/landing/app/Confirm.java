@@ -60,7 +60,7 @@ final class Confirm implements Http.Handler {
         final TicketView view;
         view = new TicketView(model);
 
-        http.ok(view);
+        throw new UnsupportedOperationException("Implement me");
       }
     }
   }

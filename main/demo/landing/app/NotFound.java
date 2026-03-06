@@ -25,10 +25,7 @@ final class NotFound implements Http.Handler {
 
   @Override
   public final void handle(Http.Exchange http) {
-    final NotFoundView view;
-    view = new NotFoundView();
-
-    http.notFound(view);
+    throw new UnsupportedOperationException("Implement me");
   }
 
 }

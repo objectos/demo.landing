@@ -17,12 +17,15 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.way.Html.Component;
 
 /// The demo UI shell responsible for displaying the application on the
 /// top/right and the source code on the bottom/left.
 final class UiShell extends Html.Template {
 
   static final class Builder {
+
+    JsAction backAction;
 
     JsAction homeAction;
 
@@ -32,17 +35,18 @@ final class UiShell extends Html.Template {
 
   }
 
+  private final JsAction backAction;
+
   private final JsAction homeAction;
 
   private final Html.Component main;
 
   private final List<SourceModel> sources;
 
-  private UiShell(JsAction homeAction, Html.Component main, List<SourceModel> sources) {
+  private UiShell(JsAction backAction, JsAction homeAction, Component main, List<SourceModel> sources) {
+    this.backAction = backAction;
     this.homeAction = homeAction;
-
     this.main = main;
-
     this.sources = sources;
   }
 
@@ -53,6 +57,8 @@ final class UiShell extends Html.Template {
     opts.accept(builder);
 
     return new UiShell(
+        builder.backAction,
+
         builder.homeAction,
 
         builder.main,
@@ -197,6 +203,8 @@ final class UiShell extends Html.Template {
             &_h2/padding:48rx_0_8rx
             """),
 
+            f(this::renderBackLink),
+
             c(main)
         )
     );
@@ -204,6 +212,44 @@ final class UiShell extends Html.Template {
 
   // ##################################################################
   // # END: Main contents
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Back Link
+  // ##################################################################
+
+  private void renderBackLink() {
+    if (backAction != null) {
+      backLink(backAction);
+    }
+  }
+
+  private void backLink(JsAction onclick) {
+    div(
+        css("""
+        border-radius:9999px
+        padding:6rx
+        margin:6rx_0_0_-6rx
+        position:absolute
+
+        active/background-color:var(--color-btn-ghost-active)
+        hover/background-color:var(--color-btn-ghost-hover)
+        hover/cursor:pointer
+        """),
+
+        onclick(onclick),
+
+        c(
+            UiIcon.ARROW_LEFT.css("""
+            height:20rx
+            width:20rx
+            """)
+        )
+    );
+  }
+
+  // ##################################################################
+  // # END: Back Link
   // ##################################################################
 
   // ##################################################################
@@ -367,38 +413,6 @@ final class UiShell extends Html.Template {
 
   // ##################################################################
   // # END: Source file selector
-  // ##################################################################
-
-  // ##################################################################
-  // # BEGIN: Back Link
-  // ##################################################################
-
-  final void backLink(JsAction onclick) {
-    div(
-        css("""
-        border-radius:9999px
-        padding:6rx
-        margin:6rx_0_0_-6rx
-        position:absolute
-
-        active/background-color:var(--color-btn-ghost-active)
-        hover/background-color:var(--color-btn-ghost-hover)
-        hover/cursor:pointer
-        """),
-
-        onclick(onclick),
-
-        c(
-            UiIcon.ARROW_LEFT.css("""
-            height:20rx
-            width:20rx
-            """)
-        )
-    );
-  }
-
-  // ##################################################################
-  // # END: Back Link
   // ##################################################################
 
   // ##################################################################

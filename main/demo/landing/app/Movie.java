@@ -19,20 +19,18 @@ import module java.base;
 import module objectos.way;
 
 /// The "/movie/{id}" controller.
-final class Movie extends AppTransactional {
+final class Movie implements Http.Handler {
 
-  private final Clock clock;
+  private final AppCtx ctx;
 
-  Movie(App.Injector injector) {
-    super(injector);
-
-    clock = injector.getInstance(Clock.class);
+  Movie(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
-  final void handle(Http.Exchange http, Sql.Transaction trx) {
-    final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
     final int movieId;
     movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
@@ -40,26 +38,59 @@ final class Movie extends AppTransactional {
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
-    if (maybeDetails.isPresent()) {
-      final MovieDetails details;
-      details = maybeDetails.get();
-
-      final LocalDateTime now;
-      now = LocalDateTime.now(clock);
-
-      final List<MovieScreening> screenings;
-      screenings = MovieScreening.query(trx, movieId, now);
-
-      final MovieView view;
-      view = new MovieView(reservation, details, screenings);
-
-      http.ok(view);
-    } else {
-      final NotFoundView view;
-      view = new NotFoundView();
-
-      http.notFound(view);
+    if (maybeDetails.isEmpty()) {
+      return;
     }
+
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
+
+    final MovieDetails details;
+    details = maybeDetails.get();
+
+    final LocalDateTime now;
+    now = ctx.now();
+
+    final List<MovieScreening> rows;
+    rows = MovieScreening.query(trx, movieId, now);
+
+    final List<MovieView.Screening> screenings;
+    screenings = rows.stream().map(row -> toUi(reservation, row)).toList();
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.backAction = opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
+
+      opts.main = new MovieView(details, screenings);
+
+      opts.sources = List.of(
+          Source.Movie,
+          Source.MovieDetails,
+          Source.MovieScreening,
+          Source.MovieShowtime
+      );
+    });
+
+    http.ok(shell);
+  }
+
+  private MovieView.Screening toUi(AppReservation reservation, MovieScreening original) {
+    return new MovieView.Screening(
+        original.screenName(),
+        original.features(),
+        original.date(),
+        original.showtimes().stream().map(row -> toUi(reservation, row)).toList()
+    );
+  }
+
+  private MovieView.Showtime toUi(AppReservation reservation, MovieShowtime original) {
+    final int showId;
+    showId = original.showId();
+
+    final JsAction clickAction;
+    clickAction = ctx.clickAction(AppView.SEATS, showId, reservation);
+
+    return new MovieView.Showtime(showId, original.time(), clickAction);
   }
 
 }

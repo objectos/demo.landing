@@ -16,22 +16,23 @@
 package demo.landing.app;
 
 import module objectos.way;
+import objectos.way.Http.Exchange;
 
 /// The seats selection form controller.
-final class SeatsForm extends AppTransactional {
+final class SeatsForm implements Http.Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
   private final Note.Sink noteSink;
 
   SeatsForm(App.Injector injector) {
-    super(injector);
-
     noteSink = injector.getInstance(Note.Sink.class);
   }
 
   @Override
-  final void handle(Http.Exchange http, Sql.Transaction trx) {
+  public void handle(Exchange http) {}
+
+  public final void handle(Http.Exchange http, Sql.Transaction trx) {
     final SeatsData data;
     data = SeatsData.parse(http);
 
@@ -71,13 +72,15 @@ final class SeatsForm extends AppTransactional {
     final int showId;
     showId = data.showId();
 
-    final String seatsUrl;
-    seatsUrl = reservation.to(AppView.SEATS, showId);
+    //    final String seatsUrl;
+    //    seatsUrl = reservation.to(AppView.SEATS, showId);
+    //
+    //    final String withAlertUrl;
+    //    withAlertUrl = alert.query(seatsUrl);
+    //
+    //    http.seeOther(withAlertUrl);
 
-    final String withAlertUrl;
-    withAlertUrl = alert.query(seatsUrl);
-
-    http.seeOther(withAlertUrl);
+    throw new UnsupportedOperationException("Implement me");
   }
 
   private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
@@ -119,13 +122,15 @@ final class SeatsForm extends AppTransactional {
           // all seats were persisted.
           // render next screen.
 
-          final AppReservation reservation;
-          reservation = data.reservation();
+          //          final AppReservation reservation;
+          //          reservation = data.reservation();
+          //
+          //          final String redirectUrl;
+          //          redirectUrl = reservation.to(AppView.CONFIRM);
+          //
+          //          http.seeOther(redirectUrl);
 
-          final String redirectUrl;
-          redirectUrl = reservation.to(AppView.CONFIRM);
-
-          http.seeOther(redirectUrl);
+          throw new UnsupportedOperationException("Implement me");
 
         }
 

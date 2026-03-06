@@ -17,9 +17,9 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.List;
+import module objectos.way;
 
-final class TicketView extends UiShell {
+final class TicketView extends Html.Template {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
@@ -30,12 +30,7 @@ final class TicketView extends UiShell {
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of();
-  }
-
-  @Override
-  final void renderMain() {
+  protected final void render() {
     testableH1("Ticket #" + model.id());
 
     h2("Thank You");

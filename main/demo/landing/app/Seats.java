@@ -17,19 +17,20 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.way.Http.Exchange;
 
 /// The "/seats/{id}" controller.
-final class Seats extends AppTransactional {
+final class Seats implements Http.Handler {
 
   private final AppReservationGen reservationGen;
 
   Seats(App.Injector injector) {
-    super(injector);
-
     reservationGen = injector.getInstance(AppReservationGen.class);
   }
 
   @Override
+  public void handle(Exchange http) {}
+
   final void handle(Http.Exchange http, Sql.Transaction trx) {
     final int showId;
     showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
@@ -74,9 +75,7 @@ final class Seats extends AppTransactional {
       final SeatsView view;
       view = new SeatsView(reservation, details, grid);
 
-      http.ok(view);
-
-      return;
+      throw new UnsupportedOperationException("Implement me");
     }
 
     throw new UnsupportedOperationException("Implement me");

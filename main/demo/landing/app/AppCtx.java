@@ -163,6 +163,8 @@ public final class AppCtx implements LandingDemo {
   public final Http.Routing.Module publicRoutes() {
     return www -> {
       www.path("/demo.landing/home", GET, trx(new Home(this)));
+
+      www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
     };
   }
 
@@ -281,17 +283,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -483,6 +485,10 @@ public final class AppCtx implements LandingDemo {
     hover/background-color:var(--color-btn-primary-hover)
     """);
 
+  public final JsAction clickAction(AppView view, AppReservation reservation) {
+    return clickAction(view, 0, reservation);
+  }
+
   public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
     final long rid;
     rid = reservation.id();
@@ -496,10 +502,6 @@ public final class AppCtx implements LandingDemo {
     return Js.byId(SHELL).render(href, opts -> {
       opts.history("/index.html#demo=" + hash + ";");
     });
-  }
-
-  public final JsAction homeAction(AppReservation reservation) {
-    return clickAction(AppView.HOME, 0, reservation);
   }
 
   private String href(AppView view) {

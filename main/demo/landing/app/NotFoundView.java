@@ -15,10 +15,11 @@
  */
 package demo.landing.app;
 
-import java.util.List;
+import module objectos.way;
 
-final class NotFoundView extends UiShell {
+final class NotFoundView extends Html.Template {
 
+  /*
   @Override
   final List<SourceModel> viewSources() {
     return List.of(
@@ -26,9 +27,10 @@ final class NotFoundView extends UiShell {
         Source.NotFoundView
     );
   }
+  */
 
   @Override
-  final void renderMain() {
+  protected final void render() {
     h2(testableH1("Something Went Wrong"));
 
     p("Sorry, we could not find the page you're looking for.");
@@ -56,9 +58,9 @@ final class NotFoundView extends UiShell {
         """),
 
         button(
-            PRIMARY,
+            AppCtx.PRIMARY,
 
-            onclick(follow("/demo.landing/home")),
+            // onclick(follow("/demo.landing/home")),
 
             type("button"),
 

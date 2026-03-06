@@ -17,11 +17,10 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.List;
 import objectos.script.Js;
 import objectos.way.Html;
 
-final class ConfirmView extends UiShell {
+final class ConfirmView extends Html.Template {
 
   private final AppReservation reservation;
 
@@ -36,16 +35,13 @@ final class ConfirmView extends UiShell {
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of();
-  }
-
-  @Override
-  final void renderMain() {
+  protected final void render() {
+    /*
     final String backUrl;
     backUrl = reservation.to(AppView.SEATS, details.showId());
-
+    
     backLink(backUrl);
+    */
 
     h2("Your Order");
 
@@ -226,7 +222,7 @@ final class ConfirmView extends UiShell {
             value(testableField("reservationId", Long.toString(reservation.id())))),
 
         button(
-            PRIMARY,
+            AppCtx.PRIMARY,
 
             type("submit"),
 

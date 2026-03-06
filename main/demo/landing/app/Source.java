@@ -40,11 +40,10 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.List;
 import objectos.script.Js;
 import objectos.way.Html;
 
-final class ConfirmView extends UiShell {
+final class ConfirmView extends Html.Template {
 
   private final AppReservation reservation;
 
@@ -59,16 +58,13 @@ final class ConfirmView extends UiShell {
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of();
-  }
-
-  @Override
-  final void renderMain() {
+  protected final void render() {
+    /*
     final String backUrl;
     backUrl = reservation.to(AppView.SEATS, details.showId());
-
+    
     backLink(backUrl);
+    */
 
     h2("Your Order");
 
@@ -249,7 +245,7 @@ final class ConfirmView extends UiShell {
             value(testableField("reservationId", Long.toString(reservation.id())))),
 
         button(
-            PRIMARY,
+            AppCtx.PRIMARY,
 
             type("submit"),
 
@@ -485,7 +481,7 @@ final class Confirm implements Http.Handler {
         final TicketView view;
         view = new TicketView(model);
 
-        http.ok(view);
+        throw new UnsupportedOperationException("Implement me");
       }
     }
   }
@@ -712,10 +708,7 @@ final class NotFound implements Http.Handler {
 
   @Override
   public final void handle(Http.Exchange http) {
-    final NotFoundView view;
-    view = new NotFoundView();
-
-    http.notFound(view);
+    throw new UnsupportedOperationException("Implement me");
   }
 
 }
@@ -822,45 +815,47 @@ final class Home implements Http.Handler {
     hashRedirect = ctx.decodeHash(hashValue);
 
     if (hashRedirect != null) {
+
       http.found(hashRedirect);
 
-      return;
+    } else {
+
+      final AppReservation reservation;
+      reservation = AppReservation.parse(http);
+
+      final Sql.Transaction trx;
+      trx = http.get(Sql.Transaction.class);
+
+      final List<HomeModel> rows;
+      rows = HomeModel.query(trx);
+
+      final List<HomeView.Movie> movies;
+      movies = rows.stream().map(row -> toUi(reservation, row)).toList();
+
+      final UiShell shell;
+      shell = UiShell.of(opts -> {
+        opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
+
+        opts.main = new HomeView(movies);
+
+        opts.sources = List.of(
+            Source.Home,
+            Source.HomeModel,
+            Source.HomeView
+        );
+      });
+
+      http.ok(shell);
+
     }
-
-    final AppReservation reservation;
-    reservation = AppReservation.parse(http);
-
-    final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
-
-    final List<HomeModel> rows;
-    rows = HomeModel.query(trx);
-
-    final List<HomeView.Movie> movies;
-    movies = rows.stream().map(row -> toUi(reservation, row)).toList();
-
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
-      opts.homeAction = ctx.homeAction(reservation);
-
-      opts.main = new HomeView(movies);
-
-      opts.sources = List.of(
-          Source.Home,
-          Source.HomeModel,
-          Source.HomeView
-      );
-    });
-
-    http.ok(shell);
   }
 
-  private HomeView.Movie toUi(AppReservation reservation, HomeModel row) {
+  private HomeView.Movie toUi(AppReservation reservation, HomeModel original) {
     final String title;
-    title = row.title();
+    title = original.title();
 
     final int id;
-    id = row.id();
+    id = original.id();
 
     final JsAction onclick;
     onclick = ctx.clickAction(AppView.MOVIE, id, reservation);
@@ -1260,20 +1255,18 @@ import module java.base;
 import module objectos.way;
 
 /// The "/movie/{id}" controller.
-final class Movie extends AppTransactional {
+final class Movie implements Http.Handler {
 
-  private final Clock clock;
+  private final AppCtx ctx;
 
-  Movie(App.Injector injector) {
-    super(injector);
-
-    clock = injector.getInstance(Clock.class);
+  Movie(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
-  final void handle(Http.Exchange http, Sql.Transaction trx) {
-    final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
     final int movieId;
     movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
@@ -1281,26 +1274,59 @@ final class Movie extends AppTransactional {
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
-    if (maybeDetails.isPresent()) {
-      final MovieDetails details;
-      details = maybeDetails.get();
-
-      final LocalDateTime now;
-      now = LocalDateTime.now(clock);
-
-      final List<MovieScreening> screenings;
-      screenings = MovieScreening.query(trx, movieId, now);
-
-      final MovieView view;
-      view = new MovieView(reservation, details, screenings);
-
-      http.ok(view);
-    } else {
-      final NotFoundView view;
-      view = new NotFoundView();
-
-      http.notFound(view);
+    if (maybeDetails.isEmpty()) {
+      return;
     }
+
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
+
+    final MovieDetails details;
+    details = maybeDetails.get();
+
+    final LocalDateTime now;
+    now = ctx.now();
+
+    final List<MovieScreening> rows;
+    rows = MovieScreening.query(trx, movieId, now);
+
+    final List<MovieView.Screening> screenings;
+    screenings = rows.stream().map(row -> toUi(reservation, row)).toList();
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.backAction = opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
+
+      opts.main = new MovieView(details, screenings);
+
+      opts.sources = List.of(
+          Source.Movie,
+          Source.MovieDetails,
+          Source.MovieScreening,
+          Source.MovieShowtime
+      );
+    });
+
+    http.ok(shell);
+  }
+
+  private MovieView.Screening toUi(AppReservation reservation, MovieScreening original) {
+    return new MovieView.Screening(
+        original.screenName(),
+        original.features(),
+        original.date(),
+        original.showtimes().stream().map(row -> toUi(reservation, row)).toList()
+    );
+  }
+
+  private MovieView.Showtime toUi(AppReservation reservation, MovieShowtime original) {
+    final int showId;
+    showId = original.showId();
+
+    final JsAction clickAction;
+    clickAction = ctx.clickAction(AppView.SEATS, showId, reservation);
+
+    return new MovieView.Showtime(showId, original.time(), clickAction);
   }
 
 }
@@ -1326,19 +1352,20 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.way.Http.Exchange;
 
 /// The "/seats/{id}" controller.
-final class Seats extends AppTransactional {
+final class Seats implements Http.Handler {
 
   private final AppReservationGen reservationGen;
 
   Seats(App.Injector injector) {
-    super(injector);
-
     reservationGen = injector.getInstance(AppReservationGen.class);
   }
 
   @Override
+  public void handle(Exchange http) {}
+
   final void handle(Http.Exchange http, Sql.Transaction trx) {
     final int showId;
     showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
@@ -1383,9 +1410,7 @@ final class Seats extends AppTransactional {
       final SeatsView view;
       view = new SeatsView(reservation, details, grid);
 
-      http.ok(view);
-
-      return;
+      throw new UnsupportedOperationException("Implement me");
     }
 
     throw new UnsupportedOperationException("Implement me");
@@ -1553,10 +1578,11 @@ record MovieShowtime(int showId, String time) {
  */
 package demo.landing.app;
 
-import java.util.List;
+import module objectos.way;
 
-final class NotFoundView extends UiShell {
+final class NotFoundView extends Html.Template {
 
+  /*
   @Override
   final List<SourceModel> viewSources() {
     return List.of(
@@ -1564,9 +1590,10 @@ final class NotFoundView extends UiShell {
         Source.NotFoundView
     );
   }
+  */
 
   @Override
-  final void renderMain() {
+  protected final void render() {
     h2(testableH1("Something Went Wrong"));
 
     p("Sorry, we could not find the page you're looking for.");
@@ -1594,9 +1621,9 @@ final class NotFoundView extends UiShell {
         \"""),
 
         button(
-            PRIMARY,
+            AppCtx.PRIMARY,
 
-            onclick(follow("/demo.landing/home")),
+            // onclick(follow("/demo.landing/home")),
 
             type("button"),
 
@@ -1627,22 +1654,23 @@ final class NotFoundView extends UiShell {
 package demo.landing.app;
 
 import module objectos.way;
+import objectos.way.Http.Exchange;
 
 /// The seats selection form controller.
-final class SeatsForm extends AppTransactional {
+final class SeatsForm implements Http.Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
   private final Note.Sink noteSink;
 
   SeatsForm(App.Injector injector) {
-    super(injector);
-
     noteSink = injector.getInstance(Note.Sink.class);
   }
 
   @Override
-  final void handle(Http.Exchange http, Sql.Transaction trx) {
+  public void handle(Exchange http) {}
+
+  public final void handle(Http.Exchange http, Sql.Transaction trx) {
     final SeatsData data;
     data = SeatsData.parse(http);
 
@@ -1682,13 +1710,15 @@ final class SeatsForm extends AppTransactional {
     final int showId;
     showId = data.showId();
 
-    final String seatsUrl;
-    seatsUrl = reservation.to(AppView.SEATS, showId);
+    //    final String seatsUrl;
+    //    seatsUrl = reservation.to(AppView.SEATS, showId);
+    //
+    //    final String withAlertUrl;
+    //    withAlertUrl = alert.query(seatsUrl);
+    //
+    //    http.seeOther(withAlertUrl);
 
-    final String withAlertUrl;
-    withAlertUrl = alert.query(seatsUrl);
-
-    http.seeOther(withAlertUrl);
+    throw new UnsupportedOperationException("Implement me");
   }
 
   private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
@@ -1730,13 +1760,15 @@ final class SeatsForm extends AppTransactional {
           // all seats were persisted.
           // render next screen.
 
-          final AppReservation reservation;
-          reservation = data.reservation();
+          //          final AppReservation reservation;
+          //          reservation = data.reservation();
+          //
+          //          final String redirectUrl;
+          //          redirectUrl = reservation.to(AppView.CONFIRM);
+          //
+          //          http.seeOther(redirectUrl);
 
-          final String redirectUrl;
-          redirectUrl = reservation.to(AppView.CONFIRM);
-
-          http.seeOther(redirectUrl);
+          throw new UnsupportedOperationException("Implement me");
 
         }
 
@@ -1791,6 +1823,8 @@ public final class AppCtx implements LandingDemo {
 
     private RandomGenerator reservationRandom;
 
+    private boolean testing;
+
     @Override
     public final void clock(Clock value) {
       clock = Objects.requireNonNull(value, "value == null");
@@ -1822,6 +1856,11 @@ public final class AppCtx implements LandingDemo {
     @Override
     public final void reservationRandom(RandomGenerator value) {
       reservationRandom = Objects.requireNonNull(value, "value == null");
+    }
+
+    @Override
+    public final void testing() {
+      testing = true;
     }
 
     final AppCtx build() {
@@ -1863,6 +1902,8 @@ public final class AppCtx implements LandingDemo {
 
   private final RandomGenerator reservationRandom;
 
+  private final boolean testing;
+
   private AppCtx(Builder builder) {
     clock = builder.clock;
 
@@ -1875,6 +1916,8 @@ public final class AppCtx implements LandingDemo {
     reservationEpoch = builder.reservationEpoch;
 
     reservationRandom = builder.reservationRandom;
+
+    testing = builder.testing;
   }
 
   /// Creates a new instance with the specified configuration.
@@ -1904,34 +1947,38 @@ public final class AppCtx implements LandingDemo {
   public final Http.Routing.Module publicRoutes() {
     return www -> {
       www.path("/demo.landing/home", GET, trx(new Home(this)));
+
+      www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
     };
   }
 
   private Http.Handler trx(Http.Handler handler) {
-    return http -> {
+    return testing
+        ? http -> handler.handle(http)
+        : http -> {
 
-      final Sql.Transaction trx;
-      trx = database.beginTransaction(Sql.READ_COMMITED);
+          final Sql.Transaction trx;
+          trx = database.beginTransaction(Sql.READ_COMMITED);
 
-      try {
-        trx.sql("set schema CINEMA");
+          try {
+            trx.sql("set schema CINEMA");
 
-        trx.update();
+            trx.update();
 
-        http.set(Sql.Transaction.class, trx);
+            http.set(Sql.Transaction.class, trx);
 
-        handler.handle(http);
+            handler.handle(http);
 
-        trx.commit();
-      } catch (Throwable t) {
-        noteSink.send(TRANSACTIONAL, t);
+            trx.commit();
+          } catch (Throwable t) {
+            noteSink.send(TRANSACTIONAL, t);
 
-        throw trx.rollbackAndWrap(t);
-      } finally {
-        trx.close();
-      }
+            throw trx.rollbackAndWrap(t);
+          } finally {
+            trx.close();
+          }
 
-    };
+        };
   }
 
   // ##################################################################
@@ -2020,17 +2067,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -2222,6 +2269,10 @@ public final class AppCtx implements LandingDemo {
     hover/background-color:var(--color-btn-primary-hover)
     \""");
 
+  public final JsAction clickAction(AppView view, AppReservation reservation) {
+    return clickAction(view, 0, reservation);
+  }
+
   public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
     final long rid;
     rid = reservation.id();
@@ -2235,10 +2286,6 @@ public final class AppCtx implements LandingDemo {
     return Js.byId(SHELL).render(href, opts -> {
       opts.history("/index.html#demo=" + hash + ";");
     });
-  }
-
-  public final JsAction homeAction(AppReservation reservation) {
-    return clickAction(AppView.HOME, 0, reservation);
   }
 
   private String href(AppView view) {
@@ -2464,9 +2511,9 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.List;
+import module objectos.way;
 
-final class TicketView extends UiShell {
+final class TicketView extends Html.Template {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
@@ -2477,12 +2524,7 @@ final class TicketView extends UiShell {
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of();
-  }
-
-  @Override
-  final void renderMain() {
+  protected final void render() {
     testableH1("Ticket #" + model.id());
 
     h2("Thank You");
@@ -2953,10 +2995,9 @@ final class AppReservationGen {
  */
 package demo.landing.app;
 
-import module java.base;
 import module objectos.way;
 
-final class SeatsView extends UiShell {
+final class SeatsView extends Html.Template {
 
   private static final String FORM_ID = "seats-form";
 
@@ -2983,17 +3024,13 @@ final class SeatsView extends UiShell {
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-    );
-  }
-
-  @Override
-  final void renderMain() {
+  protected final void render() {
+    /*
     final String backUrl;
     backUrl = reservation.to(AppView.MOVIE, details.movieId());
-
+    
     backLink(backUrl);
+    */
 
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
@@ -3169,7 +3206,7 @@ final class SeatsView extends UiShell {
 
         method("post"),
 
-        onsubmit(submit()),
+        //onsubmit(submit()),
 
         input(
             type("hidden"),
@@ -3238,7 +3275,7 @@ final class SeatsView extends UiShell {
         \"""),
 
         button(
-            PRIMARY,
+            AppCtx.PRIMARY,
 
             form(FORM_ID),
 
@@ -3678,43 +3715,37 @@ final class Ticket {
  */
 package demo.landing.app;
 
-import java.util.List;
-import objectos.script.JsAction;
+import module java.base;
+import module objectos.way;
 
 /// Renders the details of a movie and lists its available screenings.
-final class MovieView extends UiShell {
+final class MovieView extends Html.Template {
 
-  private final AppReservation reservation;
+  record Screening(
+      String screenName,
+      String features,
+      String date,
+      List<Showtime> showtimes
+  ) {}
+
+  record Showtime(
+      int id,
+      String time,
+      JsAction onclick
+  ) {}
 
   private final MovieDetails details;
 
-  private final List<MovieScreening> screenings;
+  private final List<Screening> screenings;
 
-  MovieView(AppReservation reservation, MovieDetails details, List<MovieScreening> screenings) {
-    this.reservation = reservation;
-
+  MovieView(MovieDetails details, List<Screening> screenings) {
     this.details = details;
 
     this.screenings = screenings;
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-        Source.Movie,
-        Source.MovieDetails,
-        Source.MovieScreening,
-        Source.MovieShowtime
-    );
-  }
-
-  @Override
-  final void renderMain() {
-    final String backUrl;
-    backUrl = reservation.to(AppView.HOME);
-
-    backLink(backUrl);
-
+  protected final void render() {
     div(
         css(\"""
         display:grid
@@ -3802,7 +3833,7 @@ final class MovieView extends UiShell {
 
             alt(details.title()),
 
-            src("/demo/landing/poster" + details.movieId() + ".jpg")
+            src("/demo.landing/poster" + details.movieId() + ".jpg")
         )
     );
   }
@@ -3816,12 +3847,12 @@ final class MovieView extends UiShell {
   // ##################################################################
 
   private void renderMovieScreenings() {
-    for (MovieScreening screening : screenings) {
+    for (Screening screening : screenings) {
       renderMovieScreening(screening);
     }
   }
 
-  private void renderMovieScreening(MovieScreening screening) {
+  private void renderMovieScreening(Screening screening) {
     div(
         css(\"""
         border:1px_solid_var(--color-border)
@@ -3900,18 +3931,15 @@ final class MovieView extends UiShell {
   // # BEGIN: Movie Showtime
   // ##################################################################
 
-  private void renderMovieShowtimes(List<MovieShowtime> showtimes) {
-    for (MovieShowtime showtime : showtimes) {
+  private void renderMovieShowtimes(List<Showtime> showtimes) {
+    for (Showtime showtime : showtimes) {
       final int showId;
-      showId = showtime.showId();
+      showId = showtime.id();
 
       testableCell(Integer.toString(showId), 2);
 
-      final String showUrl;
-      showUrl = reservation.to(AppView.SEATS, showId);
-
       final JsAction showClick;
-      showClick = follow(showUrl);
+      showClick = showtime.onclick;
 
       final String time;
       time = showtime.time();
@@ -3966,12 +3994,15 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.way.Html.Component;
 
 /// The demo UI shell responsible for displaying the application on the
 /// top/right and the source code on the bottom/left.
 final class UiShell extends Html.Template {
 
   static final class Builder {
+
+    JsAction backAction;
 
     JsAction homeAction;
 
@@ -3981,17 +4012,18 @@ final class UiShell extends Html.Template {
 
   }
 
+  private final JsAction backAction;
+
   private final JsAction homeAction;
 
   private final Html.Component main;
 
   private final List<SourceModel> sources;
 
-  private UiShell(JsAction homeAction, Html.Component main, List<SourceModel> sources) {
+  private UiShell(JsAction backAction, JsAction homeAction, Component main, List<SourceModel> sources) {
+    this.backAction = backAction;
     this.homeAction = homeAction;
-
     this.main = main;
-
     this.sources = sources;
   }
 
@@ -4002,6 +4034,8 @@ final class UiShell extends Html.Template {
     opts.accept(builder);
 
     return new UiShell(
+        builder.backAction,
+
         builder.homeAction,
 
         builder.main,
@@ -4146,6 +4180,8 @@ final class UiShell extends Html.Template {
             &_h2/padding:48rx_0_8rx
             \"""),
 
+            f(this::renderBackLink),
+
             c(main)
         )
     );
@@ -4153,6 +4189,44 @@ final class UiShell extends Html.Template {
 
   // ##################################################################
   // # END: Main contents
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Back Link
+  // ##################################################################
+
+  private void renderBackLink() {
+    if (backAction != null) {
+      backLink(backAction);
+    }
+  }
+
+  private void backLink(JsAction onclick) {
+    div(
+        css(\"""
+        border-radius:9999px
+        padding:6rx
+        margin:6rx_0_0_-6rx
+        position:absolute
+
+        active/background-color:var(--color-btn-ghost-active)
+        hover/background-color:var(--color-btn-ghost-hover)
+        hover/cursor:pointer
+        \"""),
+
+        onclick(onclick),
+
+        c(
+            UiIcon.ARROW_LEFT.css(\"""
+            height:20rx
+            width:20rx
+            \""")
+        )
+    );
+  }
+
+  // ##################################################################
+  // # END: Back Link
   // ##################################################################
 
   // ##################################################################
@@ -4316,38 +4390,6 @@ final class UiShell extends Html.Template {
 
   // ##################################################################
   // # END: Source file selector
-  // ##################################################################
-
-  // ##################################################################
-  // # BEGIN: Back Link
-  // ##################################################################
-
-  final void backLink(JsAction onclick) {
-    div(
-        css(\"""
-        border-radius:9999px
-        padding:6rx
-        margin:6rx_0_0_-6rx
-        position:absolute
-
-        active/background-color:var(--color-btn-ghost-active)
-        hover/background-color:var(--color-btn-ghost-hover)
-        hover/cursor:pointer
-        \"""),
-
-        onclick(onclick),
-
-        c(
-            UiIcon.ARROW_LEFT.css(\"""
-            height:20rx
-            width:20rx
-            \""")
-        )
-    );
-  }
-
-  // ##################################################################
-  // # END: Back Link
   // ##################################################################
 
   // ##################################################################

@@ -15,43 +15,37 @@
  */
 package demo.landing.app;
 
-import java.util.List;
-import objectos.script.JsAction;
+import module java.base;
+import module objectos.way;
 
 /// Renders the details of a movie and lists its available screenings.
-final class MovieView extends UiShell {
+final class MovieView extends Html.Template {
 
-  private final AppReservation reservation;
+  record Screening(
+      String screenName,
+      String features,
+      String date,
+      List<Showtime> showtimes
+  ) {}
+
+  record Showtime(
+      int id,
+      String time,
+      JsAction onclick
+  ) {}
 
   private final MovieDetails details;
 
-  private final List<MovieScreening> screenings;
+  private final List<Screening> screenings;
 
-  MovieView(AppReservation reservation, MovieDetails details, List<MovieScreening> screenings) {
-    this.reservation = reservation;
-
+  MovieView(MovieDetails details, List<Screening> screenings) {
     this.details = details;
 
     this.screenings = screenings;
   }
 
   @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-        Source.Movie,
-        Source.MovieDetails,
-        Source.MovieScreening,
-        Source.MovieShowtime
-    );
-  }
-
-  @Override
-  final void renderMain() {
-    final String backUrl;
-    backUrl = reservation.to(AppView.HOME);
-
-    backLink(backUrl);
-
+  protected final void render() {
     div(
         css("""
         display:grid
@@ -139,7 +133,7 @@ final class MovieView extends UiShell {
 
             alt(details.title()),
 
-            src("/demo/landing/poster" + details.movieId() + ".jpg")
+            src("/demo.landing/poster" + details.movieId() + ".jpg")
         )
     );
   }
@@ -153,12 +147,12 @@ final class MovieView extends UiShell {
   // ##################################################################
 
   private void renderMovieScreenings() {
-    for (MovieScreening screening : screenings) {
+    for (Screening screening : screenings) {
       renderMovieScreening(screening);
     }
   }
 
-  private void renderMovieScreening(MovieScreening screening) {
+  private void renderMovieScreening(Screening screening) {
     div(
         css("""
         border:1px_solid_var(--color-border)
@@ -237,18 +231,15 @@ final class MovieView extends UiShell {
   // # BEGIN: Movie Showtime
   // ##################################################################
 
-  private void renderMovieShowtimes(List<MovieShowtime> showtimes) {
-    for (MovieShowtime showtime : showtimes) {
+  private void renderMovieShowtimes(List<Showtime> showtimes) {
+    for (Showtime showtime : showtimes) {
       final int showId;
-      showId = showtime.showId();
+      showId = showtime.id();
 
       testableCell(Integer.toString(showId), 2);
 
-      final String showUrl;
-      showUrl = reservation.to(AppView.SEATS, showId);
-
       final JsAction showClick;
-      showClick = follow(showUrl);
+      showClick = showtime.onclick;
 
       final String time;
       time = showtime.time();
