@@ -19,15 +19,11 @@ import module objectos.way;
 
 final class NotFoundView extends Html.Template {
 
-  /*
-  @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-        Source.NotFound,
-        Source.NotFoundView
-    );
+  private final JsAction onclick;
+
+  NotFoundView(JsAction onclick) {
+    this.onclick = onclick;
   }
-  */
 
   @Override
   protected final void render() {
@@ -60,7 +56,7 @@ final class NotFoundView extends Html.Template {
         button(
             AppCtx.PRIMARY,
 
-            // onclick(follow("/demo.landing/home")),
+            onclick(onclick),
 
             type("button"),
 

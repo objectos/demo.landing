@@ -20,7 +20,8 @@ import module objectos.way;
 
 /// Renders the home page view. More specifically, it renders:
 ///
-/// - a top header with the "Now Showing" title. - a list of the movies that are
+/// - a top header with the "Now Showing" title. 
+/// - a list of the movies that are
 /// currently playing.
 final class HomeView extends Html.Template {
 

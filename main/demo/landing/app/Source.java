@@ -2067,17 +2067,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {
@@ -2252,7 +2252,7 @@ public final class AppCtx implements LandingDemo {
   public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
 
   public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home", opts -> {
-    opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().href());
+    opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());
   });
 
   static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""

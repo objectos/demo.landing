@@ -67,7 +67,8 @@ final class Movie implements Http.Handler {
           Source.Movie,
           Source.MovieDetails,
           Source.MovieScreening,
-          Source.MovieShowtime
+          Source.MovieShowtime,
+          Source.MovieView
       );
     });
 

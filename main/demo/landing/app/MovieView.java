@@ -21,6 +21,7 @@ import module objectos.way;
 /// Renders the details of a movie and lists its available screenings.
 final class MovieView extends Html.Template {
 
+  /// A screening of the movie to be displayed in this view
   record Screening(
       String screenName,
       String features,
@@ -28,6 +29,7 @@ final class MovieView extends Html.Template {
       List<Showtime> showtimes
   ) {}
 
+  /// A clickable showtime to be listed in this view
   record Showtime(
       int id,
       String time,
@@ -238,12 +240,6 @@ final class MovieView extends Html.Template {
 
       testableCell(Integer.toString(showId), 2);
 
-      final JsAction showClick;
-      showClick = showtime.onclick;
-
-      final String time;
-      time = showtime.time();
-
       li(
           div(
               css("""
@@ -257,9 +253,9 @@ final class MovieView extends Html.Template {
               hover/cursor:pointer
               """),
 
-              onclick(showClick),
+              onclick(showtime.onclick),
 
-              span(testableCell(time, 5))
+              span(testableCell(showtime.time, 5))
           ),
 
           testableNewLine()

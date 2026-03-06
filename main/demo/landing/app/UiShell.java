@@ -220,32 +220,49 @@ final class UiShell extends Html.Template {
 
   private void renderBackLink() {
     if (backAction != null) {
-      backLink(backAction);
+      // if (testable())
+      String backLink;
+      backLink = backAction.toString();
+
+      final String raw;
+      raw = backLink;
+
+      final int prefix;
+      prefix = raw.indexOf("/demo.landing/");
+
+      if (prefix != -1) {
+        final int quote;
+        quote = raw.indexOf('"', prefix);
+
+        if (quote != -1) {
+          backLink = raw.substring(prefix, quote);
+        }
+      }
+
+      testableField("back-link", backLink);
+
+      div(
+          css("""
+          border-radius:9999px
+          padding:6rx
+          margin:6rx_0_0_-6rx
+          position:absolute
+
+          active/background-color:var(--color-btn-ghost-active)
+          hover/background-color:var(--color-btn-ghost-hover)
+          hover/cursor:pointer
+          """),
+
+          onclick(backAction),
+
+          c(
+              UiIcon.ARROW_LEFT.css("""
+              height:20rx
+              width:20rx
+              """)
+          )
+      );
     }
-  }
-
-  private void backLink(JsAction onclick) {
-    div(
-        css("""
-        border-radius:9999px
-        padding:6rx
-        margin:6rx_0_0_-6rx
-        position:absolute
-
-        active/background-color:var(--color-btn-ghost-active)
-        hover/background-color:var(--color-btn-ghost-hover)
-        hover/cursor:pointer
-        """),
-
-        onclick(onclick),
-
-        c(
-            UiIcon.ARROW_LEFT.css("""
-            height:20rx
-            width:20rx
-            """)
-        )
-    );
   }
 
   // ##################################################################

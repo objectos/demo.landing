@@ -15,17 +15,36 @@
  */
 package demo.landing.app;
 
+import java.util.List;
 import module objectos.way;
 
+/// Controller for any unmatched request to '/demo.landing/*'
 final class NotFound implements Http.Handler {
 
-  public static Html.Component create() {
-    throw new UnsupportedOperationException("Implement me");
+  private final AppCtx ctx;
+
+  NotFound(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
   public final void handle(Http.Exchange http) {
-    throw new UnsupportedOperationException("Implement me");
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
+
+      opts.main = new NotFoundView(opts.homeAction);
+
+      opts.sources = List.of(
+          Source.NotFound,
+          Source.NotFoundView
+      );
+    });
+
+    http.notFound(shell);
   }
 
 }
