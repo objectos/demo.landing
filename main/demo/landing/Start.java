@@ -96,6 +96,12 @@ abstract class Start extends App.Bootstrap {
     // apply migrations
     db.migrate(this::dbMigrations);
 
+    // Application
+    final LandingDemo demo;
+    demo = demo(ctx);
+
+    ctx.putInstance(LandingDemo.class, demo);
+
     // Web.Resources
     final Web.Resources webResources;
     webResources = webResources(ctx);
@@ -103,12 +109,6 @@ abstract class Start extends App.Bootstrap {
     shutdownHook.register(webResources);
 
     ctx.putInstance(Web.Resources.class, webResources);
-
-    // Application
-    final LandingDemo demo;
-    demo = demo(ctx);
-
-    ctx.putInstance(LandingDemo.class, demo);
 
     // Head component
     final Html.Component headComponent;
@@ -186,13 +186,10 @@ abstract class Start extends App.Bootstrap {
 
         opts.addMedia("/ui/script.js", JsLibrary.of());
 
-        final Sql.Database db;
-        db = injector.getInstance(Sql.Database.class);
+        final LandingDemo demo;
+        demo = injector.getInstance(LandingDemo.class);
 
-        final Web.Resources.Library posters;
-        posters = LandingDemoDb.posters(db);
-
-        opts.include(posters);
+        opts.include(demo.webResources());
       });
     } catch (IOException e) {
       throw App.serviceFailed("Web.Resources", e);

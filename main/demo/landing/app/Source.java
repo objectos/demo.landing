@@ -1883,8 +1883,6 @@ import demo.landing.LandingDemo;
 import java.time.Duration;
 import module java.base;
 import module objectos.way;
-import objectos.way.Note.Sink;
-import objectos.way.Sql.Database;
 
 /// Application entry point and system-wide context.
 public final class AppCtx implements LandingDemo {
@@ -1970,7 +1968,15 @@ public final class AppCtx implements LandingDemo {
         reservationRandom = new SecureRandom();
       }
 
-      return new AppCtx(this);
+      return new AppCtx(
+          clock,
+          codecKey,
+          database,
+          noteSink,
+          reservationEpoch,
+          reservationRandom,
+          testing
+      );
     }
 
   }
@@ -1993,29 +1999,26 @@ public final class AppCtx implements LandingDemo {
 
   private final boolean testing;
 
-  private AppCtx(Builder builder) {
-    clock = builder.clock;
-
-    codecKey = builder.codecKey;
-
-    database = builder.database;
-
-    noteSink = builder.noteSink;
-
-    reservationEpoch = builder.reservationEpoch;
-
-    reservationRandom = builder.reservationRandom;
-
-    testing = builder.testing;
-  }
-
-  private AppCtx(Clock clock, byte[] codecKey, Database database, Sink noteSink, Instant reservationEpoch, RandomGenerator reservationRandom, boolean testing) {
+  private AppCtx(
+      Clock clock,
+      byte[] codecKey,
+      Sql.Database database,
+      Note.Sink noteSink,
+      Instant reservationEpoch,
+      RandomGenerator reservationRandom,
+      boolean testing) {
     this.clock = clock;
+
     this.codecKey = codecKey;
+
     this.database = database;
+
     this.noteSink = noteSink;
+
     this.reservationEpoch = reservationEpoch;
+
     this.reservationRandom = reservationRandom;
+
     this.testing = testing;
   }
 
@@ -2043,7 +2046,7 @@ public final class AppCtx implements LandingDemo {
   }
 
   @Override
-  public final Http.Routing.Module publicRoutes() {
+  public final Http.Routing.Module publicRoutes(Web.Resources webResources) {
     return www -> {
       www.path("/demo.landing/home", GET, trx(new Home(this)));
 
@@ -2062,6 +2065,8 @@ public final class AppCtx implements LandingDemo {
       });
 
       www.path("/demo.landing/ticket", GET, trx(new Ticket()));
+
+      www.path("/demo.landing/poster{}", path -> path.handler(webResources));
 
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
@@ -2475,6 +2480,65 @@ public final class AppCtx implements LandingDemo {
 
   // ##################################################################
   // # END: CSS
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Web Resources
+  // ##################################################################
+
+  private record Poster(int id, byte[] contents) implements Media.Bytes {
+    Poster(ResultSet rs, int idx) throws SQLException {
+      this(
+          rs.getInt(idx++),
+          rs.getBytes(idx++)
+      );
+    }
+
+    public final String path() {
+      return "/demo.landing/poster" + id + ".jpg";
+    }
+
+    @Override
+    public final String contentType() {
+      return "image/jpeg";
+    }
+
+    @Override
+    public final byte[] toByteArray() {
+      return contents;
+    }
+  }
+
+  @Override
+  public final Web.Resources.Library webResources() {
+    return opts -> {
+      try (Sql.Transaction trx = database.connect()) {
+        trx.sql("set schema CINEMA");
+
+        trx.update();
+
+        trx.sql(\"""
+          select
+            MOVIE_ID,
+            DATA
+          from
+            MOVIE_POSTER
+          \""");
+
+        final List<Poster> posters;
+        posters = trx.query(Poster::new);
+
+        trx.commit();
+
+        for (Poster poster : posters) {
+          opts.addMedia(poster.path(), poster);
+        }
+      }
+    };
+  }
+
+  // ##################################################################
+  // # END: Web Resources
   // ##################################################################
 
   // ##################################################################
@@ -3762,7 +3826,7 @@ final class Ticket implements Http.Handler {
     final UiShell shell;
     shell = UiShell.of(opts -> {
       opts.homeAction = Js.byId(AppCtx.SHELL).render("/demo.landing/home", render -> {
-        render.history("/demo.landing/home");
+        render.history("/index.html");
       });
 
       opts.main = new TicketView(ticket);

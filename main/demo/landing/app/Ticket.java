@@ -46,7 +46,7 @@ final class Ticket implements Http.Handler {
     final UiShell shell;
     shell = UiShell.of(opts -> {
       opts.homeAction = Js.byId(AppCtx.SHELL).render("/demo.landing/home", render -> {
-        render.history("/demo.landing/home");
+        render.history("/index.html");
       });
 
       opts.main = new TicketView(ticket);

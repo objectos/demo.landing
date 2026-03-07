@@ -53,8 +53,10 @@ public interface LandingDemo {
 
   Http.Routing.Module localRoutes();
 
-  Http.Routing.Module publicRoutes();
+  Http.Routing.Module publicRoutes(Web.Resources webResources);
 
   Css.Library styles();
+
+  Web.Resources.Library webResources();
 
 }
