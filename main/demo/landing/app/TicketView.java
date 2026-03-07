@@ -23,15 +23,15 @@ final class TicketView extends Html.Template {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  private final TicketModel model;
+  private final TicketModel ticket;
 
-  TicketView(TicketModel model) {
-    this.model = model;
+  TicketView(TicketModel ticket) {
+    this.ticket = ticket;
   }
 
   @Override
   protected final void render() {
-    testableH1("Ticket #" + model.id());
+    testableH1("Ticket #" + ticket.id());
 
     h2("Thank You");
 
@@ -73,18 +73,18 @@ final class TicketView extends Html.Template {
 
         div(
             dt(testableFieldName("Ammount Paid")),
-            dd(testableFieldValue(format(model.ammountPaid())))
+            dd(testableFieldValue(format(ticket.ammountPaid())))
         ),
 
         div(
             dt(testableFieldName("Purchase Time")),
-            dd(testableFieldValue(model.purchaseTime()))
+            dd(testableFieldValue(ticket.purchaseTime()))
         )
     );
 
     h2(testableH2("Tickets"));
 
-    p(model.singular() ? "Here's your ticket" : "Here are your tickets");
+    p(ticket.singular() ? "Here's your ticket" : "Here are your tickets");
 
     div(
         css("""
@@ -99,7 +99,7 @@ final class TicketView extends Html.Template {
   }
 
   private void renderTickets() {
-    for (var item : model.items()) {
+    for (var item : ticket.items()) {
       div(
           css("""
           border:1px_solid_var(--color-border)
@@ -124,10 +124,10 @@ final class TicketView extends Html.Template {
               flex:1
               """),
 
-              li(testableCell(model.title(), 8)),
-              li(testableCell(model.date(), 10)),
-              li(testableCell(model.time(), 6)),
-              li(testableCell(model.screen(), 8))
+              li(testableCell(ticket.title(), 8)),
+              li(testableCell(ticket.date(), 10)),
+              li(testableCell(ticket.time(), 6)),
+              li(testableCell(ticket.screen(), 8))
           ),
 
           div(

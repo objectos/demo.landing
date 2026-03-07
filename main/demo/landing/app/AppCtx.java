@@ -189,16 +189,18 @@ public final class AppCtx implements LandingDemo {
       www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
 
       www.path("/demo.landing/seats/{id}", path -> {
-        path.allow(GET, new Seats(this));
+        path.allow(GET, trx(new Seats(this)));
 
-        path.allow(POST, new SeatsForm(this));
+        path.allow(POST, trx(new SeatsForm(this)));
       });
 
       www.path("/demo.landing/confirm", path -> {
-        path.allow(GET, new Confirm(this));
+        path.allow(GET, trx(new Confirm(this)));
 
-        path.allow(POST, new ConfirmForm(this));
+        path.allow(POST, trx(new ConfirmForm(this)));
       });
+
+      www.path("/demo.landing/ticket", GET, trx(new Ticket()));
 
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
@@ -240,17 +242,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -480,9 +482,10 @@ public final class AppCtx implements LandingDemo {
   }
 
   public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
-    final long rid;
-    rid = reservation.id();
+    return clickAction(view, id, reservation.id());
+  }
 
+  public final JsAction clickAction(AppView view, int id, long rid) {
     final String href;
     href = href(view, id, rid);
 

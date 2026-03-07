@@ -43,9 +43,9 @@ public final class DevModule implements Http.Routing.Module {
 
   @Override
   public final void configure(Http.Routing routing) {
-    routing.install(ctx.publicRoutes());
-
     routing.install(ctx.localRoutes());
+
+    routing.install(ctx.publicRoutes());
 
     routing.path("/", GET, http -> http.movedPermanently("/index.html"));
 

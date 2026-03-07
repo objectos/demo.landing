@@ -105,7 +105,7 @@ public class LocalModuleTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing/clear-reservation");
+        config.path("/demo.landing/clear-reservation");
       });
 
       assertEquals(
@@ -150,7 +150,7 @@ public class LocalModuleTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing/clear-reservation");
+        config.path("/demo.landing/clear-reservation");
       });
 
       assertEquals(
@@ -200,7 +200,7 @@ public class LocalModuleTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing/clear-reservation");
+        config.path("/demo.landing/clear-reservation");
       });
 
       assertEquals(
@@ -236,7 +236,7 @@ public class LocalModuleTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing/create-show");
+        config.path("/demo.landing/create-show");
       });
 
       assertEquals(
@@ -273,7 +273,7 @@ public class LocalModuleTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing/create-show");
+        config.path("/demo.landing/create-show");
       });
 
       assertEquals(

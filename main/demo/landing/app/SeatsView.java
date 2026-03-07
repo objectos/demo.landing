@@ -175,7 +175,7 @@ final class SeatsView extends Html.Template {
         max-width:400rx
         min-height:0
         min-width:0
-        stroke:icon
+        stroke:var(--color-icon)
         width:100%
         """),
 

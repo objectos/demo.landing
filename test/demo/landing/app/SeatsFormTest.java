@@ -124,7 +124,6 @@ public class SeatsFormTest {
 
           B1    | $9.99
           Total | $9.99
-          reservationId: 901
           """
       );
     });
@@ -205,7 +204,6 @@ public class SeatsFormTest {
           B2    | $9.99
           B3    | $9.99
           Total | $29.97
-          reservationId: 901
           """
       );
     });
@@ -285,7 +283,6 @@ public class SeatsFormTest {
           B1    | $9.99
           B2    | $9.99
           Total | $19.98
-          reservationId: 901
           """
       );
     });
@@ -364,7 +361,6 @@ public class SeatsFormTest {
           B1    | $9.99
           B2    | $9.99
           Total | $19.98
-          reservationId: 901
           """
       );
     });
@@ -563,7 +559,6 @@ public class SeatsFormTest {
           B3    | $9.99
           B4    | $9.99
           Total | $59.94
-          reservationId: 901
           """
       );
     });

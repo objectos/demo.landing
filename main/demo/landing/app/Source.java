@@ -46,21 +46,18 @@ final class ConfirmView extends Html.Template {
 
   private final ConfirmDetails details;
 
+  private final String formAction;
+
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  ConfirmView(ConfirmDetails details) {
+  ConfirmView(ConfirmDetails details, String formAction) {
     this.details = details;
+
+    this.formAction = formAction;
   }
 
   @Override
   protected final void render() {
-    /*
-    final String backUrl;
-    backUrl = reservation.to(AppView.SEATS, details.showId());
-
-    backLink(backUrl);
-    */
-
     h2("Your Order");
 
     // testable node only
@@ -228,16 +225,11 @@ final class ConfirmView extends Html.Template {
         margin-top:24rx
         \"""),
 
-        action("/demo.landing/confirm"),
+        action(formAction),
 
         method("post"),
 
         onsubmit(AppCtx.SUBMIT),
-
-        input(
-            type("hidden"),
-            name("reservationId"),
-            value(testableField("reservationId", details.reservationId()))),
 
         button(
             UiShell.PRIMARY,
@@ -465,13 +457,16 @@ final class Confirm implements Http.Handler {
     final ConfirmDetails details;
     details = maybe.get();
 
+    final String formAction;
+    formAction = ctx.href(AppView.CONFIRM, reservation);
+
     final UiShell shell;
     shell = UiShell.of(opts -> {
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
       opts.backAction = ctx.clickAction(AppView.SEATS, details.showId(), reservation);
 
-      opts.main = new ConfirmView(details);
+      opts.main = new ConfirmView(details, formAction);
 
       opts.sources = List.of(
           Source.Confirm,
@@ -1204,24 +1199,13 @@ import java.time.LocalDateTime;
 import objectos.way.Http;
 import objectos.way.Sql;
 
-record ConfirmData(long reservationId, boolean wayRequest) {
+record ConfirmData(AppReservation reservation) {
 
   static ConfirmData parse(Http.Exchange http) {
-    final long reservationId;
-    reservationId = http.formParamAsLong("reservationId", Long.MIN_VALUE);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-    return new ConfirmData(
-        reservationId,
-
-        wayRequest(http)
-    );
-  }
-
-  private static boolean wayRequest(Http.Exchange http) {
-    final String maybe;
-    maybe = http.header(Http.HeaderName.WAY_REQUEST);
-
-    return "true".equals(maybe);
+    return new ConfirmData(reservation);
   }
 
   public final Sql.Update persistTicket(Sql.Transaction trx, LocalDateTime today) {
@@ -1237,7 +1221,7 @@ record ConfirmData(long reservationId, boolean wayRequest) {
 
     trx.param(today);
 
-    trx.param(reservationId);
+    trx.param(reservation.id());
 
     return trx.updateWithResult();
   }
@@ -1396,19 +1380,13 @@ final class ConfirmForm implements Http.Handler {
       }
 
       case Sql.UpdateSuccess _ -> {
-        final long reservationId;
-        reservationId = data.reservationId();
+        final AppReservation reservation;
+        reservation = data.reservation();
 
-        final Optional<TicketModel> maybe;
-        maybe = TicketModel.queryOptional(trx, reservationId);
+        final String location;
+        location = ctx.href(AppView.TICKET, reservation);
 
-        final TicketModel model;
-        model = maybe.get();
-
-        final TicketView view;
-        view = new TicketView(model);
-
-        throw new UnsupportedOperationException("Implement me");
+        http.seeOther(location);
       }
     }
   }
@@ -1479,13 +1457,16 @@ final class Seats implements Http.Handler {
     final SeatsGrid grid;
     grid = SeatsGrid.query(trx, reservation.id());
 
+    final String formAction;
+    formAction = ctx.href(AppView.SEATS, showId, reservation);
+
     final UiShell shell;
     shell = UiShell.of(opts -> {
       opts.backAction = ctx.clickAction(AppView.MOVIE, details.movieId(), reservation);
 
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
-      opts.main = new SeatsView(reservation, alert, details, grid);
+      opts.main = new SeatsView(alert, details, grid, formAction);
 
       opts.sources = List.of(
           Source.Seats,
@@ -2068,11 +2049,19 @@ public final class AppCtx implements LandingDemo {
 
       www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
 
-      www.path("/demo.landing/seats/{id}", GET, trx(new Seats(this)));
+      www.path("/demo.landing/seats/{id}", path -> {
+        path.allow(GET, trx(new Seats(this)));
 
-      www.path("/demo.landing/seats", POST, trx(new SeatsForm(this)));
+        path.allow(POST, trx(new SeatsForm(this)));
+      });
 
-      www.path("/demo.landing/confirm", GET, trx(new Confirm(this)));
+      www.path("/demo.landing/confirm", path -> {
+        path.allow(GET, trx(new Confirm(this)));
+
+        path.allow(POST, trx(new ConfirmForm(this)));
+      });
+
+      www.path("/demo.landing/ticket", GET, trx(new Ticket()));
 
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
@@ -2114,17 +2103,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -2354,9 +2343,10 @@ public final class AppCtx implements LandingDemo {
   }
 
   public final JsAction clickAction(AppView view, int id, AppReservation reservation) {
-    final long rid;
-    rid = reservation.id();
+    return clickAction(view, id, reservation.id());
+  }
 
+  public final JsAction clickAction(AppView view, int id, long rid) {
     final String href;
     href = href(view, id, rid);
 
@@ -2558,7 +2548,6 @@ import java.util.Optional;
 import objectos.way.Sql;
 
 record SeatsDetails(
-    int showId,
     String date,
     String time,
 
@@ -2572,7 +2561,6 @@ record SeatsDetails(
 
   private SeatsDetails(ResultSet rs, int idx) throws SQLException {
     this(
-        rs.getInt(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
 
@@ -2588,7 +2576,6 @@ record SeatsDetails(
   public static Optional<SeatsDetails> byId(Sql.Transaction trx, int id) {
     trx.sql(\"""
     select
-      SHOW.SHOW_ID,
       formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
       formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
 
@@ -2615,7 +2602,6 @@ record SeatsDetails(
   public static Optional<SeatsDetails> byReservationId(Sql.Transaction trx, long reservationId) {
     trx.sql(\"""
     select
-      SHOW.SHOW_ID,
       formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
       formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
 
@@ -2701,15 +2687,15 @@ final class TicketView extends Html.Template {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  private final TicketModel model;
+  private final TicketModel ticket;
 
-  TicketView(TicketModel model) {
-    this.model = model;
+  TicketView(TicketModel ticket) {
+    this.ticket = ticket;
   }
 
   @Override
   protected final void render() {
-    testableH1("Ticket #" + model.id());
+    testableH1("Ticket #" + ticket.id());
 
     h2("Thank You");
 
@@ -2751,18 +2737,18 @@ final class TicketView extends Html.Template {
 
         div(
             dt(testableFieldName("Ammount Paid")),
-            dd(testableFieldValue(format(model.ammountPaid())))
+            dd(testableFieldValue(format(ticket.ammountPaid())))
         ),
 
         div(
             dt(testableFieldName("Purchase Time")),
-            dd(testableFieldValue(model.purchaseTime()))
+            dd(testableFieldValue(ticket.purchaseTime()))
         )
     );
 
     h2(testableH2("Tickets"));
 
-    p(model.singular() ? "Here's your ticket" : "Here are your tickets");
+    p(ticket.singular() ? "Here's your ticket" : "Here are your tickets");
 
     div(
         css(\"""
@@ -2777,7 +2763,7 @@ final class TicketView extends Html.Template {
   }
 
   private void renderTickets() {
-    for (var item : model.items()) {
+    for (var item : ticket.items()) {
       div(
           css(\"""
           border:1px_solid_var(--color-border)
@@ -2802,10 +2788,10 @@ final class TicketView extends Html.Template {
               flex:1
               \"""),
 
-              li(testableCell(model.title(), 8)),
-              li(testableCell(model.date(), 10)),
-              li(testableCell(model.time(), 6)),
-              li(testableCell(model.screen(), 8))
+              li(testableCell(ticket.title(), 8)),
+              li(testableCell(ticket.date(), 10)),
+              li(testableCell(ticket.time(), 6)),
+              li(testableCell(ticket.screen(), 8))
           ),
 
           div(
@@ -3021,21 +3007,21 @@ final record ConfirmDetails(
     }
 
     static List<Item> of(Array array) throws SQLException {
-      Object[] values;
+      final Object[] values;
       values = (Object[]) array.getArray();
 
-      List<Item> list;
+      final List<Item> list;
       list = new ArrayList<>(values.length);
 
       for (Object value : values) {
-        ResultSet rs;
+        final ResultSet rs;
         rs = (ResultSet) value;
 
         if (!rs.next()) {
           continue;
         }
 
-        Item item;
+        final Item item;
         item = new Item(rs, 1);
 
         list.add(item);
@@ -3120,22 +3106,22 @@ final class SeatsView extends Html.Template {
 
   private static final String FORM_ID = "seats-form";
 
-  private final AppReservation reservation;
-
   private final SeatsAlert alert;
 
   private final SeatsDetails details;
 
   private final SeatsGrid grid;
 
-  SeatsView(AppReservation reservation, SeatsAlert alert, SeatsDetails details, SeatsGrid grid) {
-    this.reservation = reservation;
+  private final String formAction;
 
+  SeatsView(SeatsAlert alert, SeatsDetails details, SeatsGrid grid, String formAction) {
     this.alert = alert;
 
     this.details = details;
 
     this.grid = grid;
+
+    this.formAction = formAction;
   }
 
   @Override
@@ -3274,7 +3260,7 @@ final class SeatsView extends Html.Template {
         max-width:400rx
         min-height:0
         min-width:0
-        stroke:icon
+        stroke:var(--color-icon)
         width:100%
         \"""),
 
@@ -3298,7 +3284,7 @@ final class SeatsView extends Html.Template {
     form(
         id(FORM_ID),
 
-        action("/demo.landing/seats"),
+        action(formAction),
 
         css(\"""
         aspect-ratio:1.15
@@ -3315,16 +3301,6 @@ final class SeatsView extends Html.Template {
         method("post"),
 
         onsubmit(AppCtx.SUBMIT),
-
-        input(
-            type("hidden"),
-            name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservation.id())))),
-
-        input(
-            type("hidden"),
-            name("showId"),
-            value(testableField("showId", Integer.toString(details.showId())))),
 
         input(
             type("hidden"),
@@ -3606,12 +3582,13 @@ import objectos.way.Sql;
 record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
   public static SeatsData parse(Http.Exchange http) {
-    return new SeatsData(
-        new AppReservation(
-            http.formParamAsLong("reservationId", 0)
-        ),
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-        http.formParamAsInt("showId", Integer.MIN_VALUE),
+    return new SeatsData(
+        reservation,
+
+        http.pathParamAsInt("id", Integer.MIN_VALUE),
 
         http.formParamAsInt("screenId", Integer.MIN_VALUE),
 
@@ -3754,52 +3731,50 @@ record SeatsData(AppReservation reservation, int showId, int screenId, int[] sel
  */
 package demo.landing.app;
 
+import java.util.List;
 import java.util.Optional;
-import objectos.way.Html;
+import objectos.script.Js;
 import objectos.way.Http;
 import objectos.way.Sql;
 
-final class Ticket {
+final class Ticket implements Http.Handler {
 
   Ticket() {}
 
-  public static Html.Component create(Sql.Transaction trx, ConfirmData data) {
-    final Ticket action;
-    action = new Ticket();
-
-    final long ticketId;
-    ticketId = data.reservationId();
-
-    return action.view(trx, ticketId);
-  }
-
-  public final Html.Component get(Http.Exchange http) {
+  @Override
+  public final void handle(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final AppReservation query;
-    query = http.get(AppReservation.class);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-    final long ticketId;
-    ticketId = query.id();
-
-    return view(trx, ticketId);
-  }
-
-  @SuppressWarnings("unused")
-  private Html.Component view(Sql.Transaction trx, long ticketId) {
     final Optional<TicketModel> maybe;
-    maybe = TicketModel.queryOptional(trx, ticketId);
+    maybe = TicketModel.queryOptional(trx, reservation.id());
 
-    if (maybe.isPresent()) {
-      final TicketModel model;
-      model = maybe.get();
-
-      throw new UnsupportedOperationException("Implement me");
-    } else {
-      throw new UnsupportedOperationException("Implement me");
-      //return NotFound.create();
+    if (maybe.isEmpty()) {
+      return;
     }
+
+    final TicketModel ticket;
+    ticket = maybe.get();
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = Js.byId(AppCtx.SHELL).render("/demo.landing/home", render -> {
+        render.history("/demo.landing/home");
+      });
+
+      opts.main = new TicketView(ticket);
+
+      opts.sources = List.of(
+          Source.Ticket,
+          Source.TicketModel,
+          Source.TicketView
+      );
+    });
+
+    http.ok(shell);
   }
 
 }

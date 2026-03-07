@@ -15,52 +15,50 @@
  */
 package demo.landing.app;
 
+import java.util.List;
 import java.util.Optional;
-import objectos.way.Html;
+import objectos.script.Js;
 import objectos.way.Http;
 import objectos.way.Sql;
 
-final class Ticket {
+final class Ticket implements Http.Handler {
 
   Ticket() {}
 
-  public static Html.Component create(Sql.Transaction trx, ConfirmData data) {
-    final Ticket action;
-    action = new Ticket();
-
-    final long ticketId;
-    ticketId = data.reservationId();
-
-    return action.view(trx, ticketId);
-  }
-
-  public final Html.Component get(Http.Exchange http) {
+  @Override
+  public final void handle(Http.Exchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final AppReservation query;
-    query = http.get(AppReservation.class);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-    final long ticketId;
-    ticketId = query.id();
-
-    return view(trx, ticketId);
-  }
-
-  @SuppressWarnings("unused")
-  private Html.Component view(Sql.Transaction trx, long ticketId) {
     final Optional<TicketModel> maybe;
-    maybe = TicketModel.queryOptional(trx, ticketId);
+    maybe = TicketModel.queryOptional(trx, reservation.id());
 
-    if (maybe.isPresent()) {
-      final TicketModel model;
-      model = maybe.get();
-
-      throw new UnsupportedOperationException("Implement me");
-    } else {
-      throw new UnsupportedOperationException("Implement me");
-      //return NotFound.create();
+    if (maybe.isEmpty()) {
+      return;
     }
+
+    final TicketModel ticket;
+    ticket = maybe.get();
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = Js.byId(AppCtx.SHELL).render("/demo.landing/home", render -> {
+        render.history("/demo.landing/home");
+      });
+
+      opts.main = new TicketView(ticket);
+
+      opts.sources = List.of(
+          Source.Ticket,
+          Source.TicketModel,
+          Source.TicketView
+      );
+    });
+
+    http.ok(shell);
   }
 
 }
