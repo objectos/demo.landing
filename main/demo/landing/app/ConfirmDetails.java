@@ -45,21 +45,21 @@ final record ConfirmDetails(
     }
 
     static List<Item> of(Array array) throws SQLException {
-      Object[] values;
+      final Object[] values;
       values = (Object[]) array.getArray();
 
-      List<Item> list;
+      final List<Item> list;
       list = new ArrayList<>(values.length);
 
       for (Object value : values) {
-        ResultSet rs;
+        final ResultSet rs;
         rs = (ResultSet) value;
 
         if (!rs.next()) {
           continue;
         }
 
-        Item item;
+        final Item item;
         item = new Item(rs, 1);
 
         list.add(item);

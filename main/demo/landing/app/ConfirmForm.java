@@ -48,19 +48,13 @@ final class ConfirmForm implements Http.Handler {
       }
 
       case Sql.UpdateSuccess _ -> {
-        final long reservationId;
-        reservationId = data.reservationId();
+        final AppReservation reservation;
+        reservation = data.reservation();
 
-        final Optional<TicketModel> maybe;
-        maybe = TicketModel.queryOptional(trx, reservationId);
+        final String location;
+        location = ctx.href(AppView.TICKET, reservation);
 
-        final TicketModel model;
-        model = maybe.get();
-
-        final TicketView view;
-        view = new TicketView(model);
-
-        throw new UnsupportedOperationException("Implement me");
+        http.seeOther(location);
       }
     }
   }

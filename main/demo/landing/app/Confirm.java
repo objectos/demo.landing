@@ -44,13 +44,16 @@ final class Confirm implements Http.Handler {
     final ConfirmDetails details;
     details = maybe.get();
 
+    final String formAction;
+    formAction = ctx.href(AppView.CONFIRM, reservation);
+
     final UiShell shell;
     shell = UiShell.of(opts -> {
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
       opts.backAction = ctx.clickAction(AppView.SEATS, details.showId(), reservation);
 
-      opts.main = new ConfirmView(details);
+      opts.main = new ConfirmView(details, formAction);
 
       opts.sources = List.of(
           Source.Confirm,

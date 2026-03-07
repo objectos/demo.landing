@@ -101,7 +101,6 @@ public class ConfirmTest {
           B1    | $9.99
           B2    | $9.99
           Total | $19.98
-          reservationId: 901
           """
       );
     });

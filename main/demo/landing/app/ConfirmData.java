@@ -19,24 +19,13 @@ import java.time.LocalDateTime;
 import objectos.way.Http;
 import objectos.way.Sql;
 
-record ConfirmData(long reservationId, boolean wayRequest) {
+record ConfirmData(AppReservation reservation) {
 
   static ConfirmData parse(Http.Exchange http) {
-    final long reservationId;
-    reservationId = http.formParamAsLong("reservationId", Long.MIN_VALUE);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-    return new ConfirmData(
-        reservationId,
-
-        wayRequest(http)
-    );
-  }
-
-  private static boolean wayRequest(Http.Exchange http) {
-    final String maybe;
-    maybe = http.header(Http.HeaderName.WAY_REQUEST);
-
-    return "true".equals(maybe);
+    return new ConfirmData(reservation);
   }
 
   public final Sql.Update persistTicket(Sql.Transaction trx, LocalDateTime today) {
@@ -52,7 +41,7 @@ record ConfirmData(long reservationId, boolean wayRequest) {
 
     trx.param(today);
 
-    trx.param(reservationId);
+    trx.param(reservation.id());
 
     return trx.updateWithResult();
   }

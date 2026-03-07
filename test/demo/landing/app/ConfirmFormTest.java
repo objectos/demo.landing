@@ -69,68 +69,23 @@ public class ConfirmFormTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.GET);
-
-        config.path("/demo.landing/confirm?reservationId=901");
-      });
-
-      assertEquals(
-          Testing.handle0(http),
-
-          """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
-          back-link: SEATS:901:999
-
-          # Order #901
-
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
-
-          ## Order Details
-
-          B1    | $9.99
-          B2    | $9.99
-          Total | $19.98
-          action: CONFIRM:901
-          """
-      );
-    });
-  }
-
-  @Test
-  public void testCase02() {
-    Testing.rollback(trx -> {
-      Testing.load(trx, data);
-
       final Http.Exchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
-
-        config.queryParam("demo", Testing.encode(AppView.CONFIRM, 901));
+        config.path("/demo.landing/confirm?reservationId=901");
       });
 
       assertEquals(
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 302 Found
+          HTTP/1.1 303 See Other
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?page=T&demo=799e0b7b9e2a4f6f081e3b5a0f
+          Location: /demo.landing/ticket?reservationId=901
 
           """
       );
@@ -141,11 +96,7 @@ public class ConfirmFormTest {
 
         config.method(Http.Method.GET);
 
-        config.path("/index.html");
-
-        config.queryParam("page", AppView.TICKET.key);
-
-        config.queryParam("demo", "799e0b7b9e2a4f6f081e3b5a0f");
+        config.path("/demo.landing/ticket?reservationId=901");
       });
 
       assertEquals(

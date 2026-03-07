@@ -1,6 +1,5 @@
 package demo.landing.app;
 
-import demo.landing.LandingDemoConfig;
 import demo.landing.StartTest;
 import demo.landing.testing.TestingResponseListener;
 import java.time.Clock;
@@ -26,7 +25,7 @@ public class Testing implements ISuiteListener {
     }
   }
 
-  public static Sql.Transaction beginTrx() {
+  private static Sql.Transaction beginTrx() {
     final App.Injector injector;
     injector = Testing.INJECTOR;
 
@@ -56,25 +55,6 @@ public class Testing implements ISuiteListener {
     } finally {
       trx.close();
     }
-  }
-
-  public static AppReservation decode(String hex) {
-    return CodecHolder.INSTANCE.decode(hex);
-  }
-
-  public static String encode(AppView page) {
-    return encode(page, 0L);
-  }
-
-  public static String encode(AppView page, long id) {
-    return encode(page, id, 0);
-  }
-
-  public static String encode(AppView page, long id, int aux) {
-    final AppReservation q;
-    q = page.query(id, aux);
-
-    return CodecHolder.INSTANCE.encode(q);
   }
 
   public static String handle0(Http.Exchange http) {
@@ -131,19 +111,6 @@ public class Testing implements ISuiteListener {
     } finally {
       Sql.rollbackAndClose(trx);
     }
-  }
-
-  private static final class CodecHolder {
-
-    static AppCodec INSTANCE = create();
-
-    private static AppCodec create() {
-      final LandingDemoConfig config;
-      config = INJECTOR.getInstance(LandingDemoConfig.class);
-
-      return new AppCodec(config.clock, config.codecKey());
-    }
-
   }
 
 }

@@ -194,7 +194,11 @@ public final class AppCtx implements LandingDemo {
         path.allow(POST, new SeatsForm(this));
       });
 
-      www.path("/demo.landing/confirm", GET, trx(new Confirm(this)));
+      www.path("/demo.landing/confirm", path -> {
+        path.allow(GET, new Confirm(this));
+
+        path.allow(POST, new ConfirmForm(this));
+      });
 
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
@@ -236,17 +240,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {

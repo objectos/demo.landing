@@ -23,21 +23,18 @@ final class ConfirmView extends Html.Template {
 
   private final ConfirmDetails details;
 
+  private final String formAction;
+
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  ConfirmView(ConfirmDetails details) {
+  ConfirmView(ConfirmDetails details, String formAction) {
     this.details = details;
+
+    this.formAction = formAction;
   }
 
   @Override
   protected final void render() {
-    /*
-    final String backUrl;
-    backUrl = reservation.to(AppView.SEATS, details.showId());
-
-    backLink(backUrl);
-    */
-
     h2("Your Order");
 
     // testable node only
@@ -205,16 +202,11 @@ final class ConfirmView extends Html.Template {
         margin-top:24rx
         """),
 
-        action("/demo.landing/confirm"),
+        action(formAction),
 
         method("post"),
 
         onsubmit(AppCtx.SUBMIT),
-
-        input(
-            type("hidden"),
-            name("reservationId"),
-            value(testableField("reservationId", details.reservationId()))),
 
         button(
             UiShell.PRIMARY,
