@@ -68,15 +68,13 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901);
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31);
 
@@ -84,7 +82,28 @@ public class SeatsFormTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 303 See Other
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /demo.landing/confirm?reservationId=901
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/demo.landing/confirm?reservationId=901");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK
@@ -92,7 +111,7 @@ public class SeatsFormTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/seats/0?reservationId=901
+          back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
@@ -112,7 +131,7 @@ public class SeatsFormTest {
   }
 
   @Test
-  public void testCase03() {
+  public void testCase02() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -124,15 +143,13 @@ public class SeatsFormTest {
       values (901, 103, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901);
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31);
 
@@ -144,7 +161,28 @@ public class SeatsFormTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 303 See Other
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /demo.landing/confirm?reservationId=901
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/demo.landing/confirm?reservationId=901");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK
@@ -152,7 +190,7 @@ public class SeatsFormTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/seats/0?reservationId=901
+          back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
@@ -174,7 +212,7 @@ public class SeatsFormTest {
   }
 
   @Test
-  public void testCase04() {
+  public void testCase03() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -188,15 +226,13 @@ public class SeatsFormTest {
       ,      (901, 105, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901);
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31);
 
@@ -206,7 +242,28 @@ public class SeatsFormTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 303 See Other
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /demo.landing/confirm?reservationId=901
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/demo.landing/confirm?reservationId=901");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK
@@ -214,7 +271,7 @@ public class SeatsFormTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/seats/0?reservationId=901
+          back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
@@ -235,7 +292,7 @@ public class SeatsFormTest {
   }
 
   @Test
-  public void testCase05() {
+  public void testCase04() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -248,15 +305,13 @@ public class SeatsFormTest {
       ,      (901, 104, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901);
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31);
 
@@ -266,7 +321,28 @@ public class SeatsFormTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 303 See Other
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /demo.landing/confirm?reservationId=901
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/demo.landing/confirm?reservationId=901");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK
@@ -274,7 +350,7 @@ public class SeatsFormTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/seats/0?reservationId=901
+          back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
@@ -295,7 +371,7 @@ public class SeatsFormTest {
   }
 
   @Test(description = "POST: bad reservation id")
-  public void testCase07() {
+  public void testCase05() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -304,15 +380,13 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 902); // bad reservation id
+        config.path("/demo.landing/seats/61?reservationId=902");
 
         config.formParam("screenId", 31); // valid screen id
 
@@ -322,15 +396,13 @@ public class SeatsFormTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
 
           """
           HTTP/1.1 400 Bad Request
           Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
-          # Something Went Wrong
+          Content-Type: text/plain; charset=utf-8
+          Content-Length: 8
 
           """
       );
@@ -338,7 +410,7 @@ public class SeatsFormTest {
   }
 
   @Test(description = "POST: bad seat id")
-  public void testCase08() {
+  public void testCase06() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -353,9 +425,7 @@ public class SeatsFormTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901); // valid reservation id
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31); // valid screen id
 
@@ -368,10 +438,8 @@ public class SeatsFormTest {
           """
           HTTP/1.1 400 Bad Request
           Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
-          # Something Went Wrong
+          Content-Type: text/plain; charset=utf-8
+          Content-Length: 8
 
           """
       );
@@ -379,7 +447,7 @@ public class SeatsFormTest {
   }
 
   @Test(description = "POST: bad reservation id (refers to sold ticket)")
-  public void testCase09() {
+  public void testCase07() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -398,9 +466,7 @@ public class SeatsFormTest {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901);
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31);
 
@@ -413,10 +479,8 @@ public class SeatsFormTest {
           """
           HTTP/1.1 400 Bad Request
           Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
-          # Something Went Wrong
+          Content-Type: text/plain; charset=utf-8
+          Content-Length: 8
 
           """
       );
@@ -424,7 +488,7 @@ public class SeatsFormTest {
   }
 
   @Test
-  public void testCase10() {
+  public void testCase08() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -433,15 +497,13 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901);
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31);
 
@@ -454,7 +516,28 @@ public class SeatsFormTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 303 See Other
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /demo.landing/confirm?reservationId=901
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/demo.landing/confirm?reservationId=901");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
 
           """
           HTTP/1.1 200 OK
@@ -462,7 +545,7 @@ public class SeatsFormTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/seats/0?reservationId=901
+          back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
@@ -487,7 +570,7 @@ public class SeatsFormTest {
   }
 
   @Test(description = "Too many seats")
-  public void testCase11() {
+  public void testCase09() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -496,15 +579,13 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901);
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31);
 
@@ -519,15 +600,36 @@ public class SeatsFormTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
 
           """
-          HTTP/1.1 400 Bad Request
+          HTTP/1.1 303 See Other
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /demo.landing/seats/131133?reservationId=901
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/demo.landing/seats/131133?reservationId=901");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
+
+          """
+          HTTP/1.1 200 OK
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/movie/11
+          back-link: /demo.landing/movie/11?reservationId=901
 
           # Show details
 
@@ -539,7 +641,6 @@ public class SeatsFormTest {
 
           # Seats
 
-          reservationId: 901
           screenId: 31
           """
       );
@@ -547,7 +648,7 @@ public class SeatsFormTest {
   }
 
   @Test(description = "No seats selected")
-  public void testCase12() {
+  public void testCase10() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
@@ -556,15 +657,13 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.POST);
 
-        config.path("/demo.landing/seats");
-
-        config.formParam("reservationId", 901);
+        config.path("/demo.landing/seats/61?reservationId=901");
 
         config.formParam("screenId", 31);
 
@@ -573,15 +672,36 @@ public class SeatsFormTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http0),
 
           """
-          HTTP/1.1 400 Bad Request
+          HTTP/1.1 303 See Other
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /demo.landing/seats/65597?reservationId=901
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.GET);
+
+        config.path("/demo.landing/seats/65597?reservationId=901");
+      });
+
+      assertEquals(
+          Testing.handle0(http1),
+
+          """
+          HTTP/1.1 200 OK
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/movie/11
+          back-link: /demo.landing/movie/11?reservationId=901
 
           # Show details
 
@@ -593,7 +713,6 @@ public class SeatsFormTest {
 
           # Seats
 
-          reservationId: 901
           screenId: 31
           """
       );

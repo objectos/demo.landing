@@ -23,7 +23,7 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class SeatsTest {
+public class ConfirmFormTest {
 
   private final String data = """
   insert into MOVIE (MOVIE_ID, TITLE, SYNOPSYS, RUNTIME, RELEASE_DATE)
@@ -53,9 +53,15 @@ public class SeatsTest {
   ,      (103, 31, 'B', 1, 6, 2)
   ,      (104, 31, 'B', 2, 6, 3)
   ,      (105, 31, 'B', 3, 6, 6)
-  ,      (106, 31, 'B', 4, 6, 7)
-  ,      (107, 31, 'C', 1, 7, 4)
-  ,      (108, 31, 'C', 2, 7, 5);
+  ,      (106, 31, 'B', 4, 6, 7);
+
+  insert into RESERVATION (RESERVATION_ID, SHOW_ID)
+  values (901, 61)
+  ,      (902, 61);
+
+  insert into SELECTION (RESERVATION_ID, SEAT_ID, SHOW_ID)
+  values (901, 103, 61)
+  ,      (901, 104, 61);
   """;
 
   @Test
@@ -69,7 +75,7 @@ public class SeatsTest {
 
         config.method(Http.Method.GET);
 
-        config.path("/demo.landing/seats/61");
+        config.path("/demo.landing/confirm?reservationId=901");
       });
 
       assertEquals(
@@ -81,48 +87,85 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/movie/11?reservationId=1
+          back-link: SEATS:901:999
 
-          # Show details
+          # Order #901
 
           title: Title 1
           date: Sat 25/Jan
           time: 13:00
           screen: Screen 1
 
-          # Seats
+          ## Order Details
 
-          screenId: 31
+          B1    | $9.99
+          B2    | $9.99
+          Total | $19.98
+          action: CONFIRM:901
           """
       );
     });
   }
 
-  @Test(description = "non-existing id")
+  @Test
   public void testCase02() {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final Http.Exchange http;
-      http = Testing.http(config -> {
+      final Http.Exchange http0;
+      http0 = Testing.http(config -> {
+        config.set(Sql.Transaction.class, trx);
+
+        config.method(Http.Method.POST);
+
+        config.path("/demo/landing");
+
+        config.queryParam("demo", Testing.encode(AppView.CONFIRM, 901));
+      });
+
+      assertEquals(
+          Testing.handle0(http0),
+
+          """
+          HTTP/1.1 302 Found
+          Date: Mon, 28 Apr 2025 13:01:00 GMT
+          Content-Length: 0
+          Location: /index.html?page=T&demo=799e0b7b9e2a4f6f081e3b5a0f
+
+          """
+      );
+
+      final Http.Exchange http1;
+      http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
         config.method(Http.Method.GET);
 
-        config.path("/demo.landing/seats/4444");
+        config.path("/index.html");
+
+        config.queryParam("page", AppView.TICKET.key);
+
+        config.queryParam("demo", "799e0b7b9e2a4f6f081e3b5a0f");
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle0(http1),
 
           """
-          HTTP/1.1 404 Not Found
+          HTTP/1.1 200 OK
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          # Something Went Wrong
+          # Ticket #901
 
+          Ammount Paid: $19.98
+          Purchase Time: Sat 25/Jan 10:00
+
+          ## Tickets
+
+          Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B1    | $9.99
+          Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B2    | $9.99
           """
       );
     });

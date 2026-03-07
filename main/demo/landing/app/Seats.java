@@ -60,13 +60,16 @@ final class Seats implements Http.Handler {
     final SeatsGrid grid;
     grid = SeatsGrid.query(trx, reservation.id());
 
+    final String formAction;
+    formAction = ctx.href(AppView.SEATS, showId, reservation);
+
     final UiShell shell;
     shell = UiShell.of(opts -> {
       opts.backAction = ctx.clickAction(AppView.MOVIE, details.movieId(), reservation);
 
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
-      opts.main = new SeatsView(reservation, alert, details, grid);
+      opts.main = new SeatsView(alert, details, grid, formAction);
 
       opts.sources = List.of(
           Source.Seats,

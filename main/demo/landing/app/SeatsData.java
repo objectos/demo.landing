@@ -25,12 +25,13 @@ import objectos.way.Sql;
 record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
   public static SeatsData parse(Http.Exchange http) {
-    return new SeatsData(
-        new AppReservation(
-            http.formParamAsLong("reservationId", 0)
-        ),
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-        http.formParamAsInt("showId", Integer.MIN_VALUE),
+    return new SeatsData(
+        reservation,
+
+        http.pathParamAsInt("id", Integer.MIN_VALUE),
 
         http.formParamAsInt("screenId", Integer.MIN_VALUE),
 

@@ -17,20 +17,15 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import objectos.script.Js;
 import objectos.way.Html;
 
 final class ConfirmView extends Html.Template {
-
-  private final AppReservation reservation;
 
   private final ConfirmDetails details;
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  ConfirmView(AppReservation reservation, ConfirmDetails details) {
-    this.reservation = reservation;
-
+  ConfirmView(ConfirmDetails details) {
     this.details = details;
   }
 
@@ -46,7 +41,7 @@ final class ConfirmView extends Html.Template {
     h2("Your Order");
 
     // testable node only
-    testableH1("Order #" + reservation.id());
+    testableH1(details.orderNumber());
 
     p("Please review and confirm your order");
 
@@ -212,14 +207,14 @@ final class ConfirmView extends Html.Template {
 
         action("/demo.landing/confirm"),
 
-        onsubmit(Js.submit()),
-
         method("post"),
+
+        onsubmit(AppCtx.SUBMIT),
 
         input(
             type("hidden"),
             name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservation.id())))),
+            value(testableField("reservationId", details.reservationId()))),
 
         button(
             UiShell.PRIMARY,

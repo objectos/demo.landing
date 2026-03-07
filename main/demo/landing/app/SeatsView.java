@@ -21,22 +21,22 @@ final class SeatsView extends Html.Template {
 
   private static final String FORM_ID = "seats-form";
 
-  private final AppReservation reservation;
-
   private final SeatsAlert alert;
 
   private final SeatsDetails details;
 
   private final SeatsGrid grid;
 
-  SeatsView(AppReservation reservation, SeatsAlert alert, SeatsDetails details, SeatsGrid grid) {
-    this.reservation = reservation;
+  private final String formAction;
 
+  SeatsView(SeatsAlert alert, SeatsDetails details, SeatsGrid grid, String formAction) {
     this.alert = alert;
 
     this.details = details;
 
     this.grid = grid;
+
+    this.formAction = formAction;
   }
 
   @Override
@@ -199,7 +199,7 @@ final class SeatsView extends Html.Template {
     form(
         id(FORM_ID),
 
-        action("/demo.landing/seats"),
+        action(formAction),
 
         css("""
         aspect-ratio:1.15
@@ -216,16 +216,6 @@ final class SeatsView extends Html.Template {
         method("post"),
 
         onsubmit(AppCtx.SUBMIT),
-
-        input(
-            type("hidden"),
-            name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservation.id())))),
-
-        input(
-            type("hidden"),
-            name("showId"),
-            value(testableField("showId", Integer.toString(details.showId())))),
 
         input(
             type("hidden"),

@@ -188,9 +188,13 @@ public final class AppCtx implements LandingDemo {
 
       www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
 
-      www.path("/demo.landing/seats/{id}", GET, trx(new Seats(this)));
+      www.path("/demo.landing/seats/{id}", path -> {
+        path.allow(GET, new Seats(this));
 
-      www.path("/demo.landing/seats", POST, trx(new SeatsForm(this)));
+        path.allow(POST, new SeatsForm(this));
+      });
+
+      www.path("/demo.landing/confirm", GET, trx(new Confirm(this)));
 
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };

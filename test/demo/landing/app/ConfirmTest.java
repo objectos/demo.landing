@@ -75,11 +75,7 @@ public class ConfirmTest {
 
         config.method(Http.Method.GET);
 
-        config.path("/index.html");
-
-        config.queryParam("page", AppView.CONFIRM.key);
-
-        config.queryParam("demo", Testing.encode(AppView.CONFIRM, 901));
+        config.path("/demo.landing/confirm?reservationId=901");
       });
 
       assertEquals(
@@ -91,7 +87,7 @@ public class ConfirmTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: SEATS:901:999
+          back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
@@ -105,71 +101,7 @@ public class ConfirmTest {
           B1    | $9.99
           B2    | $9.99
           Total | $19.98
-          action: CONFIRM:901
-          """
-      );
-    });
-  }
-
-  @Test
-  public void testCase02() {
-    Testing.rollback(trx -> {
-      Testing.load(trx, data);
-
-      final Http.Exchange http0;
-      http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.POST);
-
-        config.path("/demo/landing");
-
-        config.queryParam("demo", Testing.encode(AppView.CONFIRM, 901));
-      });
-
-      assertEquals(
-          Testing.handle0(http0),
-
-          """
-          HTTP/1.1 302 Found
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /index.html?page=T&demo=799e0b7b9e2a4f6f081e3b5a0f
-
-          """
-      );
-
-      final Http.Exchange http1;
-      http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.GET);
-
-        config.path("/index.html");
-
-        config.queryParam("page", AppView.TICKET.key);
-
-        config.queryParam("demo", "799e0b7b9e2a4f6f081e3b5a0f");
-      });
-
-      assertEquals(
-          Testing.handle0(http1),
-
-          """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
-          # Ticket #901
-
-          Ammount Paid: $19.98
-          Purchase Time: Sat 25/Jan 10:00
-
-          ## Tickets
-
-          Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B1    | $9.99
-          Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B2    | $9.99
+          reservationId: 901
           """
       );
     });

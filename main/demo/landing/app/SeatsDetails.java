@@ -21,7 +21,6 @@ import java.util.Optional;
 import objectos.way.Sql;
 
 record SeatsDetails(
-    int showId,
     String date,
     String time,
 
@@ -35,7 +34,6 @@ record SeatsDetails(
 
   private SeatsDetails(ResultSet rs, int idx) throws SQLException {
     this(
-        rs.getInt(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
 
@@ -51,7 +49,6 @@ record SeatsDetails(
   public static Optional<SeatsDetails> byId(Sql.Transaction trx, int id) {
     trx.sql("""
     select
-      SHOW.SHOW_ID,
       formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
       formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
 
@@ -78,7 +75,6 @@ record SeatsDetails(
   public static Optional<SeatsDetails> byReservationId(Sql.Transaction trx, long reservationId) {
     trx.sql("""
     select
-      SHOW.SHOW_ID,
       formatdatetime(SHOW.SHOWDATE, 'EEE dd/LLL'),
       formatdatetime(SHOW.SHOWTIME, 'kk:mm'),
 

@@ -18,11 +18,11 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-final class Confirm implements Http.Handler {
+final class ConfirmForm implements Http.Handler {
 
   private final AppCtx ctx;
 
-  Confirm(AppCtx ctx) {
+  ConfirmForm(AppCtx ctx) {
     this.ctx = ctx;
   }
 
@@ -31,36 +31,38 @@ final class Confirm implements Http.Handler {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    final ConfirmData data;
+    data = ConfirmData.parse(http);
 
-    final Optional<ConfirmDetails> maybe;
-    maybe = ConfirmDetails.queryOptional(trx, reservation.id());
+    final LocalDateTime now;
+    now = ctx.now();
 
-    if (maybe.isEmpty()) {
-      return;
+    final Sql.Update ticketResult;
+    ticketResult = data.persistTicket(trx, now);
+
+    switch (ticketResult) {
+      case Sql.UpdateFailed _ -> {
+
+        throw new UnsupportedOperationException("Implement me");
+
+      }
+
+      case Sql.UpdateSuccess _ -> {
+        final long reservationId;
+        reservationId = data.reservationId();
+
+        final Optional<TicketModel> maybe;
+        maybe = TicketModel.queryOptional(trx, reservationId);
+
+        final TicketModel model;
+        model = maybe.get();
+
+        final TicketView view;
+        view = new TicketView(model);
+
+        throw new UnsupportedOperationException("Implement me");
+      }
     }
-
-    final ConfirmDetails details;
-    details = maybe.get();
-
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
-      opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
-
-      opts.backAction = ctx.clickAction(AppView.SEATS, details.showId(), reservation);
-
-      opts.main = new ConfirmView(details);
-
-      opts.sources = List.of(
-          Source.Confirm,
-          Source.ConfirmData,
-          Source.ConfirmDetails,
-          Source.ConfirmView
-      );
-    });
-
-    http.ok(shell);
   }
 
 }

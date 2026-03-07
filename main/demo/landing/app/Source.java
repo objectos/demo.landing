@@ -40,20 +40,15 @@ package demo.landing.app;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import objectos.script.Js;
 import objectos.way.Html;
 
 final class ConfirmView extends Html.Template {
-
-  private final AppReservation reservation;
 
   private final ConfirmDetails details;
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
-  ConfirmView(AppReservation reservation, ConfirmDetails details) {
-    this.reservation = reservation;
-
+  ConfirmView(ConfirmDetails details) {
     this.details = details;
   }
 
@@ -69,7 +64,7 @@ final class ConfirmView extends Html.Template {
     h2("Your Order");
 
     // testable node only
-    testableH1("Order #" + reservation.id());
+    testableH1(details.orderNumber());
 
     p("Please review and confirm your order");
 
@@ -235,14 +230,14 @@ final class ConfirmView extends Html.Template {
 
         action("/demo.landing/confirm"),
 
-        onsubmit(Js.submit()),
-
         method("post"),
+
+        onsubmit(AppCtx.SUBMIT),
 
         input(
             type("hidden"),
             name("reservationId"),
-            value(testableField("reservationId", Long.toString(reservation.id())))),
+            value(testableField("reservationId", details.reservationId()))),
 
         button(
             UiShell.PRIMARY,
@@ -446,10 +441,10 @@ import module objectos.way;
 
 final class Confirm implements Http.Handler {
 
-  private final Clock clock;
+  private final AppCtx ctx;
 
-  Confirm(Clock clock) {
-    this.clock = clock;
+  Confirm(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
@@ -457,38 +452,36 @@ final class Confirm implements Http.Handler {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
-    final ConfirmData data;
-    data = ConfirmData.parse(http);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-    final LocalDateTime today;
-    today = LocalDateTime.now(clock);
+    final Optional<ConfirmDetails> maybe;
+    maybe = ConfirmDetails.queryOptional(trx, reservation.id());
 
-    final Sql.Update ticketResult;
-    ticketResult = data.persistTicket(trx, today);
-
-    switch (ticketResult) {
-      case Sql.UpdateFailed _ -> {
-
-        throw new UnsupportedOperationException("Implement me");
-
-      }
-
-      case Sql.UpdateSuccess _ -> {
-        final long reservationId;
-        reservationId = data.reservationId();
-
-        final Optional<TicketModel> maybe;
-        maybe = TicketModel.queryOptional(trx, reservationId);
-
-        final TicketModel model;
-        model = maybe.get();
-
-        final TicketView view;
-        view = new TicketView(model);
-
-        throw new UnsupportedOperationException("Implement me");
-      }
+    if (maybe.isEmpty()) {
+      return;
     }
+
+    final ConfirmDetails details;
+    details = maybe.get();
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
+
+      opts.backAction = ctx.clickAction(AppView.SEATS, details.showId(), reservation);
+
+      opts.main = new ConfirmView(details);
+
+      opts.sources = List.of(
+          Source.Confirm,
+          Source.ConfirmData,
+          Source.ConfirmDetails,
+          Source.ConfirmView
+      );
+    });
+
+    http.ok(shell);
   }
 
 }
@@ -1352,6 +1345,77 @@ final class Movie implements Http.Handler {
 }
 """);
 
+  static final SourceModel ConfirmForm = SourceModel.create("ConfirmForm.java", """
+/*
+ * Copyright (C) 2024-2025 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module java.base;
+import module objectos.way;
+
+final class ConfirmForm implements Http.Handler {
+
+  private final AppCtx ctx;
+
+  ConfirmForm(AppCtx ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final ConfirmData data;
+    data = ConfirmData.parse(http);
+
+    final LocalDateTime now;
+    now = ctx.now();
+
+    final Sql.Update ticketResult;
+    ticketResult = data.persistTicket(trx, now);
+
+    switch (ticketResult) {
+      case Sql.UpdateFailed _ -> {
+
+        throw new UnsupportedOperationException("Implement me");
+
+      }
+
+      case Sql.UpdateSuccess _ -> {
+        final long reservationId;
+        reservationId = data.reservationId();
+
+        final Optional<TicketModel> maybe;
+        maybe = TicketModel.queryOptional(trx, reservationId);
+
+        final TicketModel model;
+        model = maybe.get();
+
+        final TicketView view;
+        view = new TicketView(model);
+
+        throw new UnsupportedOperationException("Implement me");
+      }
+    }
+  }
+
+}
+""");
+
   static final SourceModel Seats = SourceModel.create("Seats.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -1763,12 +1827,9 @@ final class SeatsForm implements Http.Handler {
     // clear TMP_SELECTION just in case some of the records were inserted
     data.clearTmpSelection(trx);
 
-    //    final NotFoundView view;
-    //    view = new NotFoundView();
-    //
-    //    http.badRequest(view);
+    // insertion failed => bad data
 
-    throw new UnsupportedOperationException("Implement me");
+    http.badRequest(Media.Bytes.textPlain("Bad data"));
   }
 
   private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
@@ -1790,12 +1851,7 @@ final class SeatsForm implements Http.Handler {
           // clear SELECTION just in case some of the records were inserted
           data.clearUserSelection(trx);
 
-          //          final NotFoundView view;
-          //          view = new NotFoundView();
-          //
-          //          http.badRequest(view);
-
-          throw new UnsupportedOperationException("Implement me");
+          http.badRequest(Media.Bytes.textPlain("Bad data"));
 
         } else {
 
@@ -2016,6 +2072,8 @@ public final class AppCtx implements LandingDemo {
 
       www.path("/demo.landing/seats", POST, trx(new SeatsForm(this)));
 
+      www.path("/demo.landing/confirm", GET, trx(new Confirm(this)));
+
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
   }
@@ -2056,17 +2114,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {
@@ -2942,6 +3000,8 @@ import java.util.Optional;
 import objectos.way.Sql;
 
 final record ConfirmDetails(
+    String orderNumber,
+    String reservationId,
     int showId,
     String title,
     String screen,
@@ -2988,6 +3048,8 @@ final record ConfirmDetails(
 
   private ConfirmDetails(ResultSet rs, int idx) throws SQLException {
     this(
+        rs.getString(idx++),
+        rs.getString(idx++),
         rs.getInt(idx++),
         rs.getString(idx++),
         rs.getString(idx++),
@@ -3001,6 +3063,8 @@ final record ConfirmDetails(
   public static Optional<ConfirmDetails> queryOptional(Sql.Transaction trx, long reservationId) {
     trx.sql(\"""
     select
+      concat('Order #', RESERVATION.RESERVATION_ID),
+      cast(RESERVATION.RESERVATION_ID as VARCHAR),
       SHOW.SHOW_ID,
       MOVIE.TITLE,
       SCREEN.NAME,

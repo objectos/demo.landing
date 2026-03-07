@@ -70,7 +70,6 @@ public class SeatsDetailsTest {
       final SeatsDetails show;
       show = maybe.get();
 
-      assertEquals(show.showId(), 61);
       assertEquals(show.date(), "Sat 25/Jan");
       assertEquals(show.time(), "13:00");
       assertEquals(show.screenId(), 31);
@@ -99,7 +98,6 @@ public class SeatsDetailsTest {
       final SeatsDetails show;
       show = maybe.get();
 
-      assertEquals(show.showId(), 64);
       assertEquals(show.date(), "Sat 25/Jan");
       assertEquals(show.time(), "14:00");
       assertEquals(show.screenId(), 32);

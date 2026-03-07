@@ -89,18 +89,9 @@ public class SeatsFormTestConcurrent {
 
         config.method(Http.Method.POST);
 
-        config.path("/demo/landing");
+        config.path("/demo.landing/seats/1061?reservationId=10902");
 
-        final long reservationId;
-        reservationId = 10902;
-
-        final int screenId;
-        screenId = 1031;
-
-        final String demo;
-        demo = Testing.encode(AppView.SEATS, reservationId, screenId);
-
-        config.queryParam("demo", demo);
+        config.formParam("screenId", 1031);
 
         config.formParam("seat", 10103);
       });
@@ -109,10 +100,10 @@ public class SeatsFormTestConcurrent {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 302 Found
+          HTTP/1.1 303 See Other
           Date: Mon, 28 Apr 2025 13:01:00 GMT
           Content-Length: 0
-          Location: /index.html?page=S&demo=7f9e0b7b9e2a4f461b1e3b5a0e
+          Location: /demo.landing/seats/197669?reservationId=10902
 
           """
       );
@@ -123,11 +114,7 @@ public class SeatsFormTestConcurrent {
 
         config.method(Http.Method.GET);
 
-        config.path("/index.html");
-
-        config.queryParam("page", AppView.SEATS.key);
-
-        config.queryParam("demo", "7f9e0b7b9e2a4f461b1e3b5a0e");
+        config.path("/demo.landing/seats/197669?reservationId=10902");
       });
 
       assertEquals(
@@ -139,7 +126,7 @@ public class SeatsFormTestConcurrent {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /index.html?page=M&id=1011
+          back-link: /demo.landing/movie/1011?reservationId=10902
 
           # Show details
 
@@ -151,7 +138,7 @@ public class SeatsFormTestConcurrent {
 
           # Seats
 
-          action: SEATS:10902:1031
+          screenId: 1031
           """
       );
     });
