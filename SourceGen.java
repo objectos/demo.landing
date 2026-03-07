@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ public final class SourceGen {
     final void writeStart() throws IOException {
       w.write("""
       /*
-       * Copyright (C) 2024-2025 Objectos Software LTDA.
+       * Copyright (C) 2024-2026 Objectos Software LTDA.
        *
        * Licensed under the Apache License, Version 2.0 (the "License");
        * you may not use this file except in compliance with the License.

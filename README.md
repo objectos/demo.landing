@@ -11,6 +11,6 @@ TBD
 
 ## License
 
-Copyright (C) 2024-2025 [Objectos Software LTDA](https://www.objectos.com.br)
+Copyright (C) 2024-2026 [Objectos Software LTDA](https://www.objectos.com.br)
 
 Licensed under the Apache License, Version 2.0.

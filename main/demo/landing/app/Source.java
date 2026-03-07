@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ final class Source {
 
   static final SourceModel ConfirmView = SourceModel.create("ConfirmView.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -298,7 +298,7 @@ record AppReservation(long id) {
 
   static final SourceModel HomeView = SourceModel.create("HomeView.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -412,7 +412,7 @@ final class HomeView extends Html.Template {
 
   static final SourceModel Confirm = SourceModel.create("Confirm.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -484,7 +484,7 @@ final class Confirm implements Http.Handler {
 
   static final SourceModel SeatsGrid = SourceModel.create("SeatsGrid.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -675,7 +675,7 @@ final class SeatsGrid implements Iterable<SeatsGrid.Seat> {
 
   static final SourceModel NotFound = SourceModel.create("NotFound.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -785,7 +785,7 @@ enum SeatsAlert {
 
   static final SourceModel Home = SourceModel.create("Home.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -878,7 +878,7 @@ final class Home implements Http.Handler {
 
   static final SourceModel LocalCreate = SourceModel.create("LocalCreate.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1001,7 +1001,7 @@ final class LocalCreate implements Http.Handler {
 
   static final SourceModel HomeModel = SourceModel.create("HomeModel.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1054,7 +1054,7 @@ record HomeModel(
 
   static final SourceModel TicketModel = SourceModel.create("TicketModel.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1179,7 +1179,7 @@ record TicketModel(
 
   static final SourceModel ConfirmData = SourceModel.create("ConfirmData.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1231,7 +1231,7 @@ record ConfirmData(AppReservation reservation) {
 
   static final SourceModel Movie = SourceModel.create("Movie.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1331,7 +1331,7 @@ final class Movie implements Http.Handler {
 
   static final SourceModel ConfirmForm = SourceModel.create("ConfirmForm.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1396,7 +1396,7 @@ final class ConfirmForm implements Http.Handler {
 
   static final SourceModel Seats = SourceModel.create("Seats.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1507,7 +1507,7 @@ final class Seats implements Http.Handler {
 
   static final SourceModel UiIcon = SourceModel.create("UiIcon.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1648,7 +1648,7 @@ record MovieShowtime(int showId, String time) {
 
   static final SourceModel NotFoundView = SourceModel.create("NotFoundView.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1719,7 +1719,7 @@ final class NotFoundView extends Html.Template {
 
   static final SourceModel SeatsForm = SourceModel.create("SeatsForm.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1860,7 +1860,7 @@ final class SeatsForm implements Http.Handler {
 
   static final SourceModel AppCtx = SourceModel.create("AppCtx.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2526,7 +2526,7 @@ public final class AppCtx implements LandingDemo {
 
   static final SourceModel SeatsDetails = SourceModel.create("SeatsDetails.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2663,7 +2663,7 @@ record SeatsDetails(
 
   static final SourceModel TicketView = SourceModel.create("TicketView.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2836,7 +2836,7 @@ final class TicketView extends Html.Template {
 
   static final SourceModel LocalClear = SourceModel.create("LocalClear.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2919,7 +2919,7 @@ final class LocalClear implements Http.Handler {
 
   static final SourceModel SourceModel_ = SourceModel.create("SourceModel.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2961,7 +2961,7 @@ record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 
   static final SourceModel ConfirmDetails = SourceModel.create("ConfirmDetails.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3084,7 +3084,7 @@ final record ConfirmDetails(
 
   static final SourceModel SeatsView = SourceModel.create("SeatsView.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3375,7 +3375,7 @@ final class SeatsView extends Html.Template {
 
   static final SourceModel MovieScreening = SourceModel.create("MovieScreening.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3482,7 +3482,7 @@ record MovieScreening(
 
   static final SourceModel MovieDetails = SourceModel.create("MovieDetails.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3556,7 +3556,7 @@ record MovieDetails(
 
   static final SourceModel SeatsData = SourceModel.create("SeatsData.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3715,7 +3715,7 @@ record SeatsData(AppReservation reservation, int showId, int screenId, int[] sel
 
   static final SourceModel Ticket = SourceModel.create("Ticket.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -3782,7 +3782,7 @@ final class Ticket implements Http.Handler {
 
   static final SourceModel MovieView = SourceModel.create("MovieView.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4055,7 +4055,7 @@ final class MovieView extends Html.Template {
 
   static final SourceModel UiShell = SourceModel.create("UiShell.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -4536,7 +4536,7 @@ final class UiShell extends Html.Template {
 
   static final SourceModel AppView = SourceModel.create("AppView.java", """
 /*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
