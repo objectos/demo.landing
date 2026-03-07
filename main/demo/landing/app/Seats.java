@@ -17,68 +17,89 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
-import objectos.way.Http.Exchange;
 
 /// The "/seats/{id}" controller.
 final class Seats implements Http.Handler {
 
-  private final AppReservationGen reservationGen;
+  private final AppCtx ctx;
 
-  Seats(App.Injector injector) {
-    reservationGen = injector.getInstance(AppReservationGen.class);
+  Seats(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
-  public void handle(Exchange http) {}
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
-  final void handle(Http.Exchange http, Sql.Transaction trx) {
+    final int id;
+    id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+
     final int showId;
-    showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    showId = id & 0xFFFF;
 
     final Optional<SeatsDetails> maybeDetails;
     maybeDetails = SeatsDetails.byId(trx, showId);
 
     if (maybeDetails.isEmpty()) {
-      final NotFoundView view;
-      view = new NotFoundView();
-
-      http.notFound(view);
-
       return;
     }
 
-    AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http, () -> generator(trx, showId));
 
-    if (reservation.isEmpty()) {
-      reservation = reservationGen.next();
+    final int alertId;
+    alertId = (id >>> 16);
 
-      trx.sql("""
+    final SeatsAlert alert;
+    alert = SeatsAlert.of(alertId);
+
+    final SeatsDetails details;
+    details = maybeDetails.get();
+
+    final SeatsGrid grid;
+    grid = SeatsGrid.query(trx, reservation.id());
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.backAction = ctx.clickAction(AppView.MOVIE, details.movieId(), reservation);
+
+      opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
+
+      opts.main = new SeatsView(reservation, alert, details, grid);
+
+      opts.sources = List.of(
+          Source.Seats,
+          Source.SeatsAlert,
+          Source.SeatsData,
+          Source.SeatsDetails,
+          Source.SeatsForm,
+          Source.SeatsGrid,
+          Source.SeatsView
+      );
+    });
+
+    http.ok(shell);
+  }
+
+  private long generator(Sql.Transaction trx, int showId) {
+    final long rid;
+    rid = ctx.nextReservation();
+
+    trx.sql("""
       insert into
         RESERVATION (RESERVATION_ID, SHOW_ID)
       values
         (?, ?)
       """);
 
-      trx.param(reservation.id());
+    trx.param(rid);
 
-      trx.param(showId);
+    trx.param(showId);
 
-      trx.update();
+    trx.update();
 
-      final SeatsDetails details;
-      details = maybeDetails.get();
-
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, reservation.id());
-
-      final SeatsView view;
-      view = new SeatsView(reservation, details, grid);
-
-      throw new UnsupportedOperationException("Implement me");
-    }
-
-    throw new UnsupportedOperationException("Implement me");
+    return rid;
   }
 
 }

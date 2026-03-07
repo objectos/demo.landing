@@ -19,21 +19,24 @@ import static objectos.way.Http.Method.GET;
 import static objectos.way.Http.Method.POST;
 
 import demo.landing.LandingDemo;
+import java.time.Duration;
 import module java.base;
 import module objectos.way;
+import objectos.way.Note.Sink;
+import objectos.way.Sql.Database;
 
 /// Application entry point and system-wide context.
 public final class AppCtx implements LandingDemo {
 
   public static final class Builder implements LandingDemo.Options {
 
-    private Clock clock = Clock.systemDefaultZone();
+    private Clock clock;
 
     private byte[] codecKey;
 
     private Sql.Database database;
 
-    private Note.Sink noteSink = Note.NoOpSink.create();
+    private Note.Sink noteSink;
 
     private Instant reservationEpoch;
 
@@ -80,8 +83,17 @@ public final class AppCtx implements LandingDemo {
     }
 
     final AppCtx build() {
+      if (clock == null) {
+        clock = Clock.systemDefaultZone();
+      }
+
       Objects.requireNonNull(codecKey, "codecKey == null");
+
       Objects.requireNonNull(database, "database == null");
+
+      if (noteSink == null) {
+        noteSink = Note.NoOpSink.create();
+      }
 
       if (reservationEpoch == null) {
         final LocalDateTime dateTime;
@@ -136,6 +148,16 @@ public final class AppCtx implements LandingDemo {
     testing = builder.testing;
   }
 
+  private AppCtx(Clock clock, byte[] codecKey, Database database, Sink noteSink, Instant reservationEpoch, RandomGenerator reservationRandom, boolean testing) {
+    this.clock = clock;
+    this.codecKey = codecKey;
+    this.database = database;
+    this.noteSink = noteSink;
+    this.reservationEpoch = reservationEpoch;
+    this.reservationRandom = reservationRandom;
+    this.testing = testing;
+  }
+
   /// Creates a new instance with the specified configuration.
   public static AppCtx create(Consumer<? super Builder> opts) {
     final Builder builder;
@@ -166,6 +188,10 @@ public final class AppCtx implements LandingDemo {
 
       www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
 
+      www.path("/demo.landing/seats/{id}", GET, trx(new Seats(this)));
+
+      www.path("/demo.landing/seats", POST, trx(new SeatsForm(this)));
+
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
   }
@@ -178,7 +204,7 @@ public final class AppCtx implements LandingDemo {
           final Sql.Transaction trx;
           trx = database.beginTransaction(Sql.READ_COMMITED);
 
-          try {
+          try (trx) {
             trx.sql("set schema CINEMA");
 
             trx.update();
@@ -192,8 +218,6 @@ public final class AppCtx implements LandingDemo {
             noteSink.send(TRANSACTIONAL, t);
 
             throw trx.rollbackAndWrap(t);
-          } finally {
-            trx.close();
           }
 
         };
@@ -204,98 +228,21 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   // ##################################################################
-  // # BEGIN: CSS
-  // ##################################################################
-
-  @Override
-  public final Css.Library styles() {
-    return opts -> {
-      opts.scanClasses(
-          HomeView.class,
-          MovieView.class,
-          SeatsView.class,
-          UiIcon.class,
-          UiShell.class
-      );
-
-      opts.theme("""
-      :root {
-        --font-sans: 'InterVariable', var(--default-font-sans);
-        --font-mono: 'Hack', var(--default-font-mono);
-        --color-body: var(--color-white);
-        --color-border: var(--color-gray-200);
-        --color-btn-ghost: var(--color-body);
-        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, black 15%);
-        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, black 10%);
-        --color-btn-ghost-text: var(--color-text);
-        --color-btn-primary: var(--color-blue-600);
-        --color-btn-primary-active: color-mix(in oklab, var(--color-btn-primary) 70%, black 30%);
-        --color-btn-primary-hover: color-mix(in oklab, var(--color-btn-primary) 85%, black 15%);
-        --color-btn-primary-text: var(--color-gray-50);
-        --color-focus: var(--color-blue-600);
-        --color-footer: var(--color-gray-700);
-        --color-footer-text: var(--color-gray-100);
-        --color-high-comment: var(--color-gray-500);
-        --color-high-keyword: var(--color-blue-700);
-        --color-high-literal: var(--color-red-600);
-        --color-high-meta: var(--color-yellow-600);
-        --color-high-string: var(--color-green-700);
-        --color-html: var(--color-gray-50);
-        --color-icon: var(--color-gray-800);
-        --color-layer: var(--color-stone-100);
-        --color-link: var(--color-blue-600);
-        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, black 15%);
-        --color-logo: var(--color-gray-800);
-        --color-logo-hover: var(--color-link);
-        --color-text: var(--color-gray-800);
-        --color-text-secondary: var(--color-gray-600);
-      }
-      """);
-
-      opts.theme("""
-      :root { @media (prefers-color-scheme: dark) {
-        --color-body: var(--color-neutral-800);
-        --color-border: var(--color-neutral-600);
-        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, white 15%);
-        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, white 10%);
-        --color-focus: var(--color-white);
-        --color-high-comment: var(--color-fuchsia-400);
-        --color-high-keyword: var(--color-blue-400);
-        --color-high-literal: var(--color-red-400);
-        --color-high-meta: var(--color-pink-400);
-        --color-high-string: var(--color-green-300);
-        --color-icon: var(--color-gray-200);
-        --color-layer: var(--color-stone-900);
-        --color-link: var(--color-blue-400);
-        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, white 15%);
-        --color-logo: var(--color-neutral-100);
-        --color-text: var(--color-neutral-100);
-        --color-text-secondary: var(--color-neutral-300);
-      }}
-      """);
-    };
-  }
-
-  // ##################################################################
-  // # END: CSS
-  // ##################################################################
-
-  // ##################################################################
   // # BEGIN: History/Hash
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -462,6 +409,41 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   // ##################################################################
+  // # BEGIN: Reservation
+  // ##################################################################
+
+  private static final long TIMESTAMP_BITS = 41;
+
+  private static final long RANDOM_BITS = 64 - TIMESTAMP_BITS;
+
+  private static final long MAX_RANDOM = (1L << RANDOM_BITS) - 1;
+
+  /// Generates a 64-bit Snowflake ID to uniquely identify an user making
+  /// seat reservations.
+  public final long nextReservation() {
+    final Instant now;
+    now = clock.instant();
+
+    final Duration duration;
+    duration = Duration.between(reservationEpoch, now);
+
+    final long epochTime;
+    epochTime = duration.toMillis();
+
+    final long timestamp;
+    timestamp = epochTime << RANDOM_BITS;
+
+    final long randomBits;
+    randomBits = reservationRandom.nextLong(MAX_RANDOM);
+
+    return timestamp | randomBits;
+  }
+
+  // ##################################################################
+  // # END: Reservation
+  // ##################################################################
+
+  // ##################################################################
   // # BEGIN: UI
   // ##################################################################
 
@@ -473,19 +455,17 @@ public final class AppCtx implements LandingDemo {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());
   });
 
-  static final Html.ClassName PRIMARY = Html.ClassName.ofText("""
-    appearance:none
-    background-color:var(--color-btn-primary)
-    color:var(--color-btn-primary-text)
-    cursor:pointer
-    display:flex
-    font-size:14rx
-    min-height:48rx
-    padding:14rx_63rx_14rx_15rx
+  /// The default 'submit' action.
+  static final JsAction SUBMIT = Js.submit(opts -> {
+    // disable history
+    opts.history(false);
 
-    active/background-color:var(--color-btn-primary-active)
-    hover/background-color:var(--color-btn-primary-hover)
-    """);
+    // disable scroll
+    opts.scroll(false);
+
+    // update only the demo shell
+    opts.update(AppCtx.SHELL);
+  });
 
   public final JsAction clickAction(AppView view, AppReservation reservation) {
     return clickAction(view, 0, reservation);
@@ -507,7 +487,15 @@ public final class AppCtx implements LandingDemo {
   }
 
   private String href(AppView view) {
-    return "/demo.landing/" + view.slug;
+    return href(view, 0, 0L);
+  }
+
+  public final String href(AppView view, AppReservation reservation) {
+    return href(view, 0, reservation);
+  }
+
+  public final String href(AppView view, int id, AppReservation reservation) {
+    return href(view, id, reservation.id());
   }
 
   private String href(AppView view, int id, long reservationId) {
@@ -538,6 +526,86 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   // ##################################################################
+  // # BEGIN: CSS
+  // ##################################################################
+
+  @Override
+  public final Css.Library styles() {
+    return opts -> {
+      opts.scanClasses(
+          ConfirmView.class,
+          HomeView.class,
+          MovieView.class,
+          NotFoundView.class,
+          SeatsView.class,
+          TicketView.class,
+          UiIcon.class,
+          UiShell.class
+      );
+
+      opts.theme("""
+      :root {
+        --font-sans: 'InterVariable', var(--default-font-sans);
+        --font-mono: 'Hack', var(--default-font-mono);
+        --color-body: var(--color-white);
+        --color-border: var(--color-gray-200);
+        --color-btn-ghost: var(--color-body);
+        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, black 15%);
+        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, black 10%);
+        --color-btn-ghost-text: var(--color-text);
+        --color-btn-primary: var(--color-blue-600);
+        --color-btn-primary-active: color-mix(in oklab, var(--color-btn-primary) 70%, black 30%);
+        --color-btn-primary-hover: color-mix(in oklab, var(--color-btn-primary) 85%, black 15%);
+        --color-btn-primary-text: var(--color-gray-50);
+        --color-focus: var(--color-blue-600);
+        --color-footer: var(--color-gray-700);
+        --color-footer-text: var(--color-gray-100);
+        --color-high-comment: var(--color-gray-500);
+        --color-high-keyword: var(--color-blue-700);
+        --color-high-literal: var(--color-red-600);
+        --color-high-meta: var(--color-yellow-600);
+        --color-high-string: var(--color-green-700);
+        --color-html: var(--color-gray-50);
+        --color-icon: var(--color-gray-800);
+        --color-layer: var(--color-stone-100);
+        --color-link: var(--color-blue-600);
+        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, black 15%);
+        --color-logo: var(--color-gray-800);
+        --color-logo-hover: var(--color-link);
+        --color-text: var(--color-gray-800);
+        --color-text-secondary: var(--color-gray-600);
+      }
+      """);
+
+      opts.theme("""
+      :root { @media (prefers-color-scheme: dark) {
+        --color-body: var(--color-neutral-800);
+        --color-border: var(--color-neutral-600);
+        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, white 15%);
+        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, white 10%);
+        --color-focus: var(--color-white);
+        --color-high-comment: var(--color-fuchsia-400);
+        --color-high-keyword: var(--color-blue-400);
+        --color-high-literal: var(--color-red-400);
+        --color-high-meta: var(--color-pink-400);
+        --color-high-string: var(--color-green-300);
+        --color-icon: var(--color-gray-200);
+        --color-layer: var(--color-stone-900);
+        --color-link: var(--color-blue-400);
+        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, white 15%);
+        --color-logo: var(--color-neutral-100);
+        --color-text: var(--color-neutral-100);
+        --color-text-secondary: var(--color-neutral-300);
+      }}
+      """);
+    };
+  }
+
+  // ##################################################################
+  // # END: CSS
+  // ##################################################################
+
+  // ##################################################################
   // # BEGIN: Date/Time
   // ##################################################################
 
@@ -561,8 +629,24 @@ public final class AppCtx implements LandingDemo {
     noteSink.send(note, value);
   }
 
+  public final <T1> void send(Note.Ref1<T1> note, T1 value) {
+    noteSink.send(note, value);
+  }
+
   // ##################################################################
   // # END: Notes
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Testing support
+  // ##################################################################
+
+  final AppCtx with(Clock clock, Instant registrationEpoch, RandomGenerator registrationRandom) {
+    return new AppCtx(clock, codecKey, database, noteSink, registrationEpoch, registrationRandom, testing);
+  }
+
+  // ##################################################################
+  // # END: Testing support
   // ##################################################################
 
 }

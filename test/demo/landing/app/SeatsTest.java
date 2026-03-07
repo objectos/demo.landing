@@ -69,7 +69,7 @@ public class SeatsTest {
 
         config.method(Http.Method.GET);
 
-        config.path("/demo.landing/show/61");
+        config.path("/demo.landing/seats/61");
       });
 
       assertEquals(
@@ -81,7 +81,7 @@ public class SeatsTest {
           Content-Type: text/html; charset=utf-8
           Transfer-Encoding: chunked
 
-          back-link: /demo.landing/movie/11
+          back-link: /demo.landing/movie/11?reservationId=1
 
           # Show details
 
@@ -93,6 +93,7 @@ public class SeatsTest {
           # Seats
 
           reservationId: 1
+          showId: 61
           screenId: 31
           """
       );
@@ -110,7 +111,7 @@ public class SeatsTest {
 
         config.method(Http.Method.GET);
 
-        config.path("/demo.landing/show/4444");
+        config.path("/demo.landing/seats/4444");
       });
 
       assertEquals(

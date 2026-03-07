@@ -62,7 +62,7 @@ final class ConfirmView extends Html.Template {
     /*
     final String backUrl;
     backUrl = reservation.to(AppView.SEATS, details.showId());
-    
+
     backLink(backUrl);
     */
 
@@ -245,7 +245,7 @@ final class ConfirmView extends Html.Template {
             value(testableField("reservationId", Long.toString(reservation.id())))),
 
         button(
-            AppCtx.PRIMARY,
+            UiShell.PRIMARY,
 
             type("submit"),
 
@@ -279,6 +279,7 @@ final class ConfirmView extends Html.Template {
  */
 package demo.landing.app;
 
+import java.util.function.LongSupplier;
 import module objectos.way;
 
 /// The ID of an user making seat reservation.
@@ -293,8 +294,11 @@ record AppReservation(long id) {
     return new AppReservation(id);
   }
 
-  public final boolean isEmpty() {
-    return id == 0L;
+  static AppReservation parse(Http.Exchange http, LongSupplier supplier) {
+    final long id;
+    id = http.queryParamAsLong(PARAM_NAME, supplier);
+
+    return new AppReservation(id);
   }
 
   @Override
@@ -328,7 +332,8 @@ import module objectos.way;
 
 /// Renders the home page view. More specifically, it renders:
 ///
-/// - a top header with the "Now Showing" title. - a list of the movies that are
+/// - a top header with the "Now Showing" title. 
+/// - a list of the movies that are
 /// currently playing.
 final class HomeView extends Html.Template {
 
@@ -698,17 +703,36 @@ final class SeatsGrid implements Iterable<SeatsGrid.Seat> {
  */
 package demo.landing.app;
 
+import java.util.List;
 import module objectos.way;
 
+/// Controller for any unmatched request to '/demo.landing/*'
 final class NotFound implements Http.Handler {
 
-  public static Html.Component create() {
-    throw new UnsupportedOperationException("Implement me");
+  private final AppCtx ctx;
+
+  NotFound(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
   public final void handle(Http.Exchange http) {
-    throw new UnsupportedOperationException("Implement me");
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
+
+      opts.main = new NotFoundView(opts.homeAction);
+
+      opts.sources = List.of(
+          Source.NotFound,
+          Source.NotFoundView
+      );
+    });
+
+    http.notFound(shell);
   }
 
 }
@@ -732,8 +756,6 @@ final class NotFound implements Http.Handler {
  */
 package demo.landing.app;
 
-import objectos.way.Http;
-
 enum SeatsAlert {
 
   EMPTY(\"""
@@ -755,9 +777,9 @@ enum SeatsAlert {
 
   private static final SeatsAlert[] VALUES = SeatsAlert.values();
 
-  static SeatsAlert parse(Http.Exchange http) {
+  static SeatsAlert of(int id) {
     final int ordinal;
-    ordinal = http.pathParamAsInt("alert", Integer.MIN_VALUE);
+    ordinal = id - 1;
 
     if (0 <= ordinal && ordinal < VALUES.length) {
       return VALUES[ordinal];
@@ -766,11 +788,8 @@ enum SeatsAlert {
     }
   }
 
-  final String query(String url) {
-    final char separator;
-    separator = url.indexOf('?') != -1 ? '?' : '&';
-
-    return url + separator + "alert=" + ordinal();
+  public final int id() {
+    return ordinal() + 1;
   }
 
 }
@@ -1303,7 +1322,8 @@ final class Movie implements Http.Handler {
           Source.Movie,
           Source.MovieDetails,
           Source.MovieScreening,
-          Source.MovieShowtime
+          Source.MovieShowtime,
+          Source.MovieView
       );
     });
 
@@ -1352,68 +1372,89 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
-import objectos.way.Http.Exchange;
 
 /// The "/seats/{id}" controller.
 final class Seats implements Http.Handler {
 
-  private final AppReservationGen reservationGen;
+  private final AppCtx ctx;
 
-  Seats(App.Injector injector) {
-    reservationGen = injector.getInstance(AppReservationGen.class);
+  Seats(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
-  public void handle(Exchange http) {}
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
-  final void handle(Http.Exchange http, Sql.Transaction trx) {
+    final int id;
+    id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+
     final int showId;
-    showId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    showId = id & 0xFFFF;
 
     final Optional<SeatsDetails> maybeDetails;
     maybeDetails = SeatsDetails.byId(trx, showId);
 
     if (maybeDetails.isEmpty()) {
-      final NotFoundView view;
-      view = new NotFoundView();
-
-      http.notFound(view);
-
       return;
     }
 
-    AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http, () -> generator(trx, showId));
 
-    if (reservation.isEmpty()) {
-      reservation = reservationGen.next();
+    final int alertId;
+    alertId = (id >>> 16);
 
-      trx.sql(\"""
+    final SeatsAlert alert;
+    alert = SeatsAlert.of(alertId);
+
+    final SeatsDetails details;
+    details = maybeDetails.get();
+
+    final SeatsGrid grid;
+    grid = SeatsGrid.query(trx, reservation.id());
+
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.backAction = ctx.clickAction(AppView.MOVIE, details.movieId(), reservation);
+
+      opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
+
+      opts.main = new SeatsView(reservation, alert, details, grid);
+
+      opts.sources = List.of(
+          Source.Seats,
+          Source.SeatsAlert,
+          Source.SeatsData,
+          Source.SeatsDetails,
+          Source.SeatsForm,
+          Source.SeatsGrid,
+          Source.SeatsView
+      );
+    });
+
+    http.ok(shell);
+  }
+
+  private long generator(Sql.Transaction trx, int showId) {
+    final long rid;
+    rid = ctx.nextReservation();
+
+    trx.sql(\"""
       insert into
         RESERVATION (RESERVATION_ID, SHOW_ID)
       values
         (?, ?)
       \""");
 
-      trx.param(reservation.id());
+    trx.param(rid);
 
-      trx.param(showId);
+    trx.param(showId);
 
-      trx.update();
+    trx.update();
 
-      final SeatsDetails details;
-      details = maybeDetails.get();
-
-      final SeatsGrid grid;
-      grid = SeatsGrid.query(trx, reservation.id());
-
-      final SeatsView view;
-      view = new SeatsView(reservation, details, grid);
-
-      throw new UnsupportedOperationException("Implement me");
-    }
-
-    throw new UnsupportedOperationException("Implement me");
+    return rid;
   }
 
 }
@@ -1582,15 +1623,11 @@ import module objectos.way;
 
 final class NotFoundView extends Html.Template {
 
-  /*
-  @Override
-  final List<SourceModel> viewSources() {
-    return List.of(
-        Source.NotFound,
-        Source.NotFoundView
-    );
+  private final JsAction onclick;
+
+  NotFoundView(JsAction onclick) {
+    this.onclick = onclick;
   }
-  */
 
   @Override
   protected final void render() {
@@ -1621,9 +1658,9 @@ final class NotFoundView extends Html.Template {
         \"""),
 
         button(
-            AppCtx.PRIMARY,
+            UiShell.PRIMARY,
 
-            // onclick(follow("/demo.landing/home")),
+            onclick(onclick),
 
             type("button"),
 
@@ -1654,27 +1691,27 @@ final class NotFoundView extends Html.Template {
 package demo.landing.app;
 
 import module objectos.way;
-import objectos.way.Http.Exchange;
 
 /// The seats selection form controller.
 final class SeatsForm implements Http.Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
-  private final Note.Sink noteSink;
+  private final AppCtx ctx;
 
-  SeatsForm(App.Injector injector) {
-    noteSink = injector.getInstance(Note.Sink.class);
+  SeatsForm(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
-  public void handle(Exchange http) {}
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
-  public final void handle(Http.Exchange http, Sql.Transaction trx) {
     final SeatsData data;
     data = SeatsData.parse(http);
 
-    noteSink.send(DATA_READ, data);
+    ctx.send(DATA_READ, data);
 
     if (data.seats() == 0) {
       // no seats were selected...
@@ -1704,31 +1741,34 @@ final class SeatsForm implements Http.Handler {
     // just in case, clear this user's selection
     data.clearUserSelection(trx);
 
-    final AppReservation reservation;
-    reservation = data.reservation();
-
     final int showId;
     showId = data.showId();
 
-    //    final String seatsUrl;
-    //    seatsUrl = reservation.to(AppView.SEATS, showId);
-    //
-    //    final String withAlertUrl;
-    //    withAlertUrl = alert.query(seatsUrl);
-    //
-    //    http.seeOther(withAlertUrl);
+    final int alertId;
+    alertId = alert.id();
 
-    throw new UnsupportedOperationException("Implement me");
+    final int id;
+    id = (alertId << 16) | showId;
+
+    final AppReservation reservation;
+    reservation = data.reservation();
+
+    final String seatsUrl;
+    seatsUrl = ctx.href(AppView.SEATS, id, reservation);
+
+    http.seeOther(seatsUrl);
   }
 
   private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
     // clear TMP_SELECTION just in case some of the records were inserted
     data.clearTmpSelection(trx);
 
-    final NotFoundView view;
-    view = new NotFoundView();
+    //    final NotFoundView view;
+    //    view = new NotFoundView();
+    //
+    //    http.badRequest(view);
 
-    http.badRequest(view);
+    throw new UnsupportedOperationException("Implement me");
   }
 
   private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
@@ -1750,25 +1790,25 @@ final class SeatsForm implements Http.Handler {
           // clear SELECTION just in case some of the records were inserted
           data.clearUserSelection(trx);
 
-          final NotFoundView view;
-          view = new NotFoundView();
+          //          final NotFoundView view;
+          //          view = new NotFoundView();
+          //
+          //          http.badRequest(view);
 
-          http.badRequest(view);
+          throw new UnsupportedOperationException("Implement me");
 
         } else {
 
           // all seats were persisted.
           // render next screen.
 
-          //          final AppReservation reservation;
-          //          reservation = data.reservation();
-          //
-          //          final String redirectUrl;
-          //          redirectUrl = reservation.to(AppView.CONFIRM);
-          //
-          //          http.seeOther(redirectUrl);
+          final AppReservation reservation;
+          reservation = data.reservation();
 
-          throw new UnsupportedOperationException("Implement me");
+          final String redirectUrl;
+          redirectUrl = ctx.href(AppView.CONFIRM, reservation);
+
+          http.seeOther(redirectUrl);
 
         }
 
@@ -1803,21 +1843,24 @@ import static objectos.way.Http.Method.GET;
 import static objectos.way.Http.Method.POST;
 
 import demo.landing.LandingDemo;
+import java.time.Duration;
 import module java.base;
 import module objectos.way;
+import objectos.way.Note.Sink;
+import objectos.way.Sql.Database;
 
 /// Application entry point and system-wide context.
 public final class AppCtx implements LandingDemo {
 
   public static final class Builder implements LandingDemo.Options {
 
-    private Clock clock = Clock.systemDefaultZone();
+    private Clock clock;
 
     private byte[] codecKey;
 
     private Sql.Database database;
 
-    private Note.Sink noteSink = Note.NoOpSink.create();
+    private Note.Sink noteSink;
 
     private Instant reservationEpoch;
 
@@ -1864,8 +1907,17 @@ public final class AppCtx implements LandingDemo {
     }
 
     final AppCtx build() {
+      if (clock == null) {
+        clock = Clock.systemDefaultZone();
+      }
+
       Objects.requireNonNull(codecKey, "codecKey == null");
+
       Objects.requireNonNull(database, "database == null");
+
+      if (noteSink == null) {
+        noteSink = Note.NoOpSink.create();
+      }
 
       if (reservationEpoch == null) {
         final LocalDateTime dateTime;
@@ -1920,6 +1972,16 @@ public final class AppCtx implements LandingDemo {
     testing = builder.testing;
   }
 
+  private AppCtx(Clock clock, byte[] codecKey, Database database, Sink noteSink, Instant reservationEpoch, RandomGenerator reservationRandom, boolean testing) {
+    this.clock = clock;
+    this.codecKey = codecKey;
+    this.database = database;
+    this.noteSink = noteSink;
+    this.reservationEpoch = reservationEpoch;
+    this.reservationRandom = reservationRandom;
+    this.testing = testing;
+  }
+
   /// Creates a new instance with the specified configuration.
   public static AppCtx create(Consumer<? super Builder> opts) {
     final Builder builder;
@@ -1949,6 +2011,12 @@ public final class AppCtx implements LandingDemo {
       www.path("/demo.landing/home", GET, trx(new Home(this)));
 
       www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
+
+      www.path("/demo.landing/seats/{id}", GET, trx(new Seats(this)));
+
+      www.path("/demo.landing/seats", POST, trx(new SeatsForm(this)));
+
+      www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
   }
 
@@ -1960,7 +2028,7 @@ public final class AppCtx implements LandingDemo {
           final Sql.Transaction trx;
           trx = database.beginTransaction(Sql.READ_COMMITED);
 
-          try {
+          try (trx) {
             trx.sql("set schema CINEMA");
 
             trx.update();
@@ -1974,8 +2042,6 @@ public final class AppCtx implements LandingDemo {
             noteSink.send(TRANSACTIONAL, t);
 
             throw trx.rollbackAndWrap(t);
-          } finally {
-            trx.close();
           }
 
         };
@@ -1986,98 +2052,21 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   // ##################################################################
-  // # BEGIN: CSS
-  // ##################################################################
-
-  @Override
-  public final Css.Library styles() {
-    return opts -> {
-      opts.scanClasses(
-          HomeView.class,
-          MovieView.class,
-          SeatsView.class,
-          UiIcon.class,
-          UiShell.class
-      );
-
-      opts.theme(\"""
-      :root {
-        --font-sans: 'InterVariable', var(--default-font-sans);
-        --font-mono: 'Hack', var(--default-font-mono);
-        --color-body: var(--color-white);
-        --color-border: var(--color-gray-200);
-        --color-btn-ghost: var(--color-body);
-        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, black 15%);
-        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, black 10%);
-        --color-btn-ghost-text: var(--color-text);
-        --color-btn-primary: var(--color-blue-600);
-        --color-btn-primary-active: color-mix(in oklab, var(--color-btn-primary) 70%, black 30%);
-        --color-btn-primary-hover: color-mix(in oklab, var(--color-btn-primary) 85%, black 15%);
-        --color-btn-primary-text: var(--color-gray-50);
-        --color-focus: var(--color-blue-600);
-        --color-footer: var(--color-gray-700);
-        --color-footer-text: var(--color-gray-100);
-        --color-high-comment: var(--color-gray-500);
-        --color-high-keyword: var(--color-blue-700);
-        --color-high-literal: var(--color-red-600);
-        --color-high-meta: var(--color-yellow-600);
-        --color-high-string: var(--color-green-700);
-        --color-html: var(--color-gray-50);
-        --color-icon: var(--color-gray-800);
-        --color-layer: var(--color-stone-100);
-        --color-link: var(--color-blue-600);
-        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, black 15%);
-        --color-logo: var(--color-gray-800);
-        --color-logo-hover: var(--color-link);
-        --color-text: var(--color-gray-800);
-        --color-text-secondary: var(--color-gray-600);
-      }
-      \""");
-
-      opts.theme(\"""
-      :root { @media (prefers-color-scheme: dark) {
-        --color-body: var(--color-neutral-800);
-        --color-border: var(--color-neutral-600);
-        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, white 15%);
-        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, white 10%);
-        --color-focus: var(--color-white);
-        --color-high-comment: var(--color-fuchsia-400);
-        --color-high-keyword: var(--color-blue-400);
-        --color-high-literal: var(--color-red-400);
-        --color-high-meta: var(--color-pink-400);
-        --color-high-string: var(--color-green-300);
-        --color-icon: var(--color-gray-200);
-        --color-layer: var(--color-stone-900);
-        --color-link: var(--color-blue-400);
-        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, white 15%);
-        --color-logo: var(--color-neutral-100);
-        --color-text: var(--color-neutral-100);
-        --color-text-secondary: var(--color-neutral-300);
-      }}
-      \""");
-    };
-  }
-
-  // ##################################################################
-  // # END: CSS
-  // ##################################################################
-
-  // ##################################################################
   // # BEGIN: History/Hash
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -2244,6 +2233,41 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   // ##################################################################
+  // # BEGIN: Reservation
+  // ##################################################################
+
+  private static final long TIMESTAMP_BITS = 41;
+
+  private static final long RANDOM_BITS = 64 - TIMESTAMP_BITS;
+
+  private static final long MAX_RANDOM = (1L << RANDOM_BITS) - 1;
+
+  /// Generates a 64-bit Snowflake ID to uniquely identify an user making
+  /// seat reservations.
+  public final long nextReservation() {
+    final Instant now;
+    now = clock.instant();
+
+    final Duration duration;
+    duration = Duration.between(reservationEpoch, now);
+
+    final long epochTime;
+    epochTime = duration.toMillis();
+
+    final long timestamp;
+    timestamp = epochTime << RANDOM_BITS;
+
+    final long randomBits;
+    randomBits = reservationRandom.nextLong(MAX_RANDOM);
+
+    return timestamp | randomBits;
+  }
+
+  // ##################################################################
+  // # END: Reservation
+  // ##################################################################
+
+  // ##################################################################
   // # BEGIN: UI
   // ##################################################################
 
@@ -2255,19 +2279,17 @@ public final class AppCtx implements LandingDemo {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());
   });
 
-  static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""
-    appearance:none
-    background-color:var(--color-btn-primary)
-    color:var(--color-btn-primary-text)
-    cursor:pointer
-    display:flex
-    font-size:14rx
-    min-height:48rx
-    padding:14rx_63rx_14rx_15rx
+  /// The default 'submit' action.
+  static final JsAction SUBMIT = Js.submit(opts -> {
+    // disable history
+    opts.history(false);
 
-    active/background-color:var(--color-btn-primary-active)
-    hover/background-color:var(--color-btn-primary-hover)
-    \""");
+    // disable scroll
+    opts.scroll(false);
+
+    // update only the demo shell
+    opts.update(AppCtx.SHELL);
+  });
 
   public final JsAction clickAction(AppView view, AppReservation reservation) {
     return clickAction(view, 0, reservation);
@@ -2289,7 +2311,15 @@ public final class AppCtx implements LandingDemo {
   }
 
   private String href(AppView view) {
-    return "/demo.landing/" + view.slug;
+    return href(view, 0, 0L);
+  }
+
+  public final String href(AppView view, AppReservation reservation) {
+    return href(view, 0, reservation);
+  }
+
+  public final String href(AppView view, int id, AppReservation reservation) {
+    return href(view, id, reservation.id());
   }
 
   private String href(AppView view, int id, long reservationId) {
@@ -2320,6 +2350,86 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   // ##################################################################
+  // # BEGIN: CSS
+  // ##################################################################
+
+  @Override
+  public final Css.Library styles() {
+    return opts -> {
+      opts.scanClasses(
+          ConfirmView.class,
+          HomeView.class,
+          MovieView.class,
+          NotFoundView.class,
+          SeatsView.class,
+          TicketView.class,
+          UiIcon.class,
+          UiShell.class
+      );
+
+      opts.theme(\"""
+      :root {
+        --font-sans: 'InterVariable', var(--default-font-sans);
+        --font-mono: 'Hack', var(--default-font-mono);
+        --color-body: var(--color-white);
+        --color-border: var(--color-gray-200);
+        --color-btn-ghost: var(--color-body);
+        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, black 15%);
+        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, black 10%);
+        --color-btn-ghost-text: var(--color-text);
+        --color-btn-primary: var(--color-blue-600);
+        --color-btn-primary-active: color-mix(in oklab, var(--color-btn-primary) 70%, black 30%);
+        --color-btn-primary-hover: color-mix(in oklab, var(--color-btn-primary) 85%, black 15%);
+        --color-btn-primary-text: var(--color-gray-50);
+        --color-focus: var(--color-blue-600);
+        --color-footer: var(--color-gray-700);
+        --color-footer-text: var(--color-gray-100);
+        --color-high-comment: var(--color-gray-500);
+        --color-high-keyword: var(--color-blue-700);
+        --color-high-literal: var(--color-red-600);
+        --color-high-meta: var(--color-yellow-600);
+        --color-high-string: var(--color-green-700);
+        --color-html: var(--color-gray-50);
+        --color-icon: var(--color-gray-800);
+        --color-layer: var(--color-stone-100);
+        --color-link: var(--color-blue-600);
+        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, black 15%);
+        --color-logo: var(--color-gray-800);
+        --color-logo-hover: var(--color-link);
+        --color-text: var(--color-gray-800);
+        --color-text-secondary: var(--color-gray-600);
+      }
+      \""");
+
+      opts.theme(\"""
+      :root { @media (prefers-color-scheme: dark) {
+        --color-body: var(--color-neutral-800);
+        --color-border: var(--color-neutral-600);
+        --color-btn-ghost-active: color-mix(in oklab, var(--color-btn-ghost) 85%, white 15%);
+        --color-btn-ghost-hover: color-mix(in oklab, var(--color-btn-ghost) 90%, white 10%);
+        --color-focus: var(--color-white);
+        --color-high-comment: var(--color-fuchsia-400);
+        --color-high-keyword: var(--color-blue-400);
+        --color-high-literal: var(--color-red-400);
+        --color-high-meta: var(--color-pink-400);
+        --color-high-string: var(--color-green-300);
+        --color-icon: var(--color-gray-200);
+        --color-layer: var(--color-stone-900);
+        --color-link: var(--color-blue-400);
+        --color-link-hover: color-mix(in oklab, var(--color-link) 85%, white 15%);
+        --color-logo: var(--color-neutral-100);
+        --color-text: var(--color-neutral-100);
+        --color-text-secondary: var(--color-neutral-300);
+      }}
+      \""");
+    };
+  }
+
+  // ##################################################################
+  // # END: CSS
+  // ##################################################################
+
+  // ##################################################################
   // # BEGIN: Date/Time
   // ##################################################################
 
@@ -2343,8 +2453,24 @@ public final class AppCtx implements LandingDemo {
     noteSink.send(note, value);
   }
 
+  public final <T1> void send(Note.Ref1<T1> note, T1 value) {
+    noteSink.send(note, value);
+  }
+
   // ##################################################################
   // # END: Notes
+  // ##################################################################
+
+  // ##################################################################
+  // # BEGIN: Testing support
+  // ##################################################################
+
+  final AppCtx with(Clock clock, Instant registrationEpoch, RandomGenerator registrationRandom) {
+    return new AppCtx(clock, codecKey, database, noteSink, registrationEpoch, registrationRandom, testing);
+  }
+
+  // ##################################################################
+  // # END: Testing support
   // ##################################################################
 
 }
@@ -2906,77 +3032,6 @@ final record ConfirmDetails(
 }
 """);
 
-  static final SourceModel AppReservationGen = SourceModel.create("AppReservationGen.java", """
-/*
- * Copyright (C) 2024-2025 Objectos Software LTDA.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package demo.landing.app;
-
-import module java.base;
-import java.time.Duration;
-
-/// Generates a 64-bit Snowflake ID to uniquely identify an user making
-/// seat reservations.
-final class AppReservationGen {
-
-  private static final long TIMESTAMP_BITS = 41;
-
-  private static final long RANDOM_BITS = 64 - TIMESTAMP_BITS;
-
-  private static final long MAX_RANDOM = (1L << RANDOM_BITS) - 1;
-
-  private final Clock clock;
-
-  // January 1st, 2025 @ 00:00 @ GMT-3
-  private final Instant epoch;
-
-  private final RandomGenerator randomGenerator;
-
-  AppReservationGen(Clock clock, Instant epoch, RandomGenerator randomGenerator) {
-    this.clock = clock;
-
-    this.epoch = epoch;
-
-    this.randomGenerator = randomGenerator;
-  }
-
-  public final AppReservation next() {
-    final Instant now;
-    now = clock.instant();
-
-    final Duration duration;
-    duration = Duration.between(epoch, now);
-
-    final long epochTime;
-    epochTime = duration.toMillis();
-
-    final long timestamp;
-    timestamp = epochTime << RANDOM_BITS;
-
-    final long randomBits;
-    randomBits = randomGenerator.nextLong(MAX_RANDOM);
-
-    final long id;
-    id = timestamp | randomBits;
-
-    return new AppReservation(id);
-  }
-
-}
-""");
-
   static final SourceModel SeatsView = SourceModel.create("SeatsView.java", """
 /*
  * Copyright (C) 2024-2025 Objectos Software LTDA.
@@ -3009,10 +3064,6 @@ final class SeatsView extends Html.Template {
 
   private final SeatsGrid grid;
 
-  SeatsView(AppReservation reservation, SeatsDetails details, SeatsGrid grid) {
-    this(reservation, null, details, grid);
-  }
-
   SeatsView(AppReservation reservation, SeatsAlert alert, SeatsDetails details, SeatsGrid grid) {
     this.reservation = reservation;
 
@@ -3025,13 +3076,6 @@ final class SeatsView extends Html.Template {
 
   @Override
   protected final void render() {
-    /*
-    final String backUrl;
-    backUrl = reservation.to(AppView.MOVIE, details.movieId());
-    
-    backLink(backUrl);
-    */
-
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
 
@@ -3206,7 +3250,7 @@ final class SeatsView extends Html.Template {
 
         method("post"),
 
-        //onsubmit(submit()),
+        onsubmit(AppCtx.SUBMIT),
 
         input(
             type("hidden"),
@@ -3275,7 +3319,7 @@ final class SeatsView extends Html.Template {
         \"""),
 
         button(
-            AppCtx.PRIMARY,
+            UiShell.PRIMARY,
 
             form(FORM_ID),
 
@@ -3721,6 +3765,7 @@ import module objectos.way;
 /// Renders the details of a movie and lists its available screenings.
 final class MovieView extends Html.Template {
 
+  /// A screening of the movie to be displayed in this view
   record Screening(
       String screenName,
       String features,
@@ -3728,6 +3773,7 @@ final class MovieView extends Html.Template {
       List<Showtime> showtimes
   ) {}
 
+  /// A clickable showtime to be listed in this view
   record Showtime(
       int id,
       String time,
@@ -3938,12 +3984,6 @@ final class MovieView extends Html.Template {
 
       testableCell(Integer.toString(showId), 2);
 
-      final JsAction showClick;
-      showClick = showtime.onclick;
-
-      final String time;
-      time = showtime.time();
-
       li(
           div(
               css(\"""
@@ -3957,9 +3997,9 @@ final class MovieView extends Html.Template {
               hover/cursor:pointer
               \"""),
 
-              onclick(showClick),
+              onclick(showtime.onclick),
 
-              span(testableCell(time, 5))
+              span(testableCell(showtime.time, 5))
           ),
 
           testableNewLine()
@@ -3999,6 +4039,20 @@ import objectos.way.Html.Component;
 /// The demo UI shell responsible for displaying the application on the
 /// top/right and the source code on the bottom/left.
 final class UiShell extends Html.Template {
+
+  static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""
+    appearance:none
+    background-color:var(--color-btn-primary)
+    color:var(--color-btn-primary-text)
+    cursor:pointer
+    display:flex
+    font-size:14rx
+    min-height:48rx
+    padding:14rx_63rx_14rx_15rx
+
+    active/background-color:var(--color-btn-primary-active)
+    hover/background-color:var(--color-btn-primary-hover)
+    \""");
 
   static final class Builder {
 
@@ -4042,20 +4096,6 @@ final class UiShell extends Html.Template {
 
         builder.sources
     );
-  }
-
-  /// The default 'submit' action.
-  protected final JsAction submit() {
-    return Js.submit(opts -> {
-      // disable history
-      opts.history(false);
-
-      // disable scroll
-      opts.scroll(false);
-
-      // update only the demo shell
-      opts.update(AppCtx.SHELL);
-    });
   }
 
   @Override
@@ -4197,32 +4237,49 @@ final class UiShell extends Html.Template {
 
   private void renderBackLink() {
     if (backAction != null) {
-      backLink(backAction);
+      // if (testable())
+      String backLink;
+      backLink = backAction.toString();
+
+      final String raw;
+      raw = backLink;
+
+      final int prefix;
+      prefix = raw.indexOf("/demo.landing/");
+
+      if (prefix != -1) {
+        final int quote;
+        quote = raw.indexOf('"', prefix);
+
+        if (quote != -1) {
+          backLink = raw.substring(prefix, quote);
+        }
+      }
+
+      testableField("back-link", backLink);
+
+      div(
+          css(\"""
+          border-radius:9999px
+          padding:6rx
+          margin:6rx_0_0_-6rx
+          position:absolute
+
+          active/background-color:var(--color-btn-ghost-active)
+          hover/background-color:var(--color-btn-ghost-hover)
+          hover/cursor:pointer
+          \"""),
+
+          onclick(backAction),
+
+          c(
+              UiIcon.ARROW_LEFT.css(\"""
+              height:20rx
+              width:20rx
+              \""")
+          )
+      );
     }
-  }
-
-  private void backLink(JsAction onclick) {
-    div(
-        css(\"""
-        border-radius:9999px
-        padding:6rx
-        margin:6rx_0_0_-6rx
-        position:absolute
-
-        active/background-color:var(--color-btn-ghost-active)
-        hover/background-color:var(--color-btn-ghost-hover)
-        hover/cursor:pointer
-        \"""),
-
-        onclick(onclick),
-
-        c(
-            UiIcon.ARROW_LEFT.css(\"""
-            height:20rx
-            width:20rx
-            \""")
-        )
-    );
   }
 
   // ##################################################################
@@ -4474,14 +4531,6 @@ enum AppView {
   NOT_FOUND;
 
   final String slug = name().toLowerCase(Locale.US);
-
-  final String href(int id, AppReservation reservation) {
-    return switch (this) {
-      case HOME, NOT_FOUND -> "/demo.landing/" + slug + reservation;
-
-      default -> "/demo.landing/" + slug + "/" + id + reservation;
-    };
-  }
 
 }
 """);

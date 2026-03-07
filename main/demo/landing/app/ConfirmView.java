@@ -39,7 +39,7 @@ final class ConfirmView extends Html.Template {
     /*
     final String backUrl;
     backUrl = reservation.to(AppView.SEATS, details.showId());
-    
+
     backLink(backUrl);
     */
 
@@ -222,7 +222,7 @@ final class ConfirmView extends Html.Template {
             value(testableField("reservationId", Long.toString(reservation.id())))),
 
         button(
-            AppCtx.PRIMARY,
+            UiShell.PRIMARY,
 
             type("submit"),
 

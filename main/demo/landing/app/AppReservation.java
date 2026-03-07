@@ -15,6 +15,7 @@
  */
 package demo.landing.app;
 
+import java.util.function.LongSupplier;
 import module objectos.way;
 
 /// The ID of an user making seat reservation.
@@ -29,8 +30,11 @@ record AppReservation(long id) {
     return new AppReservation(id);
   }
 
-  public final boolean isEmpty() {
-    return id == 0L;
+  static AppReservation parse(Http.Exchange http, LongSupplier supplier) {
+    final long id;
+    id = http.queryParamAsLong(PARAM_NAME, supplier);
+
+    return new AppReservation(id);
   }
 
   @Override

@@ -23,6 +23,20 @@ import objectos.way.Html.Component;
 /// top/right and the source code on the bottom/left.
 final class UiShell extends Html.Template {
 
+  static final Html.ClassName PRIMARY = Html.ClassName.ofText("""
+    appearance:none
+    background-color:var(--color-btn-primary)
+    color:var(--color-btn-primary-text)
+    cursor:pointer
+    display:flex
+    font-size:14rx
+    min-height:48rx
+    padding:14rx_63rx_14rx_15rx
+
+    active/background-color:var(--color-btn-primary-active)
+    hover/background-color:var(--color-btn-primary-hover)
+    """);
+
   static final class Builder {
 
     JsAction backAction;
@@ -65,20 +79,6 @@ final class UiShell extends Html.Template {
 
         builder.sources
     );
-  }
-
-  /// The default 'submit' action.
-  protected final JsAction submit() {
-    return Js.submit(opts -> {
-      // disable history
-      opts.history(false);
-
-      // disable scroll
-      opts.scroll(false);
-
-      // update only the demo shell
-      opts.update(AppCtx.SHELL);
-    });
   }
 
   @Override

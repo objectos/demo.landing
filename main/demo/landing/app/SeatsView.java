@@ -29,10 +29,6 @@ final class SeatsView extends Html.Template {
 
   private final SeatsGrid grid;
 
-  SeatsView(AppReservation reservation, SeatsDetails details, SeatsGrid grid) {
-    this(reservation, null, details, grid);
-  }
-
   SeatsView(AppReservation reservation, SeatsAlert alert, SeatsDetails details, SeatsGrid grid) {
     this.reservation = reservation;
 
@@ -45,13 +41,6 @@ final class SeatsView extends Html.Template {
 
   @Override
   protected final void render() {
-    /*
-    final String backUrl;
-    backUrl = reservation.to(AppView.MOVIE, details.movieId());
-    
-    backLink(backUrl);
-    */
-
     // this node is for testing only, it is not rendered in the final HTML
     testableH1("Show details");
 
@@ -226,7 +215,7 @@ final class SeatsView extends Html.Template {
 
         method("post"),
 
-        //onsubmit(submit()),
+        onsubmit(AppCtx.SUBMIT),
 
         input(
             type("hidden"),
@@ -295,7 +284,7 @@ final class SeatsView extends Html.Template {
         """),
 
         button(
-            AppCtx.PRIMARY,
+            UiShell.PRIMARY,
 
             form(FORM_ID),
 

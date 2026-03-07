@@ -91,8 +91,6 @@ public class SeatsFormTestConcurrent {
 
         config.path("/demo/landing");
 
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
-
         final long reservationId;
         reservationId = 10902;
 

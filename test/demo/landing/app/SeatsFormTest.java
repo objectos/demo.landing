@@ -76,8 +76,6 @@ public class SeatsFormTest {
 
         config.path("/demo.landing/seats");
 
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
-
         config.formParam("reservationId", 901);
 
         config.formParam("screenId", 31);
@@ -133,8 +131,6 @@ public class SeatsFormTest {
         config.method(Http.Method.POST);
 
         config.path("/demo.landing/seats");
-
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
         config.formParam("reservationId", 901);
 
@@ -200,8 +196,6 @@ public class SeatsFormTest {
 
         config.path("/demo.landing/seats");
 
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
-
         config.formParam("reservationId", 901);
 
         config.formParam("screenId", 31);
@@ -262,8 +256,6 @@ public class SeatsFormTest {
 
         config.path("/demo.landing/seats");
 
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
-
         config.formParam("reservationId", 901);
 
         config.formParam("screenId", 31);
@@ -320,8 +312,6 @@ public class SeatsFormTest {
 
         config.path("/demo.landing/seats");
 
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
-
         config.formParam("reservationId", 902); // bad reservation id
 
         config.formParam("screenId", 31); // valid screen id
@@ -364,8 +354,6 @@ public class SeatsFormTest {
         config.method(Http.Method.POST);
 
         config.path("/demo.landing/seats");
-
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
         config.formParam("reservationId", 901); // valid reservation id
 
@@ -412,8 +400,6 @@ public class SeatsFormTest {
 
         config.path("/demo.landing/seats");
 
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
-
         config.formParam("reservationId", 901);
 
         config.formParam("screenId", 31);
@@ -454,8 +440,6 @@ public class SeatsFormTest {
         config.method(Http.Method.POST);
 
         config.path("/demo.landing/seats");
-
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
         config.formParam("reservationId", 901);
 
@@ -520,8 +504,6 @@ public class SeatsFormTest {
 
         config.path("/demo.landing/seats");
 
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
-
         config.formParam("reservationId", 901);
 
         config.formParam("screenId", 31);
@@ -581,8 +563,6 @@ public class SeatsFormTest {
         config.method(Http.Method.POST);
 
         config.path("/demo.landing/seats");
-
-        config.header(Http.HeaderName.WAY_REQUEST, "true");
 
         config.formParam("reservationId", 901);
 

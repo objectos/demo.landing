@@ -22,7 +22,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import objectos.way.Http;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Listeners;
@@ -93,6 +92,10 @@ public class AppCtxTest {
   // # END: History/Hash
   // ##################################################################
 
+  // ##################################################################
+  // # BEGIN: Registration
+  // ##################################################################
+
   @Test
   public void nextRegistration01() {
     final FixedClock clock;
@@ -110,61 +113,33 @@ public class AppCtxTest {
     final FixedGenerator generator;
     generator = new FixedGenerator(12345L);
 
-    final AppReservationGen r;
-    r = new AppReservationGen(clock, epoch, generator);
+    final AppCtx gen;
+    gen = ctx.with(clock, epoch, generator);
 
-    test(r, "11111111110001101000010000000000000000011000000111001");
+    test(gen.nextReservation(), "11111111110001101000010000000000000000011000000111001");
 
     clock.offset = Duration.ofMillis(1);
 
-    test(r, "11111111110001101000010000000100000000011000000111001");
+    test(gen.nextReservation(), "11111111110001101000010000000100000000011000000111001");
 
     clock.offset = Duration.ofMillis(2);
 
-    test(r, "11111111110001101000010000001000000000011000000111001");
+    test(gen.nextReservation(), "11111111110001101000010000001000000000011000000111001");
 
     clock.offset = Duration.ofMillis(3);
 
-    test(r, "11111111110001101000010000001100000000011000000111001");
+    test(gen.nextReservation(), "11111111110001101000010000001100000000011000000111001");
   }
 
-  private void test(AppReservationGen r, String expected) {
-    final AppReservation res;
-    res = r.next();
-
-    final long value;
-    value = res.id();
-
+  private void test(long value, String expected) {
     final String result;
     result = Long.toBinaryString(value);
 
     assertEquals(result, expected);
   }
 
-  @Test
-  public void testCase01() {
-    final Http.Exchange http;
-    http = Testing.http(config -> {
-      config.method(Http.Method.GET);
-
-      config.path("/index.html");
-
-      config.queryParam("page", "i-do-not-exist");
-    });
-
-    assertEquals(
-        Testing.handle0(http),
-
-        """
-        HTTP/1.1 200 OK
-        Date: Mon, 28 Apr 2025 13:01:00 GMT
-        Content-Type: text/html; charset=utf-8
-        Transfer-Encoding: chunked
-
-        # Something Went Wrong
-
-        """
-    );
-  }
+  // ##################################################################
+  // # END: Registration
+  // ##################################################################
 
 }

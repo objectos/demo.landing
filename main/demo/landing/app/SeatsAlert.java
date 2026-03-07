@@ -15,8 +15,6 @@
  */
 package demo.landing.app;
 
-import objectos.way.Http;
-
 enum SeatsAlert {
 
   EMPTY("""
@@ -38,9 +36,9 @@ enum SeatsAlert {
 
   private static final SeatsAlert[] VALUES = SeatsAlert.values();
 
-  static SeatsAlert parse(Http.Exchange http) {
+  static SeatsAlert of(int id) {
     final int ordinal;
-    ordinal = http.pathParamAsInt("alert", Integer.MIN_VALUE);
+    ordinal = id - 1;
 
     if (0 <= ordinal && ordinal < VALUES.length) {
       return VALUES[ordinal];
@@ -49,11 +47,8 @@ enum SeatsAlert {
     }
   }
 
-  final String query(String url) {
-    final char separator;
-    separator = url.indexOf('?') != -1 ? '?' : '&';
-
-    return url + separator + "alert=" + ordinal();
+  public final int id() {
+    return ordinal() + 1;
   }
 
 }

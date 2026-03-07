@@ -16,27 +16,27 @@
 package demo.landing.app;
 
 import module objectos.way;
-import objectos.way.Http.Exchange;
 
 /// The seats selection form controller.
 final class SeatsForm implements Http.Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
-  private final Note.Sink noteSink;
+  private final AppCtx ctx;
 
-  SeatsForm(App.Injector injector) {
-    noteSink = injector.getInstance(Note.Sink.class);
+  SeatsForm(AppCtx ctx) {
+    this.ctx = ctx;
   }
 
   @Override
-  public void handle(Exchange http) {}
+  public final void handle(Http.Exchange http) {
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
-  public final void handle(Http.Exchange http, Sql.Transaction trx) {
     final SeatsData data;
     data = SeatsData.parse(http);
 
-    noteSink.send(DATA_READ, data);
+    ctx.send(DATA_READ, data);
 
     if (data.seats() == 0) {
       // no seats were selected...
@@ -66,31 +66,31 @@ final class SeatsForm implements Http.Handler {
     // just in case, clear this user's selection
     data.clearUserSelection(trx);
 
-    final AppReservation reservation;
-    reservation = data.reservation();
-
     final int showId;
     showId = data.showId();
 
-    //    final String seatsUrl;
-    //    seatsUrl = reservation.to(AppView.SEATS, showId);
-    //
-    //    final String withAlertUrl;
-    //    withAlertUrl = alert.query(seatsUrl);
-    //
-    //    http.seeOther(withAlertUrl);
+    final int alertId;
+    alertId = alert.id();
 
-    throw new UnsupportedOperationException("Implement me");
+    final int id;
+    id = (alertId << 16) | showId;
+
+    final AppReservation reservation;
+    reservation = data.reservation();
+
+    final String seatsUrl;
+    seatsUrl = ctx.href(AppView.SEATS, id, reservation);
+
+    http.seeOther(seatsUrl);
   }
 
   private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
     // clear TMP_SELECTION just in case some of the records were inserted
     data.clearTmpSelection(trx);
 
-    final NotFoundView view;
-    view = new NotFoundView();
+    // insertion failed => bad data
 
-    http.badRequest(view);
+    http.badRequest(Media.Bytes.textPlain("Bad data"));
   }
 
   private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
@@ -112,25 +112,20 @@ final class SeatsForm implements Http.Handler {
           // clear SELECTION just in case some of the records were inserted
           data.clearUserSelection(trx);
 
-          final NotFoundView view;
-          view = new NotFoundView();
-
-          http.badRequest(view);
+          http.badRequest(Media.Bytes.textPlain("Bad data"));
 
         } else {
 
           // all seats were persisted.
           // render next screen.
 
-          //          final AppReservation reservation;
-          //          reservation = data.reservation();
-          //
-          //          final String redirectUrl;
-          //          redirectUrl = reservation.to(AppView.CONFIRM);
-          //
-          //          http.seeOther(redirectUrl);
+          final AppReservation reservation;
+          reservation = data.reservation();
 
-          throw new UnsupportedOperationException("Implement me");
+          final String redirectUrl;
+          redirectUrl = ctx.href(AppView.CONFIRM, reservation);
+
+          http.seeOther(redirectUrl);
 
         }
 

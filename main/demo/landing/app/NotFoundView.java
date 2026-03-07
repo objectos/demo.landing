@@ -54,7 +54,7 @@ final class NotFoundView extends Html.Template {
         """),
 
         button(
-            AppCtx.PRIMARY,
+            UiShell.PRIMARY,
 
             onclick(onclick),
 
