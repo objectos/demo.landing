@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package demo.landing.local;
+package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import demo.landing.app.Testing;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
 import java.util.List;
 import objectos.way.Http;
 import objectos.way.Sql;
@@ -29,20 +27,11 @@ import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
 @Listeners(Testing.class)
-public class LocalModuleTest {
+public class LocalClearTest {
 
   private record Reservation(long id) {
     Reservation(ResultSet rs, int idx) throws SQLException {
       this(rs.getLong(idx++));
-    }
-  }
-
-  private record Show(int screening, String time) {
-    Show(ResultSet rs, int idx) throws SQLException {
-      this(
-          rs.getInt(idx++),
-          rs.getString(idx++)
-      );
     }
   }
 
@@ -225,88 +214,10 @@ public class LocalModuleTest {
     });
   }
 
-  @Test
-  public void createShow01() {
-    Testing.rollback(trx -> {
-      Testing.load(trx, data);
-
-      final Http.Exchange http1;
-      http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.POST);
-
-        config.path("/demo.landing/create-show");
-      });
-
-      assertEquals(
-          Testing.handle0(http1),
-
-          """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/plain; charset=utf-8
-          Content-Length: 3
-
-          """
-      );
-
-      final List<Show> result1;
-      result1 = queryShow(trx, LocalDate.of(2025, 1, 27));
-
-      assertEquals(result1.size(), 9);
-      assertEquals(result1.get(0), new Show(41, "13:00:00"));
-      assertEquals(result1.get(1), new Show(41, "16:00:00"));
-      assertEquals(result1.get(2), new Show(41, "20:00:00"));
-
-      assertEquals(result1.get(3), new Show(42, "13:00:00"));
-      assertEquals(result1.get(4), new Show(42, "16:00:00"));
-      assertEquals(result1.get(5), new Show(42, "19:00:00"));
-
-      assertEquals(result1.get(6), new Show(43, "14:00:00"));
-      assertEquals(result1.get(7), new Show(43, "16:00:00"));
-      assertEquals(result1.get(8), new Show(43, "19:00:00"));
-
-      final Http.Exchange http2;
-      http2 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
-
-        config.method(Http.Method.POST);
-
-        config.path("/demo.landing/create-show");
-      });
-
-      assertEquals(
-          Testing.handle0(http2),
-
-          """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/plain; charset=utf-8
-          Content-Length: 27
-
-          """
-      );
-
-      final List<Show> result2;
-      result2 = queryShow(trx, LocalDate.of(2025, 1, 27));
-
-      assertEquals(result2.size(), 9);
-    });
-  }
-
   private List<Reservation> queryReservation(Sql.Transaction trx) {
     trx.sql("select RESERVATION_ID from RESERVATION order by 1");
 
     return trx.query(Reservation::new);
-  }
-
-  private List<Show> queryShow(Sql.Transaction trx, LocalDate dt) {
-    trx.sql("select SCREENING_ID, SHOWTIME from SHOW where SHOWDATE = ? order by 1, 2");
-
-    trx.param(dt);
-
-    return trx.query(Show::new);
   }
 
 }

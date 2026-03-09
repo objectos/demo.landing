@@ -1,9 +1,14 @@
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 
 <suite name="Demo Landing" verbose="2">
-    <test name="All">
+    <test name="App">
         <packages>
-            <package name="demo.*"></package>
+            <package name="demo.landing.app"></package>
+        </packages>
+    </test>
+    <test name="App2">
+        <packages>
+            <package name="demo.landing.app2"></package>
         </packages>
     </test>
 </suite>

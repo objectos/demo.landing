@@ -21,7 +21,7 @@
 ## Coordinates
 GROUP_ID := br.com.objectos
 ARTIFACT_ID := demo.landing
-VERSION := 003-SNAPSHOT
+VERSION := 003
 MODULE := $(ARTIFACT_ID)
 
 ## javac --release option
@@ -176,7 +176,7 @@ TEST_ADD_MODULES := org.testng
 
 ## test --add-exports
 TEST_ADD_EXPORTS := demo.landing/demo.landing.app=org.testng
-TEST_ADD_EXPORTS += demo.landing/demo.landing.local=org.testng
+TEST_ADD_EXPORTS += demo.landing/demo.landing.app2=org.testng
 
 ## test --add-reads
 TEST_ADD_READS := demo.landing=org.testng
