@@ -38,10 +38,10 @@ final class Source {
  */
 package demo.landing.app;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import objectos.way.Html;
+import module java.base;
+import module objectos.way;
 
+/// Renders the current order details and a confirmation button.
 final class ConfirmView extends Html.Template {
 
   private final ConfirmDetails details;
@@ -431,6 +431,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
+/// The `/confirm` controller
 final class Confirm implements Http.Handler {
 
   private final AppCtx ctx;
@@ -472,6 +473,7 @@ final class Confirm implements Http.Handler {
           Source.Confirm,
           Source.ConfirmData,
           Source.ConfirmDetails,
+          Source.ConfirmForm,
           Source.ConfirmView
       );
     });
@@ -503,6 +505,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
+/// Represents the seats the user may (or may not) choose for a movie show.
 final class SeatsGrid implements Iterable<SeatsGrid.Seat> {
 
   record Seat(
@@ -691,7 +694,7 @@ final class SeatsGrid implements Iterable<SeatsGrid.Seat> {
  */
 package demo.landing.app;
 
-import java.util.List;
+import module java.base;
 import module objectos.way;
 
 /// Controller for any unmatched request to '/demo.landing/*'
@@ -744,6 +747,7 @@ final class NotFound implements Http.Handler {
  */
 package demo.landing.app;
 
+/// Alerts the user that invalid data was submitted.
 enum SeatsAlert {
 
   EMPTY(\"""
@@ -804,7 +808,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-/// The "/home" controller.
+/// The `/home` controller.
 final class Home implements Http.Handler {
 
   private final AppCtx ctx;
@@ -1071,13 +1075,10 @@ record HomeModel(
 package demo.landing.app;
 
 import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// The data of the tickets bought by the user.
 record TicketModel(
     long id,
     String purchaseTime,
@@ -1195,10 +1196,10 @@ record TicketModel(
  */
 package demo.landing.app;
 
-import java.time.LocalDateTime;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// The data submitted from the `/confirm` form.
 record ConfirmData(AppReservation reservation) {
 
   static ConfirmData parse(Http.Exchange http) {
@@ -1250,7 +1251,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-/// The "/movie/{id}" controller.
+/// The `/movie/{id}` controller.
 final class Movie implements Http.Handler {
 
   private final AppCtx ctx;
@@ -1350,6 +1351,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
+/// Processes the data submitted from the `/confirm` form.
 final class ConfirmForm implements Http.Handler {
 
   private final AppCtx ctx;
@@ -1415,7 +1417,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-/// The "/seats/{id}" controller.
+/// The `/seats/{id}` controller.
 final class Seats implements Http.Handler {
 
   private final AppCtx ctx;
@@ -1607,8 +1609,7 @@ package demo.landing.app;
 
 import java.sql.Array;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import module java.base;
 
 /// The time of a particular movie screening.
 record MovieShowtime(int showId, String time) {
@@ -1666,6 +1667,7 @@ package demo.landing.app;
 
 import module objectos.way;
 
+/// Renders the error view
 final class NotFoundView extends Html.Template {
 
   private final JsAction onclick;
@@ -1737,7 +1739,7 @@ package demo.landing.app;
 
 import module objectos.way;
 
-/// The seats selection form controller.
+/// Processes the seats selected by the user.
 final class SeatsForm implements Http.Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
@@ -2615,11 +2617,12 @@ public final class AppCtx implements LandingDemo {
  */
 package demo.landing.app;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// Details of the movie screening selected by the user. To be presented in the
+/// seats form.
 record SeatsDetails(
     String date,
     String time,
@@ -2752,10 +2755,10 @@ record SeatsDetails(
  */
 package demo.landing.app;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
+import module java.base;
 import module objectos.way;
 
+/// Renders the tickets bought by the user.
 final class TicketView extends Html.Template {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
@@ -3008,8 +3011,9 @@ final class LocalClear implements Http.Handler {
  */
 package demo.landing.app;
 
-import objectos.way.Html;
+import module objectos.way;
 
+/// The filename and the contents of a Java source file.
 record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 
   private static int INDEX = 0;
@@ -3051,13 +3055,11 @@ record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 package demo.landing.app;
 
 import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// The confirmation data to be shown to the user regarding the seats selected.
+/// Includes the price of each ticket and the total amount due.
 final record ConfirmDetails(
     String orderNumber,
     String reservationId,
@@ -3175,6 +3177,7 @@ package demo.landing.app;
 
 import module objectos.way;
 
+/// Renders the seat selection view.
 final class SeatsView extends Html.Template {
 
   private static final String FORM_ID = "seats-form";
@@ -3464,13 +3467,8 @@ final class SeatsView extends Html.Template {
  */
 package demo.landing.app;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /// The showing of a movie in this theater.
 record MovieScreening(
@@ -3571,10 +3569,8 @@ record MovieScreening(
  */
 package demo.landing.app;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /// The details of a particular movie.
 record MovieDetails(
@@ -3645,13 +3641,10 @@ record MovieDetails(
  */
 package demo.landing.app;
 
-import java.util.Arrays;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
-/**
- * Represents the user submitted data.
- */
+/// Represents the `/seats/{id}` user submitted data.
 record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
   public static SeatsData parse(Http.Exchange http) {
@@ -3804,12 +3797,10 @@ record SeatsData(AppReservation reservation, int showId, int screenId, int[] sel
  */
 package demo.landing.app;
 
-import java.util.List;
-import java.util.Optional;
-import objectos.script.Js;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// The `/ticket` controller.
 final class Ticket implements Http.Handler {
 
   Ticket() {}
