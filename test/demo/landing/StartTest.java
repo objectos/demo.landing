@@ -131,10 +131,7 @@ public final class StartTest extends Start {
 
       opts.noteSink(noteSink);
 
-      final LandingDemo demo;
-      demo = injector.getInstance(LandingDemo.class);
-
-      opts.include(demo.styles());
+      opts.include(LandingDemo.styles());
     });
 
     final String css;

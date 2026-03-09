@@ -51,11 +51,17 @@ public interface LandingDemo {
     return AppCtx.create(opts);
   }
 
+  static Css.Library styles() {
+    return AppCtx.stylesImpl();
+  }
+
   Http.Routing.Module localRoutes();
 
   Http.Routing.Module publicRoutes(Web.Resources webResources);
 
-  Css.Library styles();
+  Html.Id shell();
+
+  JsAction loadAction();
 
   Web.Resources.Library webResources();
 

@@ -2108,17 +2108,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {
@@ -2343,6 +2343,16 @@ public final class AppCtx implements LandingDemo {
     opts.update(AppCtx.SHELL);
   });
 
+  @Override
+  public final Html.Id shell() {
+    return SHELL;
+  }
+
+  @Override
+  public final JsAction loadAction() {
+    return ONLOAD;
+  }
+
   public final JsAction clickAction(AppView view, AppReservation reservation) {
     return clickAction(view, 0, reservation);
   }
@@ -2406,8 +2416,7 @@ public final class AppCtx implements LandingDemo {
   // # BEGIN: CSS
   // ##################################################################
 
-  @Override
-  public final Css.Library styles() {
+  public static Css.Library stylesImpl() {
     return opts -> {
       opts.scanClasses(
           ConfirmView.class,
