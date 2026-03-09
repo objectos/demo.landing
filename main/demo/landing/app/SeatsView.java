@@ -17,6 +17,7 @@ package demo.landing.app;
 
 import module objectos.way;
 
+/// Renders the seat selection view.
 final class SeatsView extends Html.Template {
 
   private static final String FORM_ID = "seats-form";

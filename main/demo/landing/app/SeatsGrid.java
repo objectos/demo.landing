@@ -18,6 +18,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
+/// Represents the seats the user may (or may not) choose for a movie show.
 final class SeatsGrid implements Iterable<SeatsGrid.Seat> {
 
   record Seat(

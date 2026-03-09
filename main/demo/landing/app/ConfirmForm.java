@@ -18,6 +18,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
+/// Processes the data submitted from the `/confirm` form.
 final class ConfirmForm implements Http.Handler {
 
   private final AppCtx ctx;

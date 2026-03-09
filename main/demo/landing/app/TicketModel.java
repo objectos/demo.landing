@@ -16,13 +16,10 @@
 package demo.landing.app;
 
 import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// The data of the tickets bought by the user.
 record TicketModel(
     long id,
     String purchaseTime,

@@ -17,8 +17,7 @@ package demo.landing.app;
 
 import java.sql.Array;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import module java.base;
 
 /// The time of a particular movie screening.
 record MovieShowtime(int showId, String time) {

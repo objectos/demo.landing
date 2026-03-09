@@ -18,6 +18,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
+/// The `/confirm` controller
 final class Confirm implements Http.Handler {
 
   private final AppCtx ctx;
@@ -59,6 +60,7 @@ final class Confirm implements Http.Handler {
           Source.Confirm,
           Source.ConfirmData,
           Source.ConfirmDetails,
+          Source.ConfirmForm,
           Source.ConfirmView
       );
     });

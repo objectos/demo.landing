@@ -17,7 +17,7 @@ package demo.landing.app;
 
 import module objectos.way;
 
-/// The seats selection form controller.
+/// Processes the seats selected by the user.
 final class SeatsForm implements Http.Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);

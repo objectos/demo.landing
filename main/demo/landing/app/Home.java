@@ -18,7 +18,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-/// The "/home" controller.
+/// The `/home` controller.
 final class Home implements Http.Handler {
 
   private final AppCtx ctx;

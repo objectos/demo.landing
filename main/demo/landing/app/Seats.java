@@ -18,7 +18,7 @@ package demo.landing.app;
 import module java.base;
 import module objectos.way;
 
-/// The "/seats/{id}" controller.
+/// The `/seats/{id}` controller.
 final class Seats implements Http.Handler {
 
   private final AppCtx ctx;

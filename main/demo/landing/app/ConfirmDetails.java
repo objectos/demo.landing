@@ -16,13 +16,11 @@
 package demo.landing.app;
 
 import java.sql.Array;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// The confirmation data to be shown to the user regarding the seats selected.
+/// Includes the price of each ticket and the total amount due.
 final record ConfirmDetails(
     String orderNumber,
     String reservationId,

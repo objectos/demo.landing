@@ -15,8 +15,9 @@
  */
 package demo.landing.app;
 
-import objectos.way.Html;
+import module objectos.way;
 
+/// The filename and the contents of a Java source file.
 record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 
   private static int INDEX = 0;

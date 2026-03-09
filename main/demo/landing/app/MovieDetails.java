@@ -15,10 +15,8 @@
  */
 package demo.landing.app;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /// The details of a particular movie.
 record MovieDetails(

@@ -15,13 +15,8 @@
  */
 package demo.landing.app;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.List;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /// The showing of a movie in this theater.
 record MovieScreening(

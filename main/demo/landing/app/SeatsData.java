@@ -15,13 +15,10 @@
  */
 package demo.landing.app;
 
-import java.util.Arrays;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
-/**
- * Represents the user submitted data.
- */
+/// Represents the `/seats/{id}` user submitted data.
 record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
   public static SeatsData parse(Http.Exchange http) {

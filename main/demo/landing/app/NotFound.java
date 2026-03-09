@@ -15,7 +15,7 @@
  */
 package demo.landing.app;
 
-import java.util.List;
+import module java.base;
 import module objectos.way;
 
 /// Controller for any unmatched request to '/demo.landing/*'

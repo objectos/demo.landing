@@ -15,12 +15,10 @@
  */
 package demo.landing.app;
 
-import java.util.List;
-import java.util.Optional;
-import objectos.script.Js;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// The `/ticket` controller.
 final class Ticket implements Http.Handler {
 
   Ticket() {}

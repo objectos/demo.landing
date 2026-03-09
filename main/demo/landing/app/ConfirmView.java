@@ -15,10 +15,10 @@
  */
 package demo.landing.app;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import objectos.way.Html;
+import module java.base;
+import module objectos.way;
 
+/// Renders the current order details and a confirmation button.
 final class ConfirmView extends Html.Template {
 
   private final ConfirmDetails details;

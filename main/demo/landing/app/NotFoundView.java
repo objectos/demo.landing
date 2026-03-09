@@ -17,6 +17,7 @@ package demo.landing.app;
 
 import module objectos.way;
 
+/// Renders the error view
 final class NotFoundView extends Html.Template {
 
   private final JsAction onclick;

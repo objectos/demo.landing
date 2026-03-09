@@ -15,10 +15,10 @@
  */
 package demo.landing.app;
 
-import java.time.LocalDateTime;
-import objectos.way.Http;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// The data submitted from the `/confirm` form.
 record ConfirmData(AppReservation reservation) {
 
   static ConfirmData parse(Http.Exchange http) {

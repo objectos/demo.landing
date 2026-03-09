@@ -15,11 +15,12 @@
  */
 package demo.landing.app;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Optional;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
+/// Details of the movie screening selected by the user. To be presented in the
+/// seats form.
 record SeatsDetails(
     String date,
     String time,

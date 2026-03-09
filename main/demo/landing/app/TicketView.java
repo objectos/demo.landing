@@ -15,10 +15,10 @@
  */
 package demo.landing.app;
 
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
+import module java.base;
 import module objectos.way;
 
+/// Renders the tickets bought by the user.
 final class TicketView extends Html.Template {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();

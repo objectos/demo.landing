@@ -15,6 +15,7 @@
  */
 package demo.landing.app;
 
+/// Alerts the user that invalid data was submitted.
 enum SeatsAlert {
 
   EMPTY("""
