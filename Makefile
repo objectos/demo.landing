@@ -21,7 +21,7 @@
 ## Coordinates
 GROUP_ID := br.com.objectos
 ARTIFACT_ID := demo.landing
-VERSION := 003-SNAPSHOT
+VERSION := 003
 MODULE := $(ARTIFACT_ID)
 
 ## javac --release option
