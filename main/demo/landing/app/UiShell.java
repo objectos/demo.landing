@@ -307,7 +307,7 @@ final class UiShell extends Html.Template {
 
           css("""
           display:none
-          font-family:mono
+          font-family:var(--font-mono)
           font-size:13rx
           line-height:18.6rx
           padding:16rx
