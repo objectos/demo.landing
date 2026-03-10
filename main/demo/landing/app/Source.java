@@ -819,46 +819,32 @@ final class Home implements Http.Handler {
 
   @Override
   public final void handle(Http.Exchange http) {
-    final String hashValue;
-    hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-    final String hashRedirect;
-    hashRedirect = ctx.decodeHash(hashValue);
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
-    if (hashRedirect != null) {
+    final List<HomeModel> rows;
+    rows = HomeModel.query(trx);
 
-      http.found(hashRedirect);
+    final List<HomeView.Movie> movies;
+    movies = rows.stream().map(row -> toUi(reservation, row)).toList();
 
-    } else {
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
-      final AppReservation reservation;
-      reservation = AppReservation.parse(http);
+      opts.main = new HomeView(movies);
 
-      final Sql.Transaction trx;
-      trx = http.get(Sql.Transaction.class);
+      opts.sources = List.of(
+          Source.Home,
+          Source.HomeModel,
+          Source.HomeView
+      );
+    });
 
-      final List<HomeModel> rows;
-      rows = HomeModel.query(trx);
-
-      final List<HomeView.Movie> movies;
-      movies = rows.stream().map(row -> toUi(reservation, row)).toList();
-
-      final UiShell shell;
-      shell = UiShell.of(opts -> {
-        opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
-
-        opts.main = new HomeView(movies);
-
-        opts.sources = List.of(
-            Source.Home,
-            Source.HomeModel,
-            Source.HomeView
-        );
-      });
-
-      http.ok(shell);
-
-    }
+    http.ok(shell);
   }
 
   private HomeView.Movie toUi(AppReservation reservation, HomeModel original) {
@@ -2051,6 +2037,8 @@ public final class AppCtx implements LandingDemo {
   @Override
   public final Http.Routing.Module publicRoutes(Web.Resources webResources) {
     return www -> {
+      www.path("/demo.landing/boot", GET, trx(new Boot(this)));
+
       www.path("/demo.landing/home", GET, trx(new Home(this)));
 
       www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
@@ -2126,7 +2114,7 @@ public final class AppCtx implements LandingDemo {
 
   public final String decodeHash(String hash) {
     if (hash == null) {
-      return null;
+      return href(AppView.HOME);
     }
 
     final int length;
@@ -2134,18 +2122,18 @@ public final class AppCtx implements LandingDemo {
 
     // '#' + 'demo' + '=' + (17 * 2) + ';'
     if (length != 41) {
-      return null;
+      return href(AppView.HOME);
     }
 
     if (!hash.startsWith("#demo=")) {
-      return null;
+      return href(AppView.HOME);
     }
 
     final char last;
     last = hash.charAt(41 - 1);
 
     if (last != ';') {
-      return null;
+      return href(AppView.HOME);
     }
 
     final String value;
@@ -2330,7 +2318,7 @@ public final class AppCtx implements LandingDemo {
 
   public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
 
-  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home", opts -> {
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/boot", opts -> {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());
   });
 
@@ -3445,6 +3433,49 @@ final class SeatsView extends Html.Template {
             text("Book seats")
         )
     );
+  }
+
+}
+""");
+
+  static final SourceModel Boot = SourceModel.create("Boot.java", """
+/*
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import module objectos.way;
+
+/// The `/home` controller.
+final class Boot implements Http.Handler {
+
+  private final AppCtx ctx;
+
+  Boot(AppCtx ctx) {
+    this.ctx = ctx;
+  }
+
+  @Override
+  public final void handle(Http.Exchange http) {
+    final String hashValue;
+    hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
+
+    final String hashRedirect;
+    hashRedirect = ctx.decodeHash(hashValue);
+
+    http.found(hashRedirect);
   }
 
 }

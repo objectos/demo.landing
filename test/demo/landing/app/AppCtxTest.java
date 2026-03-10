@@ -48,18 +48,20 @@ public class AppCtxTest {
   public Object[][] decodeHashProvider() {
     return new Object[][] {
         // no value
-        {null, null, "Request without Demo-Location-Hash header value"},
-        {"", null, "Request without hash"},
+        {null, "/demo.landing/home", "Request without Demo-Location-Hash header value"},
+        {"", "/demo.landing/home", "Request without hash"},
 
         // valid
-        {"#demo=9d8c39141d3c5e7b9a0f2d4c6e8b1a3f5c;", "/demo.landing/home", "valid"},
+        {"#demo=9d8c39141d3c5e7b9a0f2d4c6e8b1a3f5c;", "/demo.landing/home", "valid (id=0,rid=0)"},
+        {"#demo=9d8c39141e3c5e7b9a0fa27ed91abc6e8e;", "/demo.landing/confirm?reservationId=40306685673624018", "valid (id=0,rid!=0)"},
+        {"#demo=9d8c39141f3c5e7f9d0f2d4c6e8b1a15ca;", "/demo.landing/seats/1031?reservationId=10902", "valid (id!=0,rid!=0)"},
 
         // invalid
-        {"demo=foo;", null, "no initial hash"},
-        {"#demox=foo;", null, "name should be 4 chars long"},
-        {"#sort=foo;", null, "name should be 'demo'"},
-        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d", null, "no trailing semicolon"},
-        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6cd;", null, "hash has incorrent length"}
+        {"demo=foo;", "/demo.landing/home", "no initial hash"},
+        {"#demox=foo;", "/demo.landing/home", "name should be 4 chars long"},
+        {"#sort=foo;", "/demo.landing/home", "name should be 'demo'"},
+        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6c8d", "/demo.landing/home", "no trailing semicolon"},
+        {"#demo=3c8c90958b1a3f5c7d9e0b7b9e2a4f6cd;", "/demo.landing/home", "hash has incorrent length"}
     };
   }
 

@@ -29,46 +29,32 @@ final class Home implements Http.Handler {
 
   @Override
   public final void handle(Http.Exchange http) {
-    final String hashValue;
-    hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
+    final AppReservation reservation;
+    reservation = AppReservation.parse(http);
 
-    final String hashRedirect;
-    hashRedirect = ctx.decodeHash(hashValue);
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
 
-    if (hashRedirect != null) {
+    final List<HomeModel> rows;
+    rows = HomeModel.query(trx);
 
-      http.found(hashRedirect);
+    final List<HomeView.Movie> movies;
+    movies = rows.stream().map(row -> toUi(reservation, row)).toList();
 
-    } else {
+    final UiShell shell;
+    shell = UiShell.of(opts -> {
+      opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
-      final AppReservation reservation;
-      reservation = AppReservation.parse(http);
+      opts.main = new HomeView(movies);
 
-      final Sql.Transaction trx;
-      trx = http.get(Sql.Transaction.class);
+      opts.sources = List.of(
+          Source.Home,
+          Source.HomeModel,
+          Source.HomeView
+      );
+    });
 
-      final List<HomeModel> rows;
-      rows = HomeModel.query(trx);
-
-      final List<HomeView.Movie> movies;
-      movies = rows.stream().map(row -> toUi(reservation, row)).toList();
-
-      final UiShell shell;
-      shell = UiShell.of(opts -> {
-        opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
-
-        opts.main = new HomeView(movies);
-
-        opts.sources = List.of(
-            Source.Home,
-            Source.HomeModel,
-            Source.HomeView
-        );
-      });
-
-      http.ok(shell);
-
-    }
+    http.ok(shell);
   }
 
   private HomeView.Movie toUi(AppReservation reservation, HomeModel original) {

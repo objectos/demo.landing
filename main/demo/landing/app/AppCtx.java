@@ -188,6 +188,8 @@ public final class AppCtx implements LandingDemo {
   @Override
   public final Http.Routing.Module publicRoutes(Web.Resources webResources) {
     return www -> {
+      www.path("/demo.landing/boot", GET, trx(new Boot(this)));
+
       www.path("/demo.landing/home", GET, trx(new Home(this)));
 
       www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
@@ -263,7 +265,7 @@ public final class AppCtx implements LandingDemo {
 
   public final String decodeHash(String hash) {
     if (hash == null) {
-      return null;
+      return href(AppView.HOME);
     }
 
     final int length;
@@ -271,18 +273,18 @@ public final class AppCtx implements LandingDemo {
 
     // '#' + 'demo' + '=' + (17 * 2) + ';'
     if (length != 41) {
-      return null;
+      return href(AppView.HOME);
     }
 
     if (!hash.startsWith("#demo=")) {
-      return null;
+      return href(AppView.HOME);
     }
 
     final char last;
     last = hash.charAt(41 - 1);
 
     if (last != ';') {
-      return null;
+      return href(AppView.HOME);
     }
 
     final String value;
@@ -467,7 +469,7 @@ public final class AppCtx implements LandingDemo {
 
   public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
 
-  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/home", opts -> {
+  public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/boot", opts -> {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());
   });
 
