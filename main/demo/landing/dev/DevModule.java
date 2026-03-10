@@ -20,6 +20,7 @@ import static objectos.way.Http.Method.GET;
 import demo.landing.LandingDemo;
 import module java.base;
 import module objectos.way;
+import objectos.css.StyleSheet;
 
 public final class DevModule implements Http.Routing.Module {
 
@@ -64,7 +65,7 @@ public final class DevModule implements Http.Routing.Module {
   }
 
   private void styles(Http.Exchange http) {
-    http.ok(Css.StyleSheet.create(opts -> {
+    http.ok(StyleSheet.create(opts -> {
       opts.noteSink(noteSink);
 
       opts.include(LandingDemo.styles());

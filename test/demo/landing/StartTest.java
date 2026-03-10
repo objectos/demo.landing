@@ -22,9 +22,9 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HexFormat;
+import objectos.css.StyleSheet;
 import objectos.script.JsLibrary;
 import objectos.way.App;
-import objectos.way.Css;
 import objectos.way.Html;
 import objectos.way.Http;
 import objectos.way.Note;
@@ -124,8 +124,8 @@ public final class StartTest extends Start {
 
   @Override
   final Html.Component headComponent(App.Injector injector) {
-    final Css.StyleSheet styleSheet;
-    styleSheet = Css.StyleSheet.create(opts -> {
+    final StyleSheet styleSheet;
+    styleSheet = StyleSheet.create(opts -> {
       final Note.Sink noteSink;
       noteSink = injector.getInstance(Note.Sink.class);
 

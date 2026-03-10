@@ -22,6 +22,7 @@ import demo.landing.LandingDemo;
 import java.time.Duration;
 import module java.base;
 import module objectos.way;
+import objectos.css.CssLibrary;
 
 /// Application entry point and system-wide context.
 public final class AppCtx implements LandingDemo {
@@ -555,7 +556,7 @@ public final class AppCtx implements LandingDemo {
   // # BEGIN: CSS
   // ##################################################################
 
-  public static Css.Library stylesImpl() {
+  public static CssLibrary stylesImpl() {
     return opts -> {
       opts.scanClasses(
           ConfirmView.class,

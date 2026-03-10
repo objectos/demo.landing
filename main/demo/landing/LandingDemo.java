@@ -18,6 +18,7 @@ package demo.landing;
 import demo.landing.app.AppCtx;
 import module java.base;
 import module objectos.way;
+import objectos.css.CssLibrary;
 
 /// Exposes the demo application to the host application.
 @App.DoNotReload
@@ -51,7 +52,7 @@ public interface LandingDemo {
     return AppCtx.create(opts);
   }
 
-  static Css.Library styles() {
+  static CssLibrary styles() {
     return AppCtx.stylesImpl();
   }
 

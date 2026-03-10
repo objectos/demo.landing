@@ -16,10 +16,9 @@
 package demo.landing.dev;
 
 import demo.landing.app.AppCtx;
-import objectos.way.Css;
-import objectos.way.Html;
+import module objectos.way;
 
-@Css.Source
+@CssSource
 final class DevView extends Html.Template {
 
   private final Html.Component head;
