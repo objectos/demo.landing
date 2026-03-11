@@ -17,14 +17,16 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/ticket` controller.
-final class Ticket implements Http.Handler {
+final class Ticket implements HttpHandler {
 
   Ticket() {}
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 

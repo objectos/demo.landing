@@ -15,14 +15,13 @@
  */
 package demo.landing.dev;
 
-import static objectos.way.Http.Method.GET;
+import static objectos.http.HttpMethod.GET;
 
 import demo.landing.LandingDemo;
 import module java.base;
 import module objectos.way;
-import objectos.css.StyleSheet;
 
-public final class DevModule implements Http.Routing.Module {
+public final class DevModule implements HttpRouting.Module {
 
   private final LandingDemo ctx;
 
@@ -43,7 +42,7 @@ public final class DevModule implements Http.Routing.Module {
   }
 
   @Override
-  public final void configure(Http.Routing routing) {
+  public final void configure(HttpRouting routing) {
     routing.install(ctx.localRoutes());
 
     routing.install(ctx.publicRoutes(webResources));
@@ -57,14 +56,14 @@ public final class DevModule implements Http.Routing.Module {
     routing.handler(webResources);
   }
 
-  private void index(Http.Exchange http) {
+  private void index(HttpExchange http) {
     final DevView object;
     object = new DevView(head);
 
     http.ok(object);
   }
 
-  private void styles(Http.Exchange http) {
+  private void styles(HttpExchange http) {
     http.ok(StyleSheet.create(opts -> {
       opts.noteSink(noteSink);
 

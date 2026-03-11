@@ -18,7 +18,8 @@ package demo.landing.app2;
 import static org.testng.Assert.assertEquals;
 
 import demo.landing.app.Testing;
-import objectos.way.Http;
+import objectos.http.HttpExchange;
+import objectos.http.HttpMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
@@ -77,7 +78,7 @@ public class SeatsFormTestConcurrent {
 
     Testing.rollback(trx -> {
       // 902 tries to select the same seats
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         trx.sql(Sql.SCRIPT, """
         insert into RESERVATION (RESERVATION_ID, SHOW_ID)
@@ -88,7 +89,7 @@ public class SeatsFormTestConcurrent {
 
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/1061?reservationId=10902");
 
@@ -109,11 +110,11 @@ public class SeatsFormTestConcurrent {
           """
       );
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/seats/197669?reservationId=10902");
       });

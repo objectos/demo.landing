@@ -17,9 +17,11 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/confirm` controller
-final class Confirm implements Http.Handler {
+final class Confirm implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -28,7 +30,7 @@ final class Confirm implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 

@@ -19,7 +19,7 @@ import module java.base;
 import module objectos.way;
 
 /// Controller for any unmatched request to '/demo.landing/*'
-final class NotFound implements Http.Handler {
+final class NotFound implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -28,7 +28,7 @@ final class NotFound implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 

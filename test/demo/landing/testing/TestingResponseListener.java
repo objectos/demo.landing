@@ -21,11 +21,14 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import objectos.way.Http;
+import objectos.http.HttpHeaderName;
+import objectos.http.HttpResponseListener;
+import objectos.http.HttpStatus;
+import objectos.http.HttpVersion;
 import objectos.way.Media;
 import objectos.way.Testable;
 
-public class TestingResponseListener implements Http.ResponseListener {
+public class TestingResponseListener implements HttpResponseListener {
 
   private static final char LF = '\n';
 
@@ -59,7 +62,7 @@ public class TestingResponseListener implements Http.ResponseListener {
   }
 
   @Override
-  public final void status(Http.Version version, Http.Status status) {
+  public final void status(HttpVersion version, HttpStatus status) {
     switch (version) {
       case HTTP_0_9 -> out.append("HTTP/0.9 ");
 
@@ -78,7 +81,7 @@ public class TestingResponseListener implements Http.ResponseListener {
   }
 
   @Override
-  public final void header(Http.HeaderName name, String value) {
+  public final void header(HttpHeaderName name, String value) {
     out.append(name.headerCase());
 
     out.append(": ");

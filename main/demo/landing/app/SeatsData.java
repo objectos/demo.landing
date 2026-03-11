@@ -17,11 +17,12 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
 
 /// Represents the `/seats/{id}` user submitted data.
 record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
-  public static SeatsData parse(Http.Exchange http) {
+  public static SeatsData parse(HttpExchange http) {
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 

@@ -19,8 +19,10 @@ import static objectos.way.Media.Bytes.textPlain;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
-final class LocalClear implements Http.Handler {
+final class LocalClear implements HttpHandler {
 
   private static final Note.Int1 CLEAR_RESERVATION = Note.Int1.create(LocalClear.class, "Clear Reservation", Note.INFO);
 
@@ -31,7 +33,7 @@ final class LocalClear implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final int localId;
     localId = 1;
 

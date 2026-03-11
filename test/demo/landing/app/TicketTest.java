@@ -17,7 +17,8 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import objectos.way.Http;
+import objectos.http.HttpExchange;
+import objectos.http.HttpMethod;
 import objectos.way.Sql;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -70,11 +71,11 @@ public class TicketTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final Http.Exchange http;
+      final HttpExchange http;
       http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/ticket?reservationId=901");
       });

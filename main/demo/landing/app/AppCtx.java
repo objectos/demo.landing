@@ -15,14 +15,13 @@
  */
 package demo.landing.app;
 
-import static objectos.way.Http.Method.GET;
-import static objectos.way.Http.Method.POST;
+import static objectos.http.HttpMethod.GET;
+import static objectos.http.HttpMethod.POST;
 
 import demo.landing.LandingDemo;
 import java.time.Duration;
 import module java.base;
 import module objectos.way;
-import objectos.css.CssLibrary;
 
 /// Application entry point and system-wide context.
 public final class AppCtx implements LandingDemo {
@@ -177,7 +176,7 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   @Override
-  public final Http.Routing.Module localRoutes() {
+  public final HttpRouting.Module localRoutes() {
     return local -> {
       local.path("/demo.landing/clear-reservation", POST, trx(new LocalClear(this)));
 
@@ -186,7 +185,7 @@ public final class AppCtx implements LandingDemo {
   }
 
   @Override
-  public final Http.Routing.Module publicRoutes(Web.Resources webResources) {
+  public final HttpRouting.Module publicRoutes(Web.Resources webResources) {
     return www -> {
       www.path("/demo.landing/boot", GET, trx(new Boot(this)));
 
@@ -214,7 +213,7 @@ public final class AppCtx implements LandingDemo {
     };
   }
 
-  private Http.Handler trx(Http.Handler handler) {
+  private HttpHandler trx(HttpHandler handler) {
     return testing
         ? http -> handler.handle(http)
         : http -> {
@@ -250,17 +249,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -467,7 +466,7 @@ public final class AppCtx implements LandingDemo {
 
   public static final Html.Id SHELL = Html.Id.of("demo.landing");
 
-  public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
+  public static final HttpHeaderName DEMO_LOCATION_HASH = HttpHeaderName.of("Demo-Location-Hash");
 
   public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/boot", opts -> {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());

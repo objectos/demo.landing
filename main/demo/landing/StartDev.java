@@ -15,13 +15,8 @@
  */
 package demo.landing;
 
-import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.util.HexFormat;
-import objectos.way.App;
-import objectos.way.Http;
-import objectos.way.Note;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
 /**
  * Starts the application in development mode.
@@ -64,7 +59,7 @@ public final class StartDev extends Start {
 
   private record Reloader(App.Injector injector) implements App.Reloader.HandlerFactory {
     @Override
-    public final Http.Handler reload(ClassLoader loader) throws Exception {
+    public final objectos.http.HttpHandler reload(ClassLoader loader) throws Exception {
       final Class<?> bootClass;
       bootClass = loader.loadClass("demo.landing.BootModule");
 
@@ -80,15 +75,15 @@ public final class StartDev extends Start {
       final Object instance;
       instance = constructor.newInstance(injector, original);
 
-      final Http.Routing.Module module;
-      module = (Http.Routing.Module) instance;
+      final HttpRouting.Module module;
+      module = (HttpRouting.Module) instance;
 
-      return Http.Handler.of(module);
+      return HttpHandler.of(module);
     }
   }
 
   @Override
-  final Http.Handler serverHandler(App.Injector injector) {
+  final objectos.http.HttpHandler serverHandler(App.Injector injector) {
     try {
       return App.Reloader.create(opts -> {
         opts.handlerFactory(new Reloader(injector));

@@ -20,7 +20,8 @@ import static org.testng.Assert.assertEquals;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import objectos.way.Http;
+import objectos.http.HttpExchange;
+import objectos.http.HttpMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
@@ -88,11 +89,11 @@ public class LocalClearTest {
       ,      (905, 61, '2025-01-25 10:00', null);
       """);
 
-      final Http.Exchange http;
+      final HttpExchange http;
       http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/clear-reservation");
       });
@@ -133,11 +134,11 @@ public class LocalClearTest {
       ,      (905, 61, '2025-01-25 10:00', null);
       """);
 
-      final Http.Exchange http;
+      final HttpExchange http;
       http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/clear-reservation");
       });
@@ -183,11 +184,11 @@ public class LocalClearTest {
       ,      (902, 104, 61);
       """);
 
-      final Http.Exchange http;
+      final HttpExchange http;
       http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/clear-reservation");
       });

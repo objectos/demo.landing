@@ -23,14 +23,14 @@ record AppReservation(long id) {
 
   private static final String PARAM_NAME = "reservationId";
 
-  static AppReservation parse(Http.Exchange http) {
+  static AppReservation parse(HttpExchange http) {
     final long id;
     id = http.queryParamAsLong(PARAM_NAME, 0L);
 
     return new AppReservation(id);
   }
 
-  static AppReservation parse(Http.Exchange http, LongSupplier supplier) {
+  static AppReservation parse(HttpExchange http, LongSupplier supplier) {
     final long id;
     id = http.queryParamAsLong(PARAM_NAME, supplier);
 

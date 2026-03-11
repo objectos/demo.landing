@@ -17,9 +17,11 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/home` controller.
-final class Home implements Http.Handler {
+final class Home implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -28,7 +30,7 @@ final class Home implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 

@@ -18,7 +18,7 @@ package demo.landing.app;
 import module objectos.way;
 
 /// The `/home` controller.
-final class Boot implements Http.Handler {
+final class Boot implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -27,7 +27,7 @@ final class Boot implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final String hashValue;
     hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
 

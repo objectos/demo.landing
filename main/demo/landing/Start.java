@@ -16,6 +16,8 @@
 package demo.landing;
 
 import module objectos.way;
+import objectos.http.HttpHandler;
+import objectos.http.HttpServer;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -45,7 +47,7 @@ abstract class Start extends App.Bootstrap {
     shutdownHook = injector.getInstance(App.ShutdownHook.class);
 
     // Http.Handler
-    final Http.Handler serverHandler;
+    final HttpHandler serverHandler;
     serverHandler = serverHandler(injector);
 
     shutdownHook.registerIfPossible(serverHandler);
@@ -204,14 +206,14 @@ abstract class Start extends App.Bootstrap {
     };
   }
 
-  abstract Http.Handler serverHandler(App.Injector injector);
+  abstract HttpHandler serverHandler(App.Injector injector);
 
   abstract int serverPort();
 
-  AutoCloseable server(Note.Sink noteSink, Http.Handler handler) {
+  AutoCloseable server(Note.Sink noteSink, HttpHandler handler) {
     try {
-      final Http.Server server;
-      server = Http.Server.create(opts -> {
+      final HttpServer server;
+      server = HttpServer.create(opts -> {
         opts.handler(handler);
 
         opts.bufferSize(1024, 4096);

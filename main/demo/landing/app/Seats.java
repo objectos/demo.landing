@@ -17,9 +17,11 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/seats/{id}` controller.
-final class Seats implements Http.Handler {
+final class Seats implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -28,7 +30,7 @@ final class Seats implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 

@@ -6,8 +6,8 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.function.Consumer;
+import objectos.http.HttpExchange;
 import objectos.way.App;
-import objectos.way.Http;
 import objectos.way.Sql;
 import org.testng.ISuite;
 import org.testng.ISuiteListener;
@@ -16,7 +16,7 @@ public class Testing implements ISuiteListener {
 
   public static App.Injector INJECTOR;
 
-  public static Http.Handler HANDLER;
+  public static objectos.http.HttpHandler HANDLER;
 
   @Override
   public final void onStart(ISuite suite) {
@@ -57,7 +57,7 @@ public class Testing implements ISuiteListener {
     }
   }
 
-  public static String handle0(Http.Exchange http) {
+  public static String handle0(HttpExchange http) {
     HANDLER.handle(http);
 
     final TestingResponseListener listener;
@@ -71,11 +71,11 @@ public class Testing implements ISuiteListener {
       ZoneOffset.UTC
   );
 
-  public static Http.Exchange http(Consumer<? super Http.Exchange.Options> more) {
+  public static objectos.http.HttpExchange http(Consumer<? super HttpExchange.Options> more) {
     final TestingResponseListener listener;
     listener = new TestingResponseListener(4);
 
-    return Http.Exchange.create(options -> {
+    return HttpExchange.create(options -> {
       options.clock(FIXED);
 
       options.responseListener(listener);

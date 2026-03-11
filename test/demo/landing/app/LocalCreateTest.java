@@ -21,7 +21,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
-import objectos.way.Http;
+import objectos.http.HttpExchange;
+import objectos.http.HttpMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
@@ -83,11 +84,11 @@ public class LocalCreateTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/create-show");
       });
@@ -120,11 +121,11 @@ public class LocalCreateTest {
       assertEquals(result1.get(7), new Show(43, "16:00:00"));
       assertEquals(result1.get(8), new Show(43, "19:00:00"));
 
-      final Http.Exchange http2;
+      final HttpExchange http2;
       http2 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/create-show");
       });

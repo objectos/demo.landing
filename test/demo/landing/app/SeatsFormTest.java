@@ -17,7 +17,8 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import objectos.way.Http;
+import objectos.http.HttpExchange;
+import objectos.http.HttpMethod;
 import objectos.way.Sql;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -68,11 +69,11 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -93,11 +94,11 @@ public class SeatsFormTest {
           """
       );
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/confirm?reservationId=901");
       });
@@ -142,11 +143,11 @@ public class SeatsFormTest {
       values (901, 103, 61);
       """);
 
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -171,11 +172,11 @@ public class SeatsFormTest {
           """
       );
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/confirm?reservationId=901");
       });
@@ -224,11 +225,11 @@ public class SeatsFormTest {
       ,      (901, 105, 61);
       """);
 
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -251,11 +252,11 @@ public class SeatsFormTest {
           """
       );
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/confirm?reservationId=901");
       });
@@ -302,11 +303,11 @@ public class SeatsFormTest {
       ,      (901, 104, 61);
       """);
 
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -329,11 +330,11 @@ public class SeatsFormTest {
           """
       );
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/confirm?reservationId=901");
       });
@@ -376,11 +377,11 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=902");
 
@@ -415,11 +416,11 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http;
+      final HttpExchange http;
       http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -456,11 +457,11 @@ public class SeatsFormTest {
       ,      (901, 104, 61);
       """);
 
-      final Http.Exchange http;
+      final HttpExchange http;
       http = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -493,11 +494,11 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -523,11 +524,11 @@ public class SeatsFormTest {
           """
       );
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/confirm?reservationId=901");
       });
@@ -574,11 +575,11 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -606,11 +607,11 @@ public class SeatsFormTest {
           """
       );
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/seats/131133?reservationId=901");
       });
@@ -652,11 +653,11 @@ public class SeatsFormTest {
       values (901, 61);
       """);
 
-      final Http.Exchange http0;
+      final HttpExchange http0;
       http0 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.POST);
+        config.method(HttpMethod.POST);
 
         config.path("/demo.landing/seats/61?reservationId=901");
 
@@ -678,11 +679,11 @@ public class SeatsFormTest {
           """
       );
 
-      final Http.Exchange http1;
+      final HttpExchange http1;
       http1 = Testing.http(config -> {
         config.set(Sql.Transaction.class, trx);
 
-        config.method(Http.Method.GET);
+        config.method(HttpMethod.GET);
 
         config.path("/demo.landing/seats/65597?reservationId=901");
       });

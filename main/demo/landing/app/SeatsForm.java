@@ -16,9 +16,11 @@
 package demo.landing.app;
 
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// Processes the seats selected by the user.
-final class SeatsForm implements Http.Handler {
+final class SeatsForm implements HttpHandler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
@@ -29,7 +31,7 @@ final class SeatsForm implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
@@ -62,7 +64,7 @@ final class SeatsForm implements Http.Handler {
     }
   }
 
-  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
+  private void handleAlert(HttpExchange http, Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
     // just in case, clear this user's selection
     data.clearUserSelection(trx);
 
@@ -84,7 +86,7 @@ final class SeatsForm implements Http.Handler {
     http.seeOther(seatsUrl);
   }
 
-  private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
+  private void handleTmpSelectionFailed(HttpExchange http, Sql.Transaction trx, SeatsData data) {
     // clear TMP_SELECTION just in case some of the records were inserted
     data.clearTmpSelection(trx);
 
@@ -93,7 +95,7 @@ final class SeatsForm implements Http.Handler {
     http.badRequest(Media.Bytes.textPlain("Bad data"));
   }
 
-  private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
+  private void handleTmpSelectionSuccess(HttpExchange http, Sql.Transaction trx, SeatsData data) {
     final Sql.Update userSelectionResult;
     userSelectionResult = data.persisUserSelection(trx);
 

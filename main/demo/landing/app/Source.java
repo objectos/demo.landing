@@ -274,14 +274,14 @@ record AppReservation(long id) {
 
   private static final String PARAM_NAME = "reservationId";
 
-  static AppReservation parse(Http.Exchange http) {
+  static AppReservation parse(HttpExchange http) {
     final long id;
     id = http.queryParamAsLong(PARAM_NAME, 0L);
 
     return new AppReservation(id);
   }
 
-  static AppReservation parse(Http.Exchange http, LongSupplier supplier) {
+  static AppReservation parse(HttpExchange http, LongSupplier supplier) {
     final long id;
     id = http.queryParamAsLong(PARAM_NAME, supplier);
 
@@ -430,9 +430,11 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/confirm` controller
-final class Confirm implements Http.Handler {
+final class Confirm implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -441,7 +443,7 @@ final class Confirm implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
@@ -698,7 +700,7 @@ import module java.base;
 import module objectos.way;
 
 /// Controller for any unmatched request to '/demo.landing/*'
-final class NotFound implements Http.Handler {
+final class NotFound implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -707,7 +709,7 @@ final class NotFound implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 
@@ -807,9 +809,11 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/home` controller.
-final class Home implements Http.Handler {
+final class Home implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -818,7 +822,7 @@ final class Home implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 
@@ -886,13 +890,10 @@ package demo.landing.app;
 
 import static objectos.way.Media.Bytes.textPlain;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import objectos.way.Http;
-import objectos.way.Note;
-import objectos.way.Sql;
+import module java.base;
+import module objectos.way;
 
-final class LocalCreate implements Http.Handler {
+final class LocalCreate implements HttpHandler {
 
   private static final Note.Int1 CREATE_SHOW = Note.Int1.create(LocalCreate.class, "Create Show", Note.INFO);
 
@@ -903,7 +904,7 @@ final class LocalCreate implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final int localId;
     localId = 2;
 
@@ -1184,11 +1185,12 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
 
 /// The data submitted from the `/confirm` form.
 record ConfirmData(AppReservation reservation) {
 
-  static ConfirmData parse(Http.Exchange http) {
+  static ConfirmData parse(HttpExchange http) {
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 
@@ -1236,9 +1238,11 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/movie/{id}` controller.
-final class Movie implements Http.Handler {
+final class Movie implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -1247,7 +1251,7 @@ final class Movie implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
@@ -1336,9 +1340,11 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// Processes the data submitted from the `/confirm` form.
-final class ConfirmForm implements Http.Handler {
+final class ConfirmForm implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -1347,7 +1353,7 @@ final class ConfirmForm implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
@@ -1402,9 +1408,11 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/seats/{id}` controller.
-final class Seats implements Http.Handler {
+final class Seats implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -1413,7 +1421,7 @@ final class Seats implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
@@ -1724,9 +1732,11 @@ final class NotFoundView extends Html.Template {
 package demo.landing.app;
 
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// Processes the seats selected by the user.
-final class SeatsForm implements Http.Handler {
+final class SeatsForm implements HttpHandler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
@@ -1737,7 +1747,7 @@ final class SeatsForm implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 
@@ -1770,7 +1780,7 @@ final class SeatsForm implements Http.Handler {
     }
   }
 
-  private void handleAlert(Http.Exchange http, Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
+  private void handleAlert(HttpExchange http, Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
     // just in case, clear this user's selection
     data.clearUserSelection(trx);
 
@@ -1792,7 +1802,7 @@ final class SeatsForm implements Http.Handler {
     http.seeOther(seatsUrl);
   }
 
-  private void handleTmpSelectionFailed(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
+  private void handleTmpSelectionFailed(HttpExchange http, Sql.Transaction trx, SeatsData data) {
     // clear TMP_SELECTION just in case some of the records were inserted
     data.clearTmpSelection(trx);
 
@@ -1801,7 +1811,7 @@ final class SeatsForm implements Http.Handler {
     http.badRequest(Media.Bytes.textPlain("Bad data"));
   }
 
-  private void handleTmpSelectionSuccess(Http.Exchange http, Sql.Transaction trx, SeatsData data) {
+  private void handleTmpSelectionSuccess(HttpExchange http, Sql.Transaction trx, SeatsData data) {
     final Sql.Update userSelectionResult;
     userSelectionResult = data.persisUserSelection(trx);
 
@@ -1864,14 +1874,13 @@ final class SeatsForm implements Http.Handler {
  */
 package demo.landing.app;
 
-import static objectos.way.Http.Method.GET;
-import static objectos.way.Http.Method.POST;
+import static objectos.http.HttpMethod.GET;
+import static objectos.http.HttpMethod.POST;
 
 import demo.landing.LandingDemo;
 import java.time.Duration;
 import module java.base;
 import module objectos.way;
-import objectos.css.CssLibrary;
 
 /// Application entry point and system-wide context.
 public final class AppCtx implements LandingDemo {
@@ -2026,7 +2035,7 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   @Override
-  public final Http.Routing.Module localRoutes() {
+  public final HttpRouting.Module localRoutes() {
     return local -> {
       local.path("/demo.landing/clear-reservation", POST, trx(new LocalClear(this)));
 
@@ -2035,7 +2044,7 @@ public final class AppCtx implements LandingDemo {
   }
 
   @Override
-  public final Http.Routing.Module publicRoutes(Web.Resources webResources) {
+  public final HttpRouting.Module publicRoutes(Web.Resources webResources) {
     return www -> {
       www.path("/demo.landing/boot", GET, trx(new Boot(this)));
 
@@ -2063,7 +2072,7 @@ public final class AppCtx implements LandingDemo {
     };
   }
 
-  private Http.Handler trx(Http.Handler handler) {
+  private HttpHandler trx(HttpHandler handler) {
     return testing
         ? http -> handler.handle(http)
         : http -> {
@@ -2099,17 +2108,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -2316,7 +2325,7 @@ public final class AppCtx implements LandingDemo {
 
   public static final Html.Id SHELL = Html.Id.of("demo.landing");
 
-  public static final Http.HeaderName DEMO_LOCATION_HASH = Http.HeaderName.of("Demo-Location-Hash");
+  public static final HttpHeaderName DEMO_LOCATION_HASH = HttpHeaderName.of("Demo-Location-Hash");
 
   public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/boot", opts -> {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());
@@ -2921,8 +2930,10 @@ import static objectos.way.Media.Bytes.textPlain;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
-final class LocalClear implements Http.Handler {
+final class LocalClear implements HttpHandler {
 
   private static final Note.Int1 CLEAR_RESERVATION = Note.Int1.create(LocalClear.class, "Clear Reservation", Note.INFO);
 
@@ -2933,7 +2944,7 @@ final class LocalClear implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final int localId;
     localId = 1;
 
@@ -3459,7 +3470,7 @@ package demo.landing.app;
 import module objectos.way;
 
 /// The `/home` controller.
-final class Boot implements Http.Handler {
+final class Boot implements HttpHandler {
 
   private final AppCtx ctx;
 
@@ -3468,7 +3479,7 @@ final class Boot implements Http.Handler {
   }
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final String hashValue;
     hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
 
@@ -3675,11 +3686,12 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
 
 /// Represents the `/seats/{id}` user submitted data.
 record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
-  public static SeatsData parse(Http.Exchange http) {
+  public static SeatsData parse(HttpExchange http) {
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 
@@ -3831,14 +3843,16 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
 
 /// The `/ticket` controller.
-final class Ticket implements Http.Handler {
+final class Ticket implements HttpHandler {
 
   Ticket() {}
 
   @Override
-  public final void handle(Http.Exchange http) {
+  public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
     trx = http.get(Sql.Transaction.class);
 

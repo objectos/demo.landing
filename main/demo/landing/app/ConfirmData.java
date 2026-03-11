@@ -17,11 +17,12 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.HttpExchange;
 
 /// The data submitted from the `/confirm` form.
 record ConfirmData(AppReservation reservation) {
 
-  static ConfirmData parse(Http.Exchange http) {
+  static ConfirmData parse(HttpExchange http) {
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
 
