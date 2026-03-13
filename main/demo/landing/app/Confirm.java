@@ -17,8 +17,6 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
 
 /// The `/confirm` controller
 final class Confirm implements HttpHandler {
