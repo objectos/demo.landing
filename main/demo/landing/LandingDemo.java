@@ -18,8 +18,6 @@ package demo.landing;
 import demo.landing.app.AppCtx;
 import module java.base;
 import module objectos.way;
-import objectos.css.CssLibrary;
-import objectos.http.HttpRouting;
 
 /// Exposes the demo application to the host application.
 @App.DoNotReload
@@ -59,12 +57,10 @@ public interface LandingDemo {
 
   HttpRouting.Module localRoutes();
 
-  HttpRouting.Module publicRoutes(Web.Resources webResources);
+  HttpRouting.Module publicRoutes();
 
   Html.Id shell();
 
   JsAction loadAction();
-
-  Web.Resources.Library webResources();
 
 }

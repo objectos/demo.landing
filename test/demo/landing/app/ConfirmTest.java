@@ -76,18 +76,22 @@ public class ConfirmTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/confirm?reservationId=901");
+        config.path("/demo.landing/confirm");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901

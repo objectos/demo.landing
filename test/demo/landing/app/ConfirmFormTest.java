@@ -76,18 +76,22 @@ public class ConfirmFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/confirm?reservationId=901");
+        config.path("/demo.landing/confirm");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 303 See Other
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /demo.landing/ticket?reservationId=901
-
+          HTTP/1.1 303 See Other\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Length: 0\r
+          Location: /demo.landing/ticket?reservationId=901\r
+          \r
           """
       );
 
@@ -97,18 +101,22 @@ public class ConfirmFormTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/ticket?reservationId=901");
+        config.path("/demo.landing/ticket");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http1),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           # Ticket #901
 
           Ammount Paid: $19.98

@@ -104,14 +104,6 @@ abstract class Start extends App.Bootstrap {
 
     ctx.putInstance(LandingDemo.class, demo);
 
-    // Web.Resources
-    final Web.Resources webResources;
-    webResources = webResources(ctx);
-
-    shutdownHook.register(webResources);
-
-    ctx.putInstance(Web.Resources.class, webResources);
-
     // Head component
     final Html.Component headComponent;
     headComponent = headComponent(ctx);
@@ -155,48 +147,19 @@ abstract class Start extends App.Bootstrap {
   abstract App.NoteSink noteSink();
 
   JdbcConnectionPool connectionPool() throws SQLException {
-    Path relative;
+    final Path relative;
     relative = Path.of("work", "demo.landing");
 
-    Path path;
+    final Path path;
     path = relative.toAbsolutePath();
 
-    String url;
+    final String url;
     url = "jdbc:h2:file:" + path;
 
     return JdbcConnectionPool.create(url, "sa", "");
   }
 
   abstract LandingDemo demo(App.Injector injector);
-
-  private Web.Resources webResources(App.Injector injector) {
-    try {
-      return Web.Resources.create(opts -> {
-        final Note.Sink noteSink;
-        noteSink = injector.getInstance(Note.Sink.class);
-
-        opts.noteSink(noteSink);
-
-        opts.contentTypes("""
-        .css: text/css; charset=utf-8
-        .jpg: image/jpeg
-        .js: text/javascript; charset=utf-8
-        .woff2: font/woff2
-        """);
-
-        opts.addDirectory(Path.of("web-resources"));
-
-        opts.addMedia("/ui/script.js", JsLibrary.of());
-
-        final LandingDemo demo;
-        demo = injector.getInstance(LandingDemo.class);
-
-        opts.include(demo.webResources());
-      });
-    } catch (IOException e) {
-      throw App.serviceFailed("Web.Resources", e);
-    }
-  }
 
   Html.Component headComponent(App.Injector injector) {
     return html -> {
@@ -212,20 +175,31 @@ abstract class Start extends App.Bootstrap {
 
   AutoCloseable server(Note.Sink noteSink, HttpHandler handler) {
     try {
-      final HttpServer server;
-      server = HttpServer.create(opts -> {
-        opts.handler(handler);
-
-        opts.bufferSize(1024, 4096);
+      return HttpServer.create(opts -> {
+        opts.bufferSize(4096);
 
         opts.noteSink(noteSink);
 
         opts.port(serverPort());
+
+        opts.host(host -> {
+          host.handler(handler);
+
+          host.staticFiles(files -> {
+            files.contentTypes("""
+            .css: text/css; charset=utf-8
+            .jpg: image/jpeg
+            .js: text/javascript; charset=utf-8
+            .woff2: font/woff2
+            """);
+
+            final Path webResources;
+            webResources = Path.of("web-resources");
+
+            files.addDirectory(webResources);
+          });
+        });
       });
-
-      server.start();
-
-      return server;
     } catch (IOException e) {
       throw App.serviceFailed("Http.Server", e);
     }

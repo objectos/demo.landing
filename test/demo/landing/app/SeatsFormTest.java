@@ -75,7 +75,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31);
 
@@ -86,11 +88,11 @@ public class SeatsFormTest {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 303 See Other
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /demo.landing/confirm?reservationId=901
-
+          HTTP/1.1 303 See Other\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Length: 0\r
+          Location: /demo.landing/confirm?reservationId=901\r
+          \r
           """
       );
 
@@ -100,18 +102,22 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/confirm?reservationId=901");
+        config.path("/demo.landing/confirm");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http1),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
@@ -149,7 +155,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31);
 
@@ -164,11 +172,11 @@ public class SeatsFormTest {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 303 See Other
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /demo.landing/confirm?reservationId=901
-
+          HTTP/1.1 303 See Other\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Length: 0\r
+          Location: /demo.landing/confirm?reservationId=901\r
+          \r
           """
       );
 
@@ -178,18 +186,22 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/confirm?reservationId=901");
+        config.path("/demo.landing/confirm");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http1),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
@@ -231,7 +243,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31);
 
@@ -244,11 +258,11 @@ public class SeatsFormTest {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 303 See Other
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /demo.landing/confirm?reservationId=901
-
+          HTTP/1.1 303 See Other\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Length: 0\r
+          Location: /demo.landing/confirm?reservationId=901\r
+          \r
           """
       );
 
@@ -258,18 +272,22 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/confirm?reservationId=901");
+        config.path("/demo.landing/confirm");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http1),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
@@ -309,7 +327,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31);
 
@@ -322,11 +342,11 @@ public class SeatsFormTest {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 303 See Other
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /demo.landing/confirm?reservationId=901
-
+          HTTP/1.1 303 See Other\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Length: 0\r
+          Location: /demo.landing/confirm?reservationId=901\r
+          \r
           """
       );
 
@@ -336,18 +356,22 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/confirm?reservationId=901");
+        config.path("/demo.landing/confirm");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http1),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
@@ -383,7 +407,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=902");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 902);
 
         config.formParam("screenId", 31); // valid screen id
 
@@ -396,11 +422,12 @@ public class SeatsFormTest {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 400 Bad Request
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/plain; charset=utf-8
-          Content-Length: 8
-
+          HTTP/1.1 400 Bad Request\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/plain; charset=utf-8\r
+          Content-Length: 8\r
+          \r
+          Bad data\
           """
       );
     });
@@ -422,7 +449,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31); // valid screen id
 
@@ -433,11 +462,12 @@ public class SeatsFormTest {
           Testing.handle0(http),
 
           """
-          HTTP/1.1 400 Bad Request
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/plain; charset=utf-8
-          Content-Length: 8
-
+          HTTP/1.1 400 Bad Request\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/plain; charset=utf-8\r
+          Content-Length: 8\r
+          \r
+          Bad data\
           """
       );
     });
@@ -463,7 +493,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31);
 
@@ -474,11 +506,12 @@ public class SeatsFormTest {
           Testing.handle0(http),
 
           """
-          HTTP/1.1 400 Bad Request
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/plain; charset=utf-8
-          Content-Length: 8
-
+          HTTP/1.1 400 Bad Request\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/plain; charset=utf-8\r
+          Content-Length: 8\r
+          \r
+          Bad data\
           """
       );
     });
@@ -500,7 +533,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31);
 
@@ -516,11 +551,11 @@ public class SeatsFormTest {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 303 See Other
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /demo.landing/confirm?reservationId=901
-
+          HTTP/1.1 303 See Other\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Length: 0\r
+          Location: /demo.landing/confirm?reservationId=901\r
+          \r
           """
       );
 
@@ -530,18 +565,22 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/confirm?reservationId=901");
+        config.path("/demo.landing/confirm");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http1),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
@@ -581,7 +620,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31);
 
@@ -599,11 +640,11 @@ public class SeatsFormTest {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 303 See Other
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /demo.landing/seats/131133?reservationId=901
-
+          HTTP/1.1 303 See Other\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Length: 0\r
+          Location: /demo.landing/seats/131133?reservationId=901\r
+          \r
           """
       );
 
@@ -613,18 +654,22 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/seats/131133?reservationId=901");
+        config.path("/demo.landing/seats/131133");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http1),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/movie/11?reservationId=901
 
           # Show details
@@ -659,7 +704,9 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.POST);
 
-        config.path("/demo.landing/seats/61?reservationId=901");
+        config.path("/demo.landing/seats/61");
+
+        config.queryParam("reservationId", 901);
 
         config.formParam("screenId", 31);
 
@@ -671,11 +718,11 @@ public class SeatsFormTest {
           Testing.handle0(http0),
 
           """
-          HTTP/1.1 303 See Other
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Length: 0
-          Location: /demo.landing/seats/65597?reservationId=901
-
+          HTTP/1.1 303 See Other\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Length: 0\r
+          Location: /demo.landing/seats/65597?reservationId=901\r
+          \r
           """
       );
 
@@ -685,18 +732,22 @@ public class SeatsFormTest {
 
         config.method(HttpMethod.GET);
 
-        config.path("/demo.landing/seats/65597?reservationId=901");
+        config.path("/demo.landing/seats/65597");
+
+        config.queryParam("reservationId", 901);
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http1),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/movie/11?reservationId=901
 
           # Show details

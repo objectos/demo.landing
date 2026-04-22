@@ -63,7 +63,7 @@ final class LocalCreate implements HttpHandler {
 
     if (executions > 0) {
       http.ok(
-          textPlain("Skipped: already executed\\n")
+          textPlain("Skipped: already executed\n")
       );
 
       return;

@@ -29,31 +29,27 @@ public final class DevModule implements HttpRouting.Module {
 
   private final Note.Sink noteSink;
 
-  private final Web.Resources webResources;
-
   public DevModule(App.Injector injector) {
     ctx = injector.getInstance(LandingDemo.class);
 
     head = injector.getInstance(Html.Component.class);
 
     noteSink = injector.getInstance(Note.Sink.class);
-
-    webResources = injector.getInstance(Web.Resources.class);
   }
 
   @Override
   public final void configure(HttpRouting routing) {
     routing.install(ctx.localRoutes());
 
-    routing.install(ctx.publicRoutes(webResources));
+    routing.install(ctx.publicRoutes());
 
     routing.path("/", GET, http -> http.movedPermanently("/index.html"));
 
     routing.path("/index.html", GET, this::index);
 
-    routing.path("/ui/styles.css", GET, this::styles);
+    routing.path("/ui/script.js", GET, this::script);
 
-    routing.handler(webResources);
+    routing.path("/ui/styles.css", GET, this::styles);
   }
 
   private void index(HttpExchange http) {
@@ -61,6 +57,13 @@ public final class DevModule implements HttpRouting.Module {
     object = new DevView(head);
 
     http.ok(object);
+  }
+
+  private void script(HttpExchange http) {
+    final JsLibrary library;
+    library = JsLibrary.of();
+
+    http.staticFile(library);
   }
 
   private void styles(HttpExchange http) {

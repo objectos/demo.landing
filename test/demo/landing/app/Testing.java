@@ -1,7 +1,6 @@
 package demo.landing.app;
 
 import demo.landing.StartTest;
-import demo.landing.testing.TestingResponseListener;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -60,10 +59,7 @@ public class Testing implements ISuiteListener {
   public static String handle0(HttpExchange http) {
     HANDLER.handle(http);
 
-    final TestingResponseListener listener;
-    listener = http.get(TestingResponseListener.class);
-
-    return listener.toString();
+    return http.toString();
   }
 
   private static final Clock FIXED = Clock.fixed(
@@ -72,15 +68,8 @@ public class Testing implements ISuiteListener {
   );
 
   public static objectos.http.HttpExchange http(Consumer<? super HttpExchange.Options> more) {
-    final TestingResponseListener listener;
-    listener = new TestingResponseListener(4);
-
     return HttpExchange.create(options -> {
       options.clock(FIXED);
-
-      options.responseListener(listener);
-
-      options.set(TestingResponseListener.class, listener);
 
       more.accept(options);
     });

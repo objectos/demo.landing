@@ -102,11 +102,12 @@ public class LocalClearTest {
           Testing.handle0(http),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/plain; charset=utf-8
-          Content-Length: 3
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/plain; charset=utf-8\r
+          Content-Length: 3\r
+          \r
+          OK
           """
       );
 
@@ -147,11 +148,12 @@ public class LocalClearTest {
           Testing.handle0(http),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/plain; charset=utf-8
-          Content-Length: 3
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/plain; charset=utf-8\r
+          Content-Length: 3\r
+          \r
+          OK
           """
       );
 
@@ -197,11 +199,12 @@ public class LocalClearTest {
           Testing.handle0(http),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/plain; charset=utf-8
-          Content-Length: 3
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/plain; charset=utf-8\r
+          Content-Length: 3\r
+          \r
+          OK
           """
       );
 

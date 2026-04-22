@@ -185,7 +185,7 @@ public final class AppCtx implements LandingDemo {
   }
 
   @Override
-  public final HttpRouting.Module publicRoutes(Web.Resources webResources) {
+  public final HttpRouting.Module publicRoutes() {
     return www -> {
       www.path("/demo.landing/boot", GET, trx(new Boot(this)));
 
@@ -207,7 +207,7 @@ public final class AppCtx implements LandingDemo {
 
       www.path("/demo.landing/ticket", GET, trx(new Ticket()));
 
-      www.path("/demo.landing/poster{}", path -> path.handler(webResources));
+      www.path("/demo.landing/poster{id}.jpg", GET, trx(new Poster()));
 
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
@@ -236,7 +236,6 @@ public final class AppCtx implements LandingDemo {
 
             throw trx.rollbackAndWrap(t);
           }
-
         };
   }
 
@@ -630,65 +629,6 @@ public final class AppCtx implements LandingDemo {
 
   // ##################################################################
   // # END: CSS
-  // ##################################################################
-
-  // ##################################################################
-  // # BEGIN: Web Resources
-  // ##################################################################
-
-  private record Poster(int id, byte[] contents) implements Media.Bytes {
-    Poster(ResultSet rs, int idx) throws SQLException {
-      this(
-          rs.getInt(idx++),
-          rs.getBytes(idx++)
-      );
-    }
-
-    public final String path() {
-      return "/demo.landing/poster" + id + ".jpg";
-    }
-
-    @Override
-    public final String contentType() {
-      return "image/jpeg";
-    }
-
-    @Override
-    public final byte[] toByteArray() {
-      return contents;
-    }
-  }
-
-  @Override
-  public final Web.Resources.Library webResources() {
-    return opts -> {
-      try (Sql.Transaction trx = database.connect()) {
-        trx.sql("set schema CINEMA");
-
-        trx.update();
-
-        trx.sql("""
-          select
-            MOVIE_ID,
-            DATA
-          from
-            MOVIE_POSTER
-          """);
-
-        final List<Poster> posters;
-        posters = trx.query(Poster::new);
-
-        trx.commit();
-
-        for (Poster poster : posters) {
-          opts.addMedia(poster.path(), poster);
-        }
-      }
-    };
-  }
-
-  // ##################################################################
-  // # END: Web Resources
   // ##################################################################
 
   // ##################################################################

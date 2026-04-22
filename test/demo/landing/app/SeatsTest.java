@@ -71,17 +71,19 @@ public class SeatsTest {
         config.method(HttpMethod.GET);
 
         config.path("/demo.landing/seats/61");
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http),
 
           """
-          HTTP/1.1 200 OK
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 200 OK\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           back-link: /demo.landing/movie/11?reservationId=1
 
           # Show details
@@ -111,17 +113,19 @@ public class SeatsTest {
         config.method(HttpMethod.GET);
 
         config.path("/demo.landing/seats/4444");
+
+        config.testable();
       });
 
       assertEquals(
           Testing.handle0(http),
 
           """
-          HTTP/1.1 404 Not Found
-          Date: Mon, 28 Apr 2025 13:01:00 GMT
-          Content-Type: text/html; charset=utf-8
-          Transfer-Encoding: chunked
-
+          HTTP/1.1 404 Not Found\r
+          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Content-Type: text/html; charset=utf-8\r
+          Transfer-Encoding: chunked\r
+          \r
           # Something Went Wrong
 
           """

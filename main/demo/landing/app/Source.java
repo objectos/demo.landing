@@ -296,6 +296,66 @@ record AppReservation(long id) {
 }
 """);
 
+  static final SourceModel PosterModel = SourceModel.create("PosterModel.java", """
+/*
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import objectos.way.Media;
+import objectos.way.Sql;
+
+record PosterModel(byte[] data) implements Media.Bytes {
+
+  private PosterModel(ResultSet rs, int idx) throws SQLException {
+    this(
+        rs.getBytes(idx++)
+    );
+  }
+
+  public static PosterModel query(Sql.Transaction trx, int id) {
+    trx.sql(\"""
+    select
+      DATA
+    from
+      MOVIE_POSTER
+    where
+      MOVIE_ID = ?
+    \""");
+
+    trx.param(id);
+
+    return trx.querySingle(PosterModel::new);
+  }
+
+  @Override
+  public final String contentType() {
+    return "image/jpeg";
+  }
+
+  @Override
+  public final byte[] toByteArray() {
+    return data;
+  }
+
+}
+
+""");
+
   static final SourceModel HomeView = SourceModel.create("HomeView.java", """
 /*
  * Copyright (C) 2024-2026 Objectos Software LTDA.
@@ -430,8 +490,6 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
 
 /// The `/confirm` controller
 final class Confirm implements HttpHandler {
@@ -936,7 +994,7 @@ final class LocalCreate implements HttpHandler {
 
     if (executions > 0) {
       http.ok(
-          textPlain("Skipped: already executed\\\\n")
+          textPlain("Skipped: already executed\\n")
       );
 
       return;
@@ -2044,7 +2102,7 @@ public final class AppCtx implements LandingDemo {
   }
 
   @Override
-  public final HttpRouting.Module publicRoutes(Web.Resources webResources) {
+  public final HttpRouting.Module publicRoutes() {
     return www -> {
       www.path("/demo.landing/boot", GET, trx(new Boot(this)));
 
@@ -2066,7 +2124,7 @@ public final class AppCtx implements LandingDemo {
 
       www.path("/demo.landing/ticket", GET, trx(new Ticket()));
 
-      www.path("/demo.landing/poster{}", path -> path.handler(webResources));
+      www.path("/demo.landing/poster{id}.jpg", GET, trx(new Poster()));
 
       www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
     };
@@ -2095,7 +2153,6 @@ public final class AppCtx implements LandingDemo {
 
             throw trx.rollbackAndWrap(t);
           }
-
         };
   }
 
@@ -2489,65 +2546,6 @@ public final class AppCtx implements LandingDemo {
 
   // ##################################################################
   // # END: CSS
-  // ##################################################################
-
-  // ##################################################################
-  // # BEGIN: Web Resources
-  // ##################################################################
-
-  private record Poster(int id, byte[] contents) implements Media.Bytes {
-    Poster(ResultSet rs, int idx) throws SQLException {
-      this(
-          rs.getInt(idx++),
-          rs.getBytes(idx++)
-      );
-    }
-
-    public final String path() {
-      return "/demo.landing/poster" + id + ".jpg";
-    }
-
-    @Override
-    public final String contentType() {
-      return "image/jpeg";
-    }
-
-    @Override
-    public final byte[] toByteArray() {
-      return contents;
-    }
-  }
-
-  @Override
-  public final Web.Resources.Library webResources() {
-    return opts -> {
-      try (Sql.Transaction trx = database.connect()) {
-        trx.sql("set schema CINEMA");
-
-        trx.update();
-
-        trx.sql(\"""
-          select
-            MOVIE_ID,
-            DATA
-          from
-            MOVIE_POSTER
-          \""");
-
-        final List<Poster> posters;
-        posters = trx.query(Poster::new);
-
-        trx.commit();
-
-        for (Poster poster : posters) {
-          opts.addMedia(poster.path(), poster);
-        }
-      }
-    };
-  }
-
-  // ##################################################################
-  // # END: Web Resources
   // ##################################################################
 
   // ##################################################################
@@ -3490,6 +3488,56 @@ final class Boot implements HttpHandler {
   }
 
 }
+""");
+
+  static final SourceModel Poster = SourceModel.create("Poster.java", """
+/*
+ * Copyright (C) 2024-2026 Objectos Software LTDA.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package demo.landing.app;
+
+import objectos.http.HttpExchange;
+import objectos.http.HttpHandler;
+import objectos.way.Sql;
+
+final class Poster implements HttpHandler {
+
+  @Override
+  public final void handle(HttpExchange http) {
+    final int id;
+    id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+
+    if (id < 1) {
+      return;
+    }
+
+    if (id > 4) {
+      return;
+    }
+
+    final Sql.Transaction trx;
+    trx = http.get(Sql.Transaction.class);
+
+    final PosterModel model;
+    model = PosterModel.query(trx, id);
+
+    http.staticFile(model);
+  }
+
+}
+
 """);
 
   static final SourceModel MovieScreening = SourceModel.create("MovieScreening.java", """

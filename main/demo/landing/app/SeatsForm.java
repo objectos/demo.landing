@@ -127,14 +127,7 @@ final class SeatsForm implements HttpHandler {
           final String redirectUrl;
           redirectUrl = ctx.href(AppView.CONFIRM, reservation);
 
-          final String historyUrl;
-          historyUrl = ctx.canonical(AppView.CONFIRM, reservation);
-
-          http.respond(resp -> {
-            resp.header(HttpHeaderName.WAY_PUSH_URL, historyUrl);
-
-            resp.seeOther(redirectUrl);
-          });
+          http.seeOther(redirectUrl);
 
         }
 
