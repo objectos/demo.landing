@@ -165,7 +165,7 @@ public final class StartTest extends Start {
     module = new BootModule(injector);
 
     final HttpHandler handler;
-    handler = HttpHandler.of(module);
+    handler = HttpHandler.create(module);
 
     Testing.HANDLER = handler;
 

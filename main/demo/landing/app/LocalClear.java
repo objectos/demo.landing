@@ -38,7 +38,7 @@ final class LocalClear implements HttpHandler {
     localId = 1;
 
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final LocalDateTime now;
     now = ctx.now();

@@ -16,9 +16,10 @@
 package demo.landing;
 
 import demo.landing.dev.DevModule;
+import java.util.function.Consumer;
 import module objectos.way;
 
-public final class BootModule implements HttpRouting.Module {
+public final class BootModule implements Consumer<HttpRouting> {
 
   private final App.Injector injector;
 
@@ -39,13 +40,11 @@ public final class BootModule implements HttpRouting.Module {
   }
 
   @Override
-  public final void configure(HttpRouting routing) {
+  public final void accept(HttpRouting routing) {
     final DevModule dev;
     dev = new DevModule(injector);
 
-    routing.install(dev);
-
-    routing.handler(HttpHandler.notFound());
+    dev.accept(routing);
   }
 
 }

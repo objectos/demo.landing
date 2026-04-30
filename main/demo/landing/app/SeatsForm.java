@@ -33,7 +33,7 @@ final class SeatsForm implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final SeatsData data;
     data = SeatsData.parse(http);
@@ -92,7 +92,7 @@ final class SeatsForm implements HttpHandler {
 
     // insertion failed => bad data
 
-    http.badRequest(Media.Bytes.textPlain("Bad data"));
+    http.error(HttpStatus.BAD_REQUEST);
   }
 
   private void handleTmpSelectionSuccess(HttpExchange http, Sql.Transaction trx, SeatsData data) {
@@ -114,7 +114,7 @@ final class SeatsForm implements HttpHandler {
           // clear SELECTION just in case some of the records were inserted
           data.clearUserSelection(trx);
 
-          http.badRequest(Media.Bytes.textPlain("Bad data"));
+          http.error(HttpStatus.BAD_REQUEST);
 
         } else {
 

@@ -32,7 +32,7 @@ final class Seats implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final int id;
     id = http.pathParamAsInt("id", Integer.MIN_VALUE);

@@ -72,7 +72,7 @@ public class ConfirmFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -97,7 +97,7 @@ public class ConfirmFormTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 

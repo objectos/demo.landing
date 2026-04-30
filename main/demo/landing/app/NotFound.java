@@ -44,7 +44,11 @@ final class NotFound implements HttpHandler {
       );
     });
 
-    http.notFound(shell);
+    http.status(HttpStatus.NOT_FOUND);
+
+    http.header(HttpHeaderName.DATE, http.now());
+
+    http.send(shell);
   }
 
 }

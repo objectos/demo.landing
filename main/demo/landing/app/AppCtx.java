@@ -15,12 +15,9 @@
  */
 package demo.landing.app;
 
-import static objectos.http.HttpMethod.GET;
-import static objectos.http.HttpMethod.POST;
-
 import demo.landing.LandingDemo;
-import java.time.Duration;
 import module java.base;
+import java.time.Duration;
 import module objectos.way;
 
 /// Application entry point and system-wide context.
@@ -176,41 +173,37 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   @Override
-  public final HttpRouting.Module localRoutes() {
-    return local -> {
-      local.path("/demo.landing/clear-reservation", POST, trx(new LocalClear(this)));
+  public final void localRoutes(HttpRouting local) {
+    local.path("/demo.landing/clear-reservation", path -> path.POST(trx(new LocalClear(this))));
 
-      local.path("/demo.landing/create-show", POST, trx(new LocalCreate(this)));
-    };
+    local.path("/demo.landing/create-show", path -> path.POST(trx(new LocalCreate(this))));
   }
 
   @Override
-  public final HttpRouting.Module publicRoutes() {
-    return www -> {
-      www.path("/demo.landing/boot", GET, trx(new Boot(this)));
+  public final void publicRoutes(HttpRouting www) {
+    www.path("/demo.landing/boot", path -> path.GET(trx(new Boot(this))));
 
-      www.path("/demo.landing/home", GET, trx(new Home(this)));
+    www.path("/demo.landing/home", path -> path.GET(trx(new Home(this))));
 
-      www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
+    www.path("/demo.landing/movie/{id}", path -> path.GET(trx(new Movie(this))));
 
-      www.path("/demo.landing/seats/{id}", path -> {
-        path.allow(GET, trx(new Seats(this)));
+    www.path("/demo.landing/seats/{id}", path -> {
+      path.GET(trx(new Seats(this)));
 
-        path.allow(POST, trx(new SeatsForm(this)));
-      });
+      path.POST(trx(new SeatsForm(this)));
+    });
 
-      www.path("/demo.landing/confirm", path -> {
-        path.allow(GET, trx(new Confirm(this)));
+    www.path("/demo.landing/confirm", path -> {
+      path.GET(trx(new Confirm(this)));
 
-        path.allow(POST, trx(new ConfirmForm(this)));
-      });
+      path.POST(trx(new ConfirmForm(this)));
+    });
 
-      www.path("/demo.landing/ticket", GET, trx(new Ticket()));
+    www.path("/demo.landing/ticket", path -> path.GET(trx(new Ticket())));
 
-      www.path("/demo.landing/poster{id}.jpg", GET, trx(new Poster()));
+    www.path("/demo.landing/poster-{id}.jpg", path -> path.GET(trx(new Poster())));
 
-      www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
-    };
+    www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
   }
 
   private HttpHandler trx(HttpHandler handler) {
@@ -226,7 +219,7 @@ public final class AppCtx implements LandingDemo {
 
             trx.update();
 
-            http.set(Sql.Transaction.class, trx);
+            http.req(Sql.Transaction.class, trx);
 
             handler.handle(http);
 
@@ -248,17 +241,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {

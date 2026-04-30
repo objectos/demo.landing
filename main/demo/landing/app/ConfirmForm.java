@@ -32,7 +32,7 @@ final class ConfirmForm implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final ConfirmData data;
     data = ConfirmData.parse(http);

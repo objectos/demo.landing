@@ -58,6 +58,7 @@ public final class StartDev extends Start {
   }
 
   private record Reloader(App.Injector injector) implements App.Reloader.HandlerFactory {
+    @SuppressWarnings("unchecked")
     @Override
     public final objectos.http.HttpHandler reload(ClassLoader loader) throws Exception {
       final Class<?> bootClass;
@@ -75,10 +76,10 @@ public final class StartDev extends Start {
       final Object instance;
       instance = constructor.newInstance(injector, original);
 
-      final HttpRouting.Module module;
-      module = (HttpRouting.Module) instance;
+      final Consumer<HttpRouting> module;
+      module = (Consumer<HttpRouting>) instance;
 
-      return HttpHandler.of(module);
+      return HttpHandler.create(module);
     }
   }
 

@@ -71,7 +71,7 @@ public class SeatsFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -98,7 +98,7 @@ public class SeatsFormTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 
@@ -151,7 +151,7 @@ public class SeatsFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -182,7 +182,7 @@ public class SeatsFormTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 
@@ -239,7 +239,7 @@ public class SeatsFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -268,7 +268,7 @@ public class SeatsFormTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 
@@ -323,7 +323,7 @@ public class SeatsFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -352,7 +352,7 @@ public class SeatsFormTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 
@@ -403,7 +403,7 @@ public class SeatsFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -424,10 +424,11 @@ public class SeatsFormTest {
           """
           HTTP/1.1 400 Bad Request\r
           Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Connection: close\r
           Content-Type: text/plain; charset=utf-8\r
-          Content-Length: 8\r
+          Content-Length: 16\r
           \r
-          Bad data\
+          400 Bad Request
           """
       );
     });
@@ -445,7 +446,7 @@ public class SeatsFormTest {
 
       final HttpExchange http;
       http = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -464,10 +465,11 @@ public class SeatsFormTest {
           """
           HTTP/1.1 400 Bad Request\r
           Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Connection: close\r
           Content-Type: text/plain; charset=utf-8\r
-          Content-Length: 8\r
+          Content-Length: 16\r
           \r
-          Bad data\
+          400 Bad Request
           """
       );
     });
@@ -489,7 +491,7 @@ public class SeatsFormTest {
 
       final HttpExchange http;
       http = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -508,10 +510,11 @@ public class SeatsFormTest {
           """
           HTTP/1.1 400 Bad Request\r
           Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+          Connection: close\r
           Content-Type: text/plain; charset=utf-8\r
-          Content-Length: 8\r
+          Content-Length: 16\r
           \r
-          Bad data\
+          400 Bad Request
           """
       );
     });
@@ -529,7 +532,7 @@ public class SeatsFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -561,7 +564,7 @@ public class SeatsFormTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 
@@ -616,7 +619,7 @@ public class SeatsFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -650,7 +653,7 @@ public class SeatsFormTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 
@@ -700,7 +703,7 @@ public class SeatsFormTest {
 
       final HttpExchange http0;
       http0 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -728,7 +731,7 @@ public class SeatsFormTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 

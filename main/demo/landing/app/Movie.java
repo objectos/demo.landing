@@ -32,7 +32,7 @@ final class Movie implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final int movieId;
     movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);

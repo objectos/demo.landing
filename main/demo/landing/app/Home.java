@@ -35,7 +35,7 @@ final class Home implements HttpHandler {
     reservation = AppReservation.parse(http);
 
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final List<HomeModel> rows;
     rows = HomeModel.query(trx);

@@ -66,7 +66,7 @@ public class SeatsTest {
 
       final HttpExchange http;
       http = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 
@@ -108,7 +108,7 @@ public class SeatsTest {
 
       final HttpExchange http;
       http = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 

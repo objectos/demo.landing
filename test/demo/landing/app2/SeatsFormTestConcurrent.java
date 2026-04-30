@@ -87,7 +87,7 @@ public class SeatsFormTestConcurrent {
 
         trx.batchUpdate();
 
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -114,7 +114,7 @@ public class SeatsFormTestConcurrent {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 

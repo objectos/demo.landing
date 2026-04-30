@@ -36,7 +36,7 @@ final class LocalCreate implements HttpHandler {
     localId = 2;
 
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final LocalDate today;
     today = ctx.today();

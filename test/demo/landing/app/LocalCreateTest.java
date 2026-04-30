@@ -86,7 +86,7 @@ public class LocalCreateTest {
 
       final HttpExchange http1;
       http1 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 
@@ -124,7 +124,7 @@ public class LocalCreateTest {
 
       final HttpExchange http2;
       http2 = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.POST);
 

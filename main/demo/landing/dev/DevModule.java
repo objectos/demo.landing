@@ -15,13 +15,11 @@
  */
 package demo.landing.dev;
 
-import static objectos.http.HttpMethod.GET;
-
 import demo.landing.LandingDemo;
 import module java.base;
 import module objectos.way;
 
-public final class DevModule implements HttpRouting.Module {
+public final class DevModule implements Consumer<HttpRouting> {
 
   private final LandingDemo ctx;
 
@@ -38,18 +36,18 @@ public final class DevModule implements HttpRouting.Module {
   }
 
   @Override
-  public final void configure(HttpRouting routing) {
-    routing.install(ctx.localRoutes());
+  public final void accept(HttpRouting routing) {
+    ctx.localRoutes(routing);
 
-    routing.install(ctx.publicRoutes());
+    ctx.publicRoutes(routing);
 
-    routing.path("/", GET, http -> http.movedPermanently("/index.html"));
+    routing.path("/", path -> path.GET(http -> http.movedPermanently("/index.html")));
 
-    routing.path("/index.html", GET, this::index);
+    routing.path("/index.html", path -> path.GET(this::index));
 
-    routing.path("/ui/script.js", GET, this::script);
+    routing.path("/ui/script.js", path -> path.GET(this::script));
 
-    routing.path("/ui/styles.css", GET, this::styles);
+    routing.path("/ui/styles.css", path -> path.GET(this::styles));
   }
 
   private void index(HttpExchange http) {
@@ -67,7 +65,7 @@ public final class DevModule implements HttpRouting.Module {
   }
 
   private void styles(HttpExchange http) {
-    http.ok(StyleSheet.create(opts -> {
+    http.staticFile(StyleSheet.create(opts -> {
       opts.noteSink(noteSink);
 
       opts.include(LandingDemo.styles());

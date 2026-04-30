@@ -39,7 +39,7 @@ public class HomeTest {
 
       final HttpExchange http;
       http = Testing.http(config -> {
-        config.set(Sql.Transaction.class, trx);
+        config.req(Sql.Transaction.class, trx);
 
         config.method(HttpMethod.GET);
 

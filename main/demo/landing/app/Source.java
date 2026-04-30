@@ -503,7 +503,7 @@ final class Confirm implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
@@ -783,7 +783,11 @@ final class NotFound implements HttpHandler {
       );
     });
 
-    http.notFound(shell);
+    http.status(HttpStatus.NOT_FOUND);
+
+    http.header(HttpHeaderName.DATE, http.now());
+
+    http.send(shell);
   }
 
 }
@@ -885,7 +889,7 @@ final class Home implements HttpHandler {
     reservation = AppReservation.parse(http);
 
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final List<HomeModel> rows;
     rows = HomeModel.query(trx);
@@ -967,7 +971,7 @@ final class LocalCreate implements HttpHandler {
     localId = 2;
 
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final LocalDate today;
     today = ctx.today();
@@ -1311,7 +1315,7 @@ final class Movie implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final int movieId;
     movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
@@ -1413,7 +1417,7 @@ final class ConfirmForm implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final ConfirmData data;
     data = ConfirmData.parse(http);
@@ -1481,7 +1485,7 @@ final class Seats implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final int id;
     id = http.pathParamAsInt("id", Integer.MIN_VALUE);
@@ -1807,7 +1811,7 @@ final class SeatsForm implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final SeatsData data;
     data = SeatsData.parse(http);
@@ -1866,7 +1870,7 @@ final class SeatsForm implements HttpHandler {
 
     // insertion failed => bad data
 
-    http.badRequest(Media.Bytes.textPlain("Bad data"));
+    http.error(HttpStatus.BAD_REQUEST);
   }
 
   private void handleTmpSelectionSuccess(HttpExchange http, Sql.Transaction trx, SeatsData data) {
@@ -1888,7 +1892,7 @@ final class SeatsForm implements HttpHandler {
           // clear SELECTION just in case some of the records were inserted
           data.clearUserSelection(trx);
 
-          http.badRequest(Media.Bytes.textPlain("Bad data"));
+          http.error(HttpStatus.BAD_REQUEST);
 
         } else {
 
@@ -1932,12 +1936,9 @@ final class SeatsForm implements HttpHandler {
  */
 package demo.landing.app;
 
-import static objectos.http.HttpMethod.GET;
-import static objectos.http.HttpMethod.POST;
-
 import demo.landing.LandingDemo;
-import java.time.Duration;
 import module java.base;
+import java.time.Duration;
 import module objectos.way;
 
 /// Application entry point and system-wide context.
@@ -2093,41 +2094,37 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   @Override
-  public final HttpRouting.Module localRoutes() {
-    return local -> {
-      local.path("/demo.landing/clear-reservation", POST, trx(new LocalClear(this)));
+  public final void localRoutes(HttpRouting local) {
+    local.path("/demo.landing/clear-reservation", path -> path.POST(trx(new LocalClear(this))));
 
-      local.path("/demo.landing/create-show", POST, trx(new LocalCreate(this)));
-    };
+    local.path("/demo.landing/create-show", path -> path.POST(trx(new LocalCreate(this))));
   }
 
   @Override
-  public final HttpRouting.Module publicRoutes() {
-    return www -> {
-      www.path("/demo.landing/boot", GET, trx(new Boot(this)));
+  public final void publicRoutes(HttpRouting www) {
+    www.path("/demo.landing/boot", path -> path.GET(trx(new Boot(this))));
 
-      www.path("/demo.landing/home", GET, trx(new Home(this)));
+    www.path("/demo.landing/home", path -> path.GET(trx(new Home(this))));
 
-      www.path("/demo.landing/movie/{id}", GET, trx(new Movie(this)));
+    www.path("/demo.landing/movie/{id}", path -> path.GET(trx(new Movie(this))));
 
-      www.path("/demo.landing/seats/{id}", path -> {
-        path.allow(GET, trx(new Seats(this)));
+    www.path("/demo.landing/seats/{id}", path -> {
+      path.GET(trx(new Seats(this)));
 
-        path.allow(POST, trx(new SeatsForm(this)));
-      });
+      path.POST(trx(new SeatsForm(this)));
+    });
 
-      www.path("/demo.landing/confirm", path -> {
-        path.allow(GET, trx(new Confirm(this)));
+    www.path("/demo.landing/confirm", path -> {
+      path.GET(trx(new Confirm(this)));
 
-        path.allow(POST, trx(new ConfirmForm(this)));
-      });
+      path.POST(trx(new ConfirmForm(this)));
+    });
 
-      www.path("/demo.landing/ticket", GET, trx(new Ticket()));
+    www.path("/demo.landing/ticket", path -> path.GET(trx(new Ticket())));
 
-      www.path("/demo.landing/poster{id}.jpg", GET, trx(new Poster()));
+    www.path("/demo.landing/poster-{id}.jpg", path -> path.GET(trx(new Poster())));
 
-      www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
-    };
+    www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
   }
 
   private HttpHandler trx(HttpHandler handler) {
@@ -2143,7 +2140,7 @@ public final class AppCtx implements LandingDemo {
 
             trx.update();
 
-            http.set(Sql.Transaction.class, trx);
+            http.req(Sql.Transaction.class, trx);
 
             handler.handle(http);
 
@@ -2165,17 +2162,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {
@@ -2947,7 +2944,7 @@ final class LocalClear implements HttpHandler {
     localId = 1;
 
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final LocalDateTime now;
     now = ctx.now();
@@ -3528,7 +3525,7 @@ final class Poster implements HttpHandler {
     }
 
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final PosterModel model;
     model = PosterModel.query(trx, id);
@@ -3902,7 +3899,7 @@ final class Ticket implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final AppReservation reservation;
     reservation = AppReservation.parse(http);

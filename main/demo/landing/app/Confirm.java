@@ -30,7 +30,7 @@ final class Confirm implements HttpHandler {
   @Override
   public final void handle(HttpExchange http) {
     final Sql.Transaction trx;
-    trx = http.get(Sql.Transaction.class);
+    trx = http.req(Sql.Transaction.class);
 
     final AppReservation reservation;
     reservation = AppReservation.parse(http);
