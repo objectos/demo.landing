@@ -2095,20 +2095,34 @@ public final class AppCtx implements LandingDemo {
 
   @Override
   public final void localRoutes(HttpRouting local) {
-    local.path("/demo.landing/clear-reservation", path -> path.POST(trx(new LocalClear(this))));
+    local.path("/demo.landing/clear-reservation", path -> {
+      path.POST(trx(new LocalClear(this)));
+    });
 
-    local.path("/demo.landing/create-show", path -> path.POST(trx(new LocalCreate(this))));
+    local.path("/demo.landing/create-show", path -> {
+      path.POST(trx(new LocalCreate(this)));
+    });
   }
 
   @Override
   public final void publicRoutes(HttpRouting www) {
-    www.path("/demo.landing/boot", path -> path.GET(trx(new Boot(this))));
+    www.path("/demo.landing/boot", path -> {
+      path.GET(trx(new Boot(this)));
+    });
 
-    www.path("/demo.landing/home", path -> path.GET(trx(new Home(this))));
+    www.path("/demo.landing/home", path -> {
+      path.GET(trx(new Home(this)));
+    });
 
-    www.path("/demo.landing/movie/{id}", path -> path.GET(trx(new Movie(this))));
+    www.path("/demo.landing/movie/{id}", path -> {
+      path.pathParam("id", PathParams.digits());
+
+      path.GET(trx(new Movie(this)));
+    });
 
     www.path("/demo.landing/seats/{id}", path -> {
+      path.pathParam("id", PathParams.digits());
+
       path.GET(trx(new Seats(this)));
 
       path.POST(trx(new SeatsForm(this)));
@@ -2120,11 +2134,19 @@ public final class AppCtx implements LandingDemo {
       path.POST(trx(new ConfirmForm(this)));
     });
 
-    www.path("/demo.landing/ticket", path -> path.GET(trx(new Ticket())));
+    www.path("/demo.landing/ticket", path -> {
+      path.GET(trx(new Ticket()));
+    });
 
-    www.path("/demo.landing/poster-{id}.jpg", path -> path.GET(trx(new Poster())));
+    www.path("/demo.landing/poster-{id}.jpg", path -> {
+      path.pathParam("id", PathParams.digits());
 
-    www.path("/demo.landing/{}", path -> path.handler(new NotFound(this)));
+      path.GET(trx(new Poster()));
+    });
+
+    www.path("/demo.landing/{}", path -> {
+      path.handler(new NotFound(this));
+    });
   }
 
   private HttpHandler trx(HttpHandler handler) {
