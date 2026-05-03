@@ -70,7 +70,7 @@ final class Home implements HttpHandler {
     onclick = ctx.clickAction(AppView.MOVIE, id, reservation);
 
     final String imgsrc;
-    imgsrc = "/demo.landing/poster" + id + ".jpg";
+    imgsrc = "/demo.landing/poster-" + id + ".jpg";
 
     return new HomeView.Movie(title, onclick, imgsrc);
   }

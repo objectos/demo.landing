@@ -457,7 +457,7 @@ public final class LandingDemoDb {
       final Class<?> ctx;
       ctx = LandingDemoDb.class;
 
-      try (InputStream in = ctx.getResourceAsStream("poster" + id + ".jpg")) {
+      try (InputStream in = ctx.getResourceAsStream("poster-" + id + ".jpg")) {
         in.transferTo(out);
       } catch (IOException e) {
         throw new UncheckedIOException(e);

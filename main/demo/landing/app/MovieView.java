@@ -135,7 +135,7 @@ final class MovieView extends Html.Template {
 
             alt(details.title()),
 
-            src("/demo.landing/poster" + details.movieId() + ".jpg")
+            src("/demo.landing/poster-" + details.movieId() + ".jpg")
         )
     );
   }
