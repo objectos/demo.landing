@@ -19,7 +19,7 @@ import demo.landing.LandingDemo;
 import module java.base;
 import module objectos.way;
 
-public final class DevModule implements Consumer<HttpRouting> {
+public final class DevModule implements Consumer<HttpRoutes> {
 
   private final LandingDemo ctx;
 
@@ -36,18 +36,18 @@ public final class DevModule implements Consumer<HttpRouting> {
   }
 
   @Override
-  public final void accept(HttpRouting routing) {
-    ctx.localRoutes(routing);
+  public final void accept(HttpRoutes r) {
+    ctx.localRoutes(r);
 
-    ctx.publicRoutes(routing);
+    ctx.publicRoutes(r);
 
-    routing.path("/", path -> path.GET(http -> http.movedPermanently("/index.html")));
+    r.at("/", Http.GET, Http.handler(http -> http.movedPermanently("/index.html")));
 
-    routing.path("/index.html", path -> path.GET(this::index));
+    r.at("/index.html", Http.GET, Http.handler(this::index));
 
-    routing.path("/ui/script.js", path -> path.GET(this::script));
+    r.at("/ui/script.js", Http.GET, Http.handler(this::script));
 
-    routing.path("/ui/styles.css", path -> path.GET(this::styles));
+    r.at("/ui/styles.css", Http.GET, Http.handler(this::styles));
   }
 
   private void index(HttpExchange http) {

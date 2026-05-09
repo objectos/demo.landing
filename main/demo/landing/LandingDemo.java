@@ -55,9 +55,9 @@ public interface LandingDemo {
     return AppCtx.stylesImpl();
   }
 
-  void localRoutes(HttpRouting routing);
+  void localRoutes(HttpRoutes r);
 
-  void publicRoutes(HttpRouting routing);
+  void publicRoutes(HttpRoutes r);
 
   Html.Id shell();
 

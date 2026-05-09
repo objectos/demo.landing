@@ -2094,59 +2094,38 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   @Override
-  public final void localRoutes(HttpRouting local) {
-    local.path("/demo.landing/clear-reservation", path -> {
-      path.POST(trx(new LocalClear(this)));
-    });
+  public final void localRoutes(HttpRoutes local) {
+    local.at("/demo.landing/clear-reservation", Http.POST, trx(new LocalClear(this)));
 
-    local.path("/demo.landing/create-show", path -> {
-      path.POST(trx(new LocalCreate(this)));
-    });
+    local.at("/demo.landing/create-show", Http.POST, trx(new LocalCreate(this)));
   }
 
   @Override
-  public final void publicRoutes(HttpRouting www) {
-    www.path("/demo.landing/boot", path -> {
-      path.GET(trx(new Boot(this)));
-    });
+  public final void publicRoutes(HttpRoutes www) {
+    www.at("/demo.landing/boot", Http.GET, trx(new Boot(this)));
 
-    www.path("/demo.landing/home", path -> {
-      path.GET(trx(new Home(this)));
-    });
+    www.at("/demo.landing/home", Http.GET, trx(new Home(this)));
 
-    www.path("/demo.landing/movie/{id}", path -> {
-      path.pathParam("id", PathParams.digits());
+    www.at("/demo.landing/movie/{id}",
+        Http.pathParam("id", PathParams.digits()),
+        Http.GET, trx(new Movie(this)));
 
-      path.GET(trx(new Movie(this)));
-    });
+    www.at("/demo.landing/seats/{id}",
+        Http.pathParam("id", PathParams.digits()),
+        Http.GET, trx(new Seats(this)),
+        Http.POST, trx(new SeatsForm(this)));
 
-    www.path("/demo.landing/seats/{id}", path -> {
-      path.pathParam("id", PathParams.digits());
+    www.at("/demo.landing/confirm",
+        Http.GET, trx(new Confirm(this)),
+        Http.POST, trx(new ConfirmForm(this)));
 
-      path.GET(trx(new Seats(this)));
+    www.at("/demo.landing/ticket", Http.GET, trx(new Ticket()));
 
-      path.POST(trx(new SeatsForm(this)));
-    });
+    www.at("/demo.landing/poster-{id}.jpg",
+        Http.pathParam("id", PathParams.digits()),
+        Http.GET, trx(new Poster()));
 
-    www.path("/demo.landing/confirm", path -> {
-      path.GET(trx(new Confirm(this)));
-
-      path.POST(trx(new ConfirmForm(this)));
-    });
-
-    www.path("/demo.landing/ticket", path -> {
-      path.GET(trx(new Ticket()));
-    });
-
-    www.path("/demo.landing/poster-{id}.jpg", path -> {
-      path.pathParam("id", PathParams.digits());
-
-      path.GET(trx(new Poster()));
-    });
-
-    www.path("/demo.landing/{}", path -> {
-      path.handler(new NotFound(this));
-    });
+    www.at("/demo.landing/{}", new NotFound(this));
   }
 
   private HttpHandler trx(HttpHandler handler) {

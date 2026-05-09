@@ -19,7 +19,7 @@ import demo.landing.dev.DevModule;
 import java.util.function.Consumer;
 import module objectos.way;
 
-public final class BootModule implements Consumer<HttpRouting> {
+public final class BootModule implements Consumer<HttpRoutes> {
 
   private final App.Injector injector;
 
@@ -40,11 +40,11 @@ public final class BootModule implements Consumer<HttpRouting> {
   }
 
   @Override
-  public final void accept(HttpRouting routing) {
+  public final void accept(HttpRoutes r) {
     final DevModule dev;
     dev = new DevModule(injector);
 
-    dev.accept(routing);
+    dev.accept(r);
   }
 
 }

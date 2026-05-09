@@ -32,30 +32,22 @@ public class NotFoundTest {
       config.method(HttpMethod.GET);
 
       config.path("/demo.landing/not-found");
+
+      config.testable();
     });
 
     assertEquals(
         Testing.handle0(http),
 
         """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/html; charset=utf-8\r
-          Transfer-Encoding: chunked\r
-          \r
-          back-link: /demo.landing/movie/11?reservationId=1
+        HTTP/1.1 404 Not Found\r
+        Date: Mon, 28 Apr 2025 13:01:00 GMT\r
+        Content-Type: text/html; charset=utf-8\r
+        Transfer-Encoding: chunked\r
+        \r
+        # Something Went Wrong
 
-          # Show details
-
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
-
-          # Seats
-
-          screenId: 31
-          """
+        """
     );
   }
 

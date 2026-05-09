@@ -76,8 +76,8 @@ public final class StartDev extends Start {
       final Object instance;
       instance = constructor.newInstance(injector, original);
 
-      final Consumer<HttpRouting> module;
-      module = (Consumer<HttpRouting>) instance;
+      final Consumer<HttpRoutes> module;
+      module = (Consumer<HttpRoutes>) instance;
 
       return HttpHandler.create(module);
     }
