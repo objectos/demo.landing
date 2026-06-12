@@ -22,7 +22,7 @@ import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
 import objectos.http.HttpExchange;
-import objectos.http.HttpMethod;
+import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
@@ -88,7 +88,7 @@ public class LocalCreateTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/create-show");
       });
@@ -126,7 +126,7 @@ public class LocalCreateTest {
       http2 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/create-show");
       });

@@ -18,7 +18,7 @@ package demo.landing.app;
 import static org.testng.Assert.assertEquals;
 
 import objectos.http.HttpExchange;
-import objectos.http.HttpMethod;
+import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -74,7 +74,7 @@ public class ConfirmFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/confirm");
 
@@ -99,7 +99,7 @@ public class ConfirmFormTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/ticket");
 

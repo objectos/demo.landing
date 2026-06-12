@@ -18,7 +18,7 @@ package demo.landing.app;
 import static org.testng.Assert.assertEquals;
 
 import objectos.http.HttpExchange;
-import objectos.http.HttpMethod;
+import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -79,7 +79,7 @@ public class MovieTest {
       http = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/movie/11");
 
@@ -143,7 +143,7 @@ public class MovieTest {
       http = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/movie/999");
 

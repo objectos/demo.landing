@@ -213,7 +213,7 @@ public final class AppCtx implements LandingDemo {
         : http -> {
 
           final Sql.Transaction trx;
-          trx = database.beginTransaction(Sql.READ_COMMITED);
+          trx = database.connect();
 
           try (trx) {
             trx.sql("set schema CINEMA");
@@ -242,17 +242,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {

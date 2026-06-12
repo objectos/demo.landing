@@ -19,7 +19,7 @@ import static org.testng.Assert.assertEquals;
 
 import demo.landing.app.Testing;
 import objectos.http.HttpExchange;
-import objectos.http.HttpMethod;
+import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
@@ -89,7 +89,7 @@ public class SeatsFormTestConcurrent {
 
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/1061");
 
@@ -116,7 +116,7 @@ public class SeatsFormTestConcurrent {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/seats/197669");
 

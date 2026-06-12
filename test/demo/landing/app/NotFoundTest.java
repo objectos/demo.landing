@@ -18,7 +18,7 @@ package demo.landing.app;
 import static org.testng.Assert.assertEquals;
 
 import objectos.http.HttpExchange;
-import objectos.http.HttpMethod;
+import objectos.http.RequestMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
 
@@ -29,7 +29,7 @@ public class NotFoundTest {
   public void testCase01() {
     final HttpExchange http;
     http = Testing.http(config -> {
-      config.method(HttpMethod.GET);
+      config.method(RequestMethod.GET);
 
       config.path("/demo.landing/not-found");
 

@@ -18,7 +18,7 @@ package demo.landing.app;
 import static org.testng.Assert.assertEquals;
 
 import objectos.http.HttpExchange;
-import objectos.http.HttpMethod;
+import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -73,7 +73,7 @@ public class SeatsFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -100,7 +100,7 @@ public class SeatsFormTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/confirm");
 
@@ -153,7 +153,7 @@ public class SeatsFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -184,7 +184,7 @@ public class SeatsFormTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/confirm");
 
@@ -241,7 +241,7 @@ public class SeatsFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -270,7 +270,7 @@ public class SeatsFormTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/confirm");
 
@@ -325,7 +325,7 @@ public class SeatsFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -354,7 +354,7 @@ public class SeatsFormTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/confirm");
 
@@ -405,7 +405,7 @@ public class SeatsFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -448,7 +448,7 @@ public class SeatsFormTest {
       http = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -493,7 +493,7 @@ public class SeatsFormTest {
       http = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -534,7 +534,7 @@ public class SeatsFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -566,7 +566,7 @@ public class SeatsFormTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/confirm");
 
@@ -621,7 +621,7 @@ public class SeatsFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -655,7 +655,7 @@ public class SeatsFormTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/seats/131133");
 
@@ -705,7 +705,7 @@ public class SeatsFormTest {
       http0 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/seats/61");
 
@@ -733,7 +733,7 @@ public class SeatsFormTest {
       http1 = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.GET);
+        config.method(RequestMethod.GET);
 
         config.path("/demo.landing/seats/65597");
 

@@ -21,7 +21,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import objectos.http.HttpExchange;
-import objectos.http.HttpMethod;
+import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Listeners;
@@ -93,7 +93,7 @@ public class LocalClearTest {
       http = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/clear-reservation");
       });
@@ -139,7 +139,7 @@ public class LocalClearTest {
       http = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/clear-reservation");
       });
@@ -190,7 +190,7 @@ public class LocalClearTest {
       http = Testing.http(config -> {
         config.req(Sql.Transaction.class, trx);
 
-        config.method(HttpMethod.POST);
+        config.method(RequestMethod.POST);
 
         config.path("/demo.landing/clear-reservation");
       });
