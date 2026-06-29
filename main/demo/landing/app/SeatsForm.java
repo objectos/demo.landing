@@ -15,12 +15,16 @@
  */
 package demo.landing.app;
 
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import objectos.http.Handler;
+import objectos.http.Redirection;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.http.Status;
+import objectos.way.Note;
+import objectos.way.Sql;
 
 /// Processes the seats selected by the user.
-final class SeatsForm implements HttpHandler {
+final class SeatsForm implements Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
@@ -31,40 +35,36 @@ final class SeatsForm implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final SeatsData data;
-    data = SeatsData.parse(http);
+    data = SeatsData.parse(req);
 
     ctx.send(DATA_READ, data);
 
     if (data.seats() == 0) {
       // no seats were selected...
-      handleAlert(http, trx, data, SeatsAlert.EMPTY);
-
-      return;
+      return handleAlert(trx, data, SeatsAlert.EMPTY);
     }
 
     if (data.seats() > 6) {
       // too many seats were selected...
-      handleAlert(http, trx, data, SeatsAlert.LIMIT);
-
-      return;
+      return handleAlert(trx, data, SeatsAlert.LIMIT);
     }
 
     final Sql.BatchUpdate tmpSelectionResult;
     tmpSelectionResult = data.persistTmpSelection(trx);
 
-    switch (tmpSelectionResult) {
-      case Sql.BatchUpdateFailed _ -> handleTmpSelectionFailed(http, trx, data);
+    return switch (tmpSelectionResult) {
+      case Sql.BatchUpdateFailed _ -> handleTmpSelectionFailed(trx, data);
 
-      case Sql.BatchUpdateSuccess _ -> handleTmpSelectionSuccess(http, trx, data);
-    }
+      case Sql.BatchUpdateSuccess _ -> handleTmpSelectionSuccess(trx, data);
+    };
   }
 
-  private void handleAlert(HttpExchange http, Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
+  private Result handleAlert(Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
     // just in case, clear this user's selection
     data.clearUserSelection(trx);
 
@@ -83,23 +83,23 @@ final class SeatsForm implements HttpHandler {
     final String seatsUrl;
     seatsUrl = ctx.href(AppView.SEATS, id, reservation);
 
-    http.seeOther(seatsUrl);
+    return Redirection.seeOther(seatsUrl);
   }
 
-  private void handleTmpSelectionFailed(HttpExchange http, Sql.Transaction trx, SeatsData data) {
+  private Result handleTmpSelectionFailed(Sql.Transaction trx, SeatsData data) {
     // clear TMP_SELECTION just in case some of the records were inserted
     data.clearTmpSelection(trx);
 
     // insertion failed => bad data
 
-    http.error(HttpStatus.BAD_REQUEST);
+    return Status.BAD_REQUEST;
   }
 
-  private void handleTmpSelectionSuccess(HttpExchange http, Sql.Transaction trx, SeatsData data) {
+  private Result handleTmpSelectionSuccess(Sql.Transaction trx, SeatsData data) {
     final Sql.Update userSelectionResult;
     userSelectionResult = data.persisUserSelection(trx);
 
-    switch (userSelectionResult) {
+    return switch (userSelectionResult) {
       case Sql.UpdateSuccess ok -> {
         int count;
         count = ok.count();
@@ -114,7 +114,7 @@ final class SeatsForm implements HttpHandler {
           // clear SELECTION just in case some of the records were inserted
           data.clearUserSelection(trx);
 
-          http.error(HttpStatus.BAD_REQUEST);
+          yield Status.BAD_REQUEST;
 
         } else {
 
@@ -127,14 +127,14 @@ final class SeatsForm implements HttpHandler {
           final String redirectUrl;
           redirectUrl = ctx.href(AppView.CONFIRM, reservation);
 
-          http.seeOther(redirectUrl);
+          yield Redirection.seeOther(redirectUrl);
 
         }
 
       }
 
-      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, SeatsAlert.BOOKED);
-    }
+      case Sql.UpdateFailed _ -> handleAlert(trx, data, SeatsAlert.BOOKED);
+    };
   }
 
 }

@@ -23,7 +23,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HexFormat;
 import objectos.css.StyleSheet;
-import objectos.http.HttpHandler;
+import objectos.http.Handler;
 import objectos.script.JsLibrary;
 import objectos.way.App;
 import objectos.way.Html;
@@ -158,14 +158,14 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final objectos.http.HttpHandler serverHandler(App.Injector injector) {
+  final objectos.http.Handler serverHandler(App.Injector injector) {
     Testing.INJECTOR = injector;
 
     final BootModule module;
     module = new BootModule(injector);
 
-    final HttpHandler handler;
-    handler = HttpHandler.create(module);
+    final Handler handler;
+    handler = Handler.create(module);
 
     Testing.HANDLER = handler;
 
@@ -178,7 +178,7 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final AutoCloseable server(Note.Sink noteSink, HttpHandler handler) {
+  final AutoCloseable server(Note.Sink noteSink, Handler handler) {
     // noop autocloseable
     return () -> {};
   }

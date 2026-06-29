@@ -16,8 +16,7 @@
 package demo.landing;
 
 import module objectos.way;
-import objectos.http.HttpHandler;
-import objectos.http.HttpServer;
+import objectos.http.Handler;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.sql.SQLException;
@@ -46,13 +45,9 @@ abstract class Start extends App.Bootstrap {
     final App.ShutdownHook shutdownHook;
     shutdownHook = injector.getInstance(App.ShutdownHook.class);
 
-    // Http.Handler
-    final HttpHandler serverHandler;
+    final Handler serverHandler;
     serverHandler = serverHandler(injector);
 
-    shutdownHook.registerIfPossible(serverHandler);
-
-    // Http.Server
     final AutoCloseable httpServer;
     httpServer = server(noteSink, serverHandler);
 
@@ -169,14 +164,14 @@ abstract class Start extends App.Bootstrap {
     };
   }
 
-  abstract HttpHandler serverHandler(App.Injector injector);
+  abstract Handler serverHandler(App.Injector injector);
 
   abstract int serverPort();
 
-  AutoCloseable server(Note.Sink noteSink, HttpHandler handler) {
+  AutoCloseable server(Note.Sink noteSink, Handler handler) {
     try {
-      return HttpServer.create(opts -> {
-        opts.bufferSize(4096);
+      return Server.create(opts -> {
+        //opts.bufferSize(4096);
 
         opts.noteSink(noteSink);
 
@@ -186,13 +181,6 @@ abstract class Start extends App.Bootstrap {
           host.handler(handler);
 
           host.staticFiles(files -> {
-            files.contentTypes("""
-            .css: text/css; charset=utf-8
-            .jpg: image/jpeg
-            .js: text/javascript; charset=utf-8
-            .woff2: font/woff2
-            """);
-
             final Path webResources;
             webResources = Path.of("web-resources");
 
@@ -201,7 +189,7 @@ abstract class Start extends App.Bootstrap {
         });
       });
     } catch (IOException e) {
-      throw App.serviceFailed("Http.Server", e);
+      throw App.serviceFailed("http.Server", e);
     }
   }
 

@@ -16,10 +16,19 @@
 package demo.landing.dev;
 
 import demo.landing.LandingDemo;
-import module java.base;
-import module objectos.way;
+import java.nio.file.Path;
+import java.util.function.Consumer;
+import objectos.css.StyleSheet;
+import objectos.http.Redirection;
+import objectos.http.RequestMethod;
+import objectos.http.Routing;
+import objectos.http.StaticFile;
+import objectos.script.JsLibrary;
+import objectos.way.App;
+import objectos.way.Html;
+import objectos.way.Note;
 
-public final class DevModule implements Consumer<HttpRoutes> {
+public final class DevModule implements Consumer<Routing> {
 
   private final LandingDemo ctx;
 
@@ -36,42 +45,28 @@ public final class DevModule implements Consumer<HttpRoutes> {
   }
 
   @Override
-  public final void accept(HttpRoutes r) {
+  public final void accept(Routing r) {
     ctx.localRoutes(r);
 
     ctx.publicRoutes(r);
 
-    r.at("/", Http.GET, Http.handler(http -> http.movedPermanently("/index.html")));
+    r.at("/",
+        RequestMethod.GET, Redirection.movedPermanently("/index.html"));
 
-    r.at("/index.html", Http.GET, Http.handler(this::index));
+    r.at("/index.html",
+        RequestMethod.GET, StaticFile.of(new DevView(head)));
 
-    r.at("/ui/script.js", Http.GET, Http.handler(this::script));
+    r.at("/ui/script.js",
+        RequestMethod.GET, StaticFile.of(JsLibrary.of()));
 
-    r.at("/ui/styles.css", Http.GET, Http.handler(this::styles));
-  }
+    r.at("/ui/styles.css",
+        RequestMethod.GET, StaticFile.of(StyleSheet.create(opts -> {
+          opts.noteSink(noteSink);
 
-  private void index(HttpExchange http) {
-    final DevView object;
-    object = new DevView(head);
+          opts.include(LandingDemo.styles());
 
-    http.ok(object);
-  }
-
-  private void script(HttpExchange http) {
-    final JsLibrary library;
-    library = JsLibrary.of();
-
-    http.staticFile(library);
-  }
-
-  private void styles(HttpExchange http) {
-    http.staticFile(StyleSheet.create(opts -> {
-      opts.noteSink(noteSink);
-
-      opts.include(LandingDemo.styles());
-
-      opts.scanDirectory(Path.of("work", "main"));
-    }));
+          opts.scanDirectory(Path.of("work", "main"));
+        })));
   }
 
 }

@@ -23,16 +23,16 @@ record AppReservation(long id) {
 
   private static final String PARAM_NAME = "reservationId";
 
-  static AppReservation parse(HttpExchange http) {
+  static AppReservation parse(Request req) {
     final long id;
-    id = http.queryParamAsLong(PARAM_NAME, 0L);
+    id = req.queryParamAsLong(PARAM_NAME, 0L);
 
     return new AppReservation(id);
   }
 
-  static AppReservation parse(HttpExchange http, LongSupplier supplier) {
+  static AppReservation parse(Request req, LongSupplier supplier) {
     final long id;
-    id = http.queryParamAsLong(PARAM_NAME, supplier);
+    id = req.queryParamAsLong(PARAM_NAME, supplier);
 
     return new AppReservation(id);
   }

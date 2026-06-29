@@ -15,11 +15,15 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
+import java.util.List;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Response;
+import objectos.http.Result;
+import objectos.http.Status;
 
 /// Controller for any unmatched request to '/demo.landing/*'
-final class NotFound implements HttpHandler {
+final class NotFound implements Handler {
 
   private final AppCtx ctx;
 
@@ -28,9 +32,9 @@ final class NotFound implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final UiShell shell;
     shell = UiShell.of(opts -> {
@@ -44,11 +48,13 @@ final class NotFound implements HttpHandler {
       );
     });
 
-    http.status(HttpStatus.NOT_FOUND);
+    return Response.create(opts -> {
+      opts.status(Status.NOT_FOUND);
 
-    http.header(HttpHeaderName.DATE, http.now());
+      opts.date();
 
-    http.send(shell);
+      opts.send(shell);
+    });
   }
 
 }

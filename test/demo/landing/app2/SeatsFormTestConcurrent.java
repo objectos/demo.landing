@@ -18,7 +18,8 @@ package demo.landing.app2;
 import static org.testng.Assert.assertEquals;
 
 import demo.landing.app.Testing;
-import objectos.http.HttpExchange;
+import objectos.http.Redirection;
+import objectos.http.Request;
 import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
@@ -78,8 +79,8 @@ public class SeatsFormTestConcurrent {
 
     Testing.rollback(trx -> {
       // 902 tries to select the same seats
-      final HttpExchange http0;
-      http0 = Testing.http(config -> {
+      final Request req0;
+      req0 = Request.create(config -> {
         trx.sql(Sql.SCRIPT, """
         insert into RESERVATION (RESERVATION_ID, SHOW_ID)
         values (10902, 1061)
@@ -87,7 +88,7 @@ public class SeatsFormTestConcurrent {
 
         trx.batchUpdate();
 
-        config.req(Sql.Transaction.class, trx);
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.POST);
 
@@ -101,39 +102,26 @@ public class SeatsFormTestConcurrent {
       });
 
       assertEquals(
-          Testing.handle0(http0),
+          Testing.handle(req0),
 
-          """
-          HTTP/1.1 303 See Other\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Length: 0\r
-          Location: /demo.landing/seats/197669?reservationId=10902\r
-          \r
-          """
+          Redirection.seeOther("/demo.landing/seats/197669?reservationId=10902")
       );
 
-      final HttpExchange http1;
-      http1 = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request http1;
+      http1 = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.GET);
 
         config.path("/demo.landing/seats/197669");
 
         config.queryParam("reservationId", 10902);
-
-        config.testable();
       });
 
       assertEquals(
-          Testing.handle0(http1),
+          Testing.testable(http1),
 
           """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/html; charset=utf-8\r
-          Transfer-Encoding: chunked\r
-          \r
           back-link: /demo.landing/movie/1011?reservationId=10902
 
           # Show details

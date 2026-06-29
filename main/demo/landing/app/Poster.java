@@ -15,32 +15,34 @@
  */
 package demo.landing.app;
 
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.http.StaticFile;
 import objectos.way.Sql;
 
-final class Poster implements HttpHandler {
+final class Poster implements Handler {
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final int id;
-    id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    id = req.pathParamAsInt("id", Integer.MIN_VALUE);
 
     if (id < 1) {
-      return;
+      return req;
     }
 
     if (id > 4) {
-      return;
+      return req;
     }
 
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final PosterModel model;
     model = PosterModel.query(trx, id);
 
-    http.staticFile(model);
+    return StaticFile.of(model);
   }
 
 }

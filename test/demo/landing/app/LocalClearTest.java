@@ -20,7 +20,9 @@ import static org.testng.Assert.assertEquals;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import objectos.http.HttpExchange;
+import objectos.http.Content;
+import objectos.http.MediaType;
+import objectos.http.Request;
 import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
@@ -89,9 +91,9 @@ public class LocalClearTest {
       ,      (905, 61, '2025-01-25 10:00', null);
       """);
 
-      final HttpExchange http;
-      http = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request req;
+      req = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.POST);
 
@@ -99,16 +101,9 @@ public class LocalClearTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle(req),
 
-          """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/plain; charset=utf-8\r
-          Content-Length: 3\r
-          \r
-          OK
-          """
+          Content.of(MediaType.TEXT_PLAIN, "OK\n")
       );
 
       List<Reservation> result;
@@ -135,9 +130,9 @@ public class LocalClearTest {
       ,      (905, 61, '2025-01-25 10:00', null);
       """);
 
-      final HttpExchange http;
-      http = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request req;
+      req = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.POST);
 
@@ -145,16 +140,9 @@ public class LocalClearTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle(req),
 
-          """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/plain; charset=utf-8\r
-          Content-Length: 3\r
-          \r
-          OK
-          """
+          Content.of(MediaType.TEXT_PLAIN, "OK\n")
       );
 
       List<Reservation> result;
@@ -186,9 +174,9 @@ public class LocalClearTest {
       ,      (902, 104, 61);
       """);
 
-      final HttpExchange http;
-      http = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request req;
+      req = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.POST);
 
@@ -196,16 +184,9 @@ public class LocalClearTest {
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.handle(req),
 
-          """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/plain; charset=utf-8\r
-          Content-Length: 3\r
-          \r
-          OK
-          """
+          Content.of(MediaType.TEXT_PLAIN, "OK\n")
       );
 
       List<Reservation> result;

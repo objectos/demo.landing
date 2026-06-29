@@ -274,16 +274,16 @@ record AppReservation(long id) {
 
   private static final String PARAM_NAME = "reservationId";
 
-  static AppReservation parse(HttpExchange http) {
+  static AppReservation parse(Request req) {
     final long id;
-    id = http.queryParamAsLong(PARAM_NAME, 0L);
+    id = req.queryParamAsLong(PARAM_NAME, 0L);
 
     return new AppReservation(id);
   }
 
-  static AppReservation parse(HttpExchange http, LongSupplier supplier) {
+  static AppReservation parse(Request req, LongSupplier supplier) {
     final long id;
-    id = http.queryParamAsLong(PARAM_NAME, supplier);
+    id = req.queryParamAsLong(PARAM_NAME, supplier);
 
     return new AppReservation(id);
   }
@@ -316,10 +316,12 @@ package demo.landing.app;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import objectos.way.Media;
+import objectos.http.Content;
+import objectos.http.ContentProvider;
+import objectos.http.MediaType;
 import objectos.way.Sql;
 
-record PosterModel(byte[] data) implements Media.Bytes {
+record PosterModel(byte[] data) implements ContentProvider {
 
   private PosterModel(ResultSet rs, int idx) throws SQLException {
     this(
@@ -343,13 +345,8 @@ record PosterModel(byte[] data) implements Media.Bytes {
   }
 
   @Override
-  public final String contentType() {
-    return "image/jpeg";
-  }
-
-  @Override
-  public final byte[] toByteArray() {
-    return data;
+  public final Content toContent() {
+    return Content.of(MediaType.IMAGE_JPEG, data);
   }
 
 }
@@ -488,11 +485,15 @@ final class HomeView extends Html.Template {
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
+import java.util.List;
+import java.util.Optional;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Sql;
 
 /// The `/confirm` controller
-final class Confirm implements HttpHandler {
+final class Confirm implements Handler {
 
   private final AppCtx ctx;
 
@@ -501,18 +502,18 @@ final class Confirm implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final Optional<ConfirmDetails> maybe;
     maybe = ConfirmDetails.queryOptional(trx, reservation.id());
 
     if (maybe.isEmpty()) {
-      return;
+      return req;
     }
 
     final ConfirmDetails details;
@@ -521,8 +522,7 @@ final class Confirm implements HttpHandler {
     final String formAction;
     formAction = ctx.href(AppView.CONFIRM, reservation);
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
       opts.backAction = ctx.clickAction(AppView.SEATS, details.showId(), reservation);
@@ -537,8 +537,6 @@ final class Confirm implements HttpHandler {
           Source.ConfirmView
       );
     });
-
-    http.ok(shell);
   }
 
 }
@@ -754,11 +752,15 @@ final class SeatsGrid implements Iterable<SeatsGrid.Seat> {
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
+import java.util.List;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Response;
+import objectos.http.Result;
+import objectos.http.Status;
 
 /// Controller for any unmatched request to '/demo.landing/*'
-final class NotFound implements HttpHandler {
+final class NotFound implements Handler {
 
   private final AppCtx ctx;
 
@@ -767,9 +769,9 @@ final class NotFound implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final UiShell shell;
     shell = UiShell.of(opts -> {
@@ -783,11 +785,13 @@ final class NotFound implements HttpHandler {
       );
     });
 
-    http.status(HttpStatus.NOT_FOUND);
+    return Response.create(opts -> {
+      opts.status(Status.NOT_FOUND);
 
-    http.header(HttpHeaderName.DATE, http.now());
+      opts.date();
 
-    http.send(shell);
+      opts.send(shell);
+    });
   }
 
 }
@@ -869,13 +873,15 @@ enum SeatsAlert {
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.util.List;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.script.JsAction;
+import objectos.way.Sql;
 
 /// The `/home` controller.
-final class Home implements HttpHandler {
+final class Home implements Handler {
 
   private final AppCtx ctx;
 
@@ -884,12 +890,12 @@ final class Home implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final List<HomeModel> rows;
     rows = HomeModel.query(trx);
@@ -897,8 +903,7 @@ final class Home implements HttpHandler {
     final List<HomeView.Movie> movies;
     movies = rows.stream().map(row -> toUi(reservation, row)).toList();
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
       opts.main = new HomeView(movies);
@@ -909,8 +914,6 @@ final class Home implements HttpHandler {
           Source.HomeView
       );
     });
-
-    http.ok(shell);
   }
 
   private HomeView.Movie toUi(AppReservation reservation, HomeModel original) {
@@ -950,12 +953,17 @@ final class Home implements HttpHandler {
  */
 package demo.landing.app;
 
-import static objectos.way.Media.Bytes.textPlain;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import objectos.http.Content;
+import objectos.http.Handler;
+import objectos.http.MediaType;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Note;
+import objectos.way.Sql;
 
-import module java.base;
-import module objectos.way;
-
-final class LocalCreate implements HttpHandler {
+final class LocalCreate implements Handler {
 
   private static final Note.Int1 CREATE_SHOW = Note.Int1.create(LocalCreate.class, "Create Show", Note.INFO);
 
@@ -966,12 +974,12 @@ final class LocalCreate implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final int localId;
     localId = 2;
 
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final LocalDate today;
     today = ctx.today();
@@ -996,42 +1004,40 @@ final class LocalCreate implements HttpHandler {
     int executions;
     executions = _executions.intValue();
 
-    if (executions > 0) {
-      http.ok(
-          textPlain("Skipped: already executed\\n")
-      );
+    final String text;
 
-      return;
+    if (executions > 0) {
+      text = "Skipped: already executed\\n";
+    } else {
+      trx.sql(\"""
+      insert into
+        SHOW (SCREENING_ID, SHOWDATE, SHOWTIME, SEAT_PRICE)
+      select
+        SCREENING_ID,
+        dateadd (day, 2, '%1$s'),
+        SCREENING_TIME,
+        SEAT_PRICE
+      from
+        SCREENING_TIME
+      order by
+        1,
+        2,
+        3
+      \""");
+
+      trx.format(today);
+
+      int count;
+      count = trx.update();
+
+      ctx.send(CREATE_SHOW, count);
+
+      log(trx, localId);
+
+      text = "OK\\n";
     }
 
-    trx.sql(\"""
-    insert into
-      SHOW (SCREENING_ID, SHOWDATE, SHOWTIME, SEAT_PRICE)
-    select
-      SCREENING_ID,
-      dateadd (day, 2, '%1$s'),
-      SCREENING_TIME,
-      SEAT_PRICE
-    from
-      SCREENING_TIME
-    order by
-      1,
-      2,
-      3
-    \""");
-
-    trx.format(today);
-
-    int count;
-    count = trx.update();
-
-    ctx.send(CREATE_SHOW, count);
-
-    log(trx, localId);
-
-    http.ok(
-        textPlain("OK\\n")
-    );
+    return Content.of(MediaType.TEXT_PLAIN, text);
   }
 
   private void log(Sql.Transaction trx, int id) {
@@ -1247,14 +1253,13 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
-import objectos.http.HttpExchange;
 
 /// The data submitted from the `/confirm` form.
 record ConfirmData(AppReservation reservation) {
 
-  static ConfirmData parse(HttpExchange http) {
+  static ConfirmData parse(Request req) {
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     return new ConfirmData(reservation);
   }
@@ -1298,13 +1303,17 @@ record ConfirmData(AppReservation reservation) {
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.script.JsAction;
+import objectos.way.Sql;
 
 /// The `/movie/{id}` controller.
-final class Movie implements HttpHandler {
+final class Movie implements Handler {
 
   private final AppCtx ctx;
 
@@ -1313,22 +1322,22 @@ final class Movie implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final int movieId;
-    movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    movieId = req.pathParamAsInt("id", Integer.MIN_VALUE);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
     if (maybeDetails.isEmpty()) {
-      return;
+      return req;
     }
 
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final MovieDetails details;
     details = maybeDetails.get();
@@ -1342,8 +1351,7 @@ final class Movie implements HttpHandler {
     final List<MovieView.Screening> screenings;
     screenings = rows.stream().map(row -> toUi(reservation, row)).toList();
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.backAction = opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
       opts.main = new MovieView(details, screenings);
@@ -1356,8 +1364,6 @@ final class Movie implements HttpHandler {
           Source.MovieView
       );
     });
-
-    http.ok(shell);
   }
 
   private MovieView.Screening toUi(AppReservation reservation, MovieScreening original) {
@@ -1400,13 +1406,15 @@ final class Movie implements HttpHandler {
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.time.LocalDateTime;
+import objectos.http.Handler;
+import objectos.http.Redirection;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Sql;
 
 /// Processes the data submitted from the `/confirm` form.
-final class ConfirmForm implements HttpHandler {
+final class ConfirmForm implements Handler {
 
   private final AppCtx ctx;
 
@@ -1415,12 +1423,12 @@ final class ConfirmForm implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final ConfirmData data;
-    data = ConfirmData.parse(http);
+    data = ConfirmData.parse(req);
 
     final LocalDateTime now;
     now = ctx.now();
@@ -1428,7 +1436,7 @@ final class ConfirmForm implements HttpHandler {
     final Sql.Update ticketResult;
     ticketResult = data.persistTicket(trx, now);
 
-    switch (ticketResult) {
+    return switch (ticketResult) {
       case Sql.UpdateFailed _ -> {
 
         throw new UnsupportedOperationException("Implement me");
@@ -1442,9 +1450,9 @@ final class ConfirmForm implements HttpHandler {
         final String location;
         location = ctx.href(AppView.TICKET, reservation);
 
-        http.seeOther(location);
+        yield Redirection.seeOther(location);
       }
-    }
+    };
   }
 
 }
@@ -1468,13 +1476,15 @@ final class ConfirmForm implements HttpHandler {
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.util.List;
+import java.util.Optional;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Sql;
 
 /// The `/seats/{id}` controller.
-final class Seats implements HttpHandler {
+final class Seats implements Handler {
 
   private final AppCtx ctx;
 
@@ -1483,12 +1493,12 @@ final class Seats implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final int id;
-    id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    id = req.pathParamAsInt("id", Integer.MIN_VALUE);
 
     final int showId;
     showId = id & 0xFFFF;
@@ -1497,11 +1507,11 @@ final class Seats implements HttpHandler {
     maybeDetails = SeatsDetails.byId(trx, showId);
 
     if (maybeDetails.isEmpty()) {
-      return;
+      return req;
     }
 
     final AppReservation reservation;
-    reservation = AppReservation.parse(http, () -> generator(trx, showId));
+    reservation = AppReservation.parse(req, () -> generator(trx, showId));
 
     final int alertId;
     alertId = (id >>> 16);
@@ -1518,8 +1528,7 @@ final class Seats implements HttpHandler {
     final String formAction;
     formAction = ctx.href(AppView.SEATS, showId, reservation);
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.backAction = ctx.clickAction(AppView.MOVIE, details.movieId(), reservation);
 
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
@@ -1536,8 +1545,6 @@ final class Seats implements HttpHandler {
           Source.SeatsView
       );
     });
-
-    http.ok(shell);
   }
 
   private long generator(Sql.Transaction trx, int showId) {
@@ -1793,12 +1800,16 @@ final class NotFoundView extends Html.Template {
  */
 package demo.landing.app;
 
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import objectos.http.Handler;
+import objectos.http.Redirection;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.http.Status;
+import objectos.way.Note;
+import objectos.way.Sql;
 
 /// Processes the seats selected by the user.
-final class SeatsForm implements HttpHandler {
+final class SeatsForm implements Handler {
 
   static final Note.Ref1<SeatsData> DATA_READ = Note.Ref1.create(SeatsForm.class, "Read", Note.DEBUG);
 
@@ -1809,40 +1820,36 @@ final class SeatsForm implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final SeatsData data;
-    data = SeatsData.parse(http);
+    data = SeatsData.parse(req);
 
     ctx.send(DATA_READ, data);
 
     if (data.seats() == 0) {
       // no seats were selected...
-      handleAlert(http, trx, data, SeatsAlert.EMPTY);
-
-      return;
+      return handleAlert(trx, data, SeatsAlert.EMPTY);
     }
 
     if (data.seats() > 6) {
       // too many seats were selected...
-      handleAlert(http, trx, data, SeatsAlert.LIMIT);
-
-      return;
+      return handleAlert(trx, data, SeatsAlert.LIMIT);
     }
 
     final Sql.BatchUpdate tmpSelectionResult;
     tmpSelectionResult = data.persistTmpSelection(trx);
 
-    switch (tmpSelectionResult) {
-      case Sql.BatchUpdateFailed _ -> handleTmpSelectionFailed(http, trx, data);
+    return switch (tmpSelectionResult) {
+      case Sql.BatchUpdateFailed _ -> handleTmpSelectionFailed(trx, data);
 
-      case Sql.BatchUpdateSuccess _ -> handleTmpSelectionSuccess(http, trx, data);
-    }
+      case Sql.BatchUpdateSuccess _ -> handleTmpSelectionSuccess(trx, data);
+    };
   }
 
-  private void handleAlert(HttpExchange http, Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
+  private Result handleAlert(Sql.Transaction trx, SeatsData data, SeatsAlert alert) {
     // just in case, clear this user's selection
     data.clearUserSelection(trx);
 
@@ -1861,23 +1868,23 @@ final class SeatsForm implements HttpHandler {
     final String seatsUrl;
     seatsUrl = ctx.href(AppView.SEATS, id, reservation);
 
-    http.seeOther(seatsUrl);
+    return Redirection.seeOther(seatsUrl);
   }
 
-  private void handleTmpSelectionFailed(HttpExchange http, Sql.Transaction trx, SeatsData data) {
+  private Result handleTmpSelectionFailed(Sql.Transaction trx, SeatsData data) {
     // clear TMP_SELECTION just in case some of the records were inserted
     data.clearTmpSelection(trx);
 
     // insertion failed => bad data
 
-    http.error(HttpStatus.BAD_REQUEST);
+    return Status.BAD_REQUEST;
   }
 
-  private void handleTmpSelectionSuccess(HttpExchange http, Sql.Transaction trx, SeatsData data) {
+  private Result handleTmpSelectionSuccess(Sql.Transaction trx, SeatsData data) {
     final Sql.Update userSelectionResult;
     userSelectionResult = data.persisUserSelection(trx);
 
-    switch (userSelectionResult) {
+    return switch (userSelectionResult) {
       case Sql.UpdateSuccess ok -> {
         int count;
         count = ok.count();
@@ -1892,7 +1899,7 @@ final class SeatsForm implements HttpHandler {
           // clear SELECTION just in case some of the records were inserted
           data.clearUserSelection(trx);
 
-          http.error(HttpStatus.BAD_REQUEST);
+          yield Status.BAD_REQUEST;
 
         } else {
 
@@ -1905,14 +1912,14 @@ final class SeatsForm implements HttpHandler {
           final String redirectUrl;
           redirectUrl = ctx.href(AppView.CONFIRM, reservation);
 
-          http.seeOther(redirectUrl);
+          yield Redirection.seeOther(redirectUrl);
 
         }
 
       }
 
-      case Sql.UpdateFailed _ -> handleAlert(http, trx, data, SeatsAlert.BOOKED);
-    }
+      case Sql.UpdateFailed _ -> handleAlert(trx, data, SeatsAlert.BOOKED);
+    };
   }
 
 }
@@ -1937,9 +1944,29 @@ final class SeatsForm implements HttpHandler {
 package demo.landing.app;
 
 import demo.landing.LandingDemo;
-import module java.base;
+import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Duration;
-import module objectos.way;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.HexFormat;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.random.RandomGenerator;
+import objectos.css.CssLibrary;
+import objectos.http.Handler;
+import objectos.http.HeaderName;
+import objectos.http.PathParam;
+import objectos.http.RequestMethod;
+import objectos.http.Result;
+import objectos.http.Routing;
+import objectos.script.Js;
+import objectos.script.JsAction;
+import objectos.way.Html;
+import objectos.way.Note;
+import objectos.way.Sql;
 
 /// Application entry point and system-wide context.
 public final class AppCtx implements LandingDemo {
@@ -2094,58 +2121,67 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   @Override
-  public final void localRoutes(HttpRoutes local) {
-    local.at("/demo.landing/clear-reservation", Http.POST, trx(new LocalClear(this)));
+  public final void localRoutes(Routing local) {
+    local.at("/demo.landing/clear-reservation",
+        RequestMethod.POST, trx(new LocalClear(this)));
 
-    local.at("/demo.landing/create-show", Http.POST, trx(new LocalCreate(this)));
+    local.at("/demo.landing/create-show",
+        RequestMethod.POST, trx(new LocalCreate(this)));
   }
 
   @Override
-  public final void publicRoutes(HttpRoutes www) {
-    www.at("/demo.landing/boot", Http.GET, trx(new Boot(this)));
+  public final void publicRoutes(Routing www) {
+    www.at("/demo.landing/boot",
+        RequestMethod.GET, trx(new Boot(this)));
 
-    www.at("/demo.landing/home", Http.GET, trx(new Home(this)));
+    www.at("/demo.landing/home",
+        RequestMethod.GET, trx(new Home(this)));
 
     www.at("/demo.landing/movie/{id}",
-        Http.pathParam("id", PathParams.digits()),
-        Http.GET, trx(new Movie(this)));
+        PathParam.digits("id"),
+        RequestMethod.GET, trx(new Movie(this)));
 
     www.at("/demo.landing/seats/{id}",
-        Http.pathParam("id", PathParams.digits()),
-        Http.GET, trx(new Seats(this)),
-        Http.POST, trx(new SeatsForm(this)));
+        PathParam.digits("id"),
+        RequestMethod.GET, trx(new Seats(this)),
+        RequestMethod.POST, trx(new SeatsForm(this)));
 
     www.at("/demo.landing/confirm",
-        Http.GET, trx(new Confirm(this)),
-        Http.POST, trx(new ConfirmForm(this)));
+        RequestMethod.GET, trx(new Confirm(this)),
+        RequestMethod.POST, trx(new ConfirmForm(this)));
 
-    www.at("/demo.landing/ticket", Http.GET, trx(new Ticket()));
+    www.at("/demo.landing/ticket",
+        RequestMethod.GET, trx(new Ticket()));
 
     www.at("/demo.landing/poster-{id}.jpg",
-        Http.pathParam("id", PathParams.digits()),
-        Http.GET, trx(new Poster()));
+        PathParam.digits("id"),
+        RequestMethod.GET, trx(new Poster()));
 
-    www.at("/demo.landing/{}", new NotFound(this));
+    www.at("/demo.landing/{rest}",
+        new NotFound(this));
   }
 
-  private HttpHandler trx(HttpHandler handler) {
+  private Handler trx(Handler handler) {
     return testing
-        ? http -> handler.handle(http)
-        : http -> {
+        ? req -> handler.handle(req)
+        : req -> {
 
           final Sql.Transaction trx;
-          trx = database.beginTransaction(Sql.READ_COMMITED);
+          trx = database.connect();
 
           try (trx) {
             trx.sql("set schema CINEMA");
 
             trx.update();
 
-            http.req(Sql.Transaction.class, trx);
+            req.attr(Sql.Transaction.class, trx);
 
-            handler.handle(http);
+            final Result result;
+            result = handler.handle(req);
 
             trx.commit();
+
+            return result;
           } catch (Throwable t) {
             noteSink.send(TRANSACTIONAL, t);
 
@@ -2163,17 +2199,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-
+  
   random = 4 bytes
-
+  
   view = 1 byte
-
+  
   id = 4 byte
-
+  
   rid = 8 bytes
   ------------------
   total = 17 bytes
-
+  
   */
 
   public final String decodeHash(String hash) {
@@ -2380,7 +2416,7 @@ public final class AppCtx implements LandingDemo {
 
   public static final Html.Id SHELL = Html.Id.of("demo.landing");
 
-  public static final HttpHeaderName DEMO_LOCATION_HASH = HttpHeaderName.of("Demo-Location-Hash");
+  public static final HeaderName DEMO_LOCATION_HASH = HeaderName.of("Demo-Location-Hash");
 
   public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/boot", opts -> {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());
@@ -2922,14 +2958,16 @@ final class TicketView extends Html.Template {
  */
 package demo.landing.app;
 
-import static objectos.way.Media.Bytes.textPlain;
+import java.time.LocalDateTime;
+import objectos.http.Content;
+import objectos.http.Handler;
+import objectos.http.MediaType;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Note;
+import objectos.way.Sql;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
-
-final class LocalClear implements HttpHandler {
+final class LocalClear implements Handler {
 
   private static final Note.Int1 CLEAR_RESERVATION = Note.Int1.create(LocalClear.class, "Clear Reservation", Note.INFO);
 
@@ -2940,12 +2978,12 @@ final class LocalClear implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final int localId;
     localId = 1;
 
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final LocalDateTime now;
     now = ctx.now();
@@ -2966,9 +3004,7 @@ final class LocalClear implements HttpHandler {
 
     log(trx, localId);
 
-    http.ok(
-        textPlain("OK\\n")
-    );
+    return Content.of(MediaType.TEXT_PLAIN, "OK\\n");
   }
 
   private void log(Sql.Transaction trx, int id) {
@@ -3463,10 +3499,13 @@ final class SeatsView extends Html.Template {
  */
 package demo.landing.app;
 
-import module objectos.way;
+import objectos.http.Handler;
+import objectos.http.Redirection;
+import objectos.http.Request;
+import objectos.http.Result;
 
 /// The `/home` controller.
-final class Boot implements HttpHandler {
+final class Boot implements Handler {
 
   private final AppCtx ctx;
 
@@ -3475,14 +3514,14 @@ final class Boot implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final String hashValue;
-    hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
+    hashValue = req.header(AppCtx.DEMO_LOCATION_HASH);
 
     final String hashRedirect;
     hashRedirect = ctx.decodeHash(hashValue);
 
-    http.found(hashRedirect);
+    return Redirection.found(hashRedirect);
   }
 
 }
@@ -3506,32 +3545,34 @@ final class Boot implements HttpHandler {
  */
 package demo.landing.app;
 
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.http.StaticFile;
 import objectos.way.Sql;
 
-final class Poster implements HttpHandler {
+final class Poster implements Handler {
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final int id;
-    id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    id = req.pathParamAsInt("id", Integer.MIN_VALUE);
 
     if (id < 1) {
-      return;
+      return req;
     }
 
     if (id > 4) {
-      return;
+      return req;
     }
 
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final PosterModel model;
     model = PosterModel.query(trx, id);
 
-    http.staticFile(model);
+    return StaticFile.of(model);
   }
 
 }
@@ -3732,23 +3773,22 @@ package demo.landing.app;
 
 import module java.base;
 import module objectos.way;
-import objectos.http.HttpExchange;
 
 /// Represents the `/seats/{id}` user submitted data.
 record SeatsData(AppReservation reservation, int showId, int screenId, int[] selection) {
 
-  public static SeatsData parse(HttpExchange http) {
+  public static SeatsData parse(Request req) {
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     return new SeatsData(
         reservation,
 
-        http.pathParamAsInt("id", Integer.MIN_VALUE),
+        req.pathParamAsInt("id", Integer.MIN_VALUE),
 
-        http.formParamAsInt("screenId", Integer.MIN_VALUE),
+        req.formParamAsInt("screenId", Integer.MIN_VALUE),
 
-        http.formParamAllAsInt("seat", Integer.MIN_VALUE).distinct().toArray()
+        req.formParamAllAsInt("seat", Integer.MIN_VALUE).distinct().toArray()
     );
   }
 
@@ -3887,36 +3927,38 @@ record SeatsData(AppReservation reservation, int showId, int screenId, int[] sel
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.util.List;
+import java.util.Optional;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.script.Js;
+import objectos.way.Sql;
 
 /// The `/ticket` controller.
-final class Ticket implements HttpHandler {
+final class Ticket implements Handler {
 
   Ticket() {}
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final Optional<TicketModel> maybe;
     maybe = TicketModel.queryOptional(trx, reservation.id());
 
     if (maybe.isEmpty()) {
-      return;
+      return req;
     }
 
     final TicketModel ticket;
     ticket = maybe.get();
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.homeAction = Js.byId(AppCtx.SHELL).render("/demo.landing/home", render -> {
         render.history("/index.html");
       });
@@ -3929,8 +3971,6 @@ final class Ticket implements HttpHandler {
           Source.TicketView
       );
     });
-
-    http.ok(shell);
   }
 
 }

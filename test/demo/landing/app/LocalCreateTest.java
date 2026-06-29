@@ -21,7 +21,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.List;
-import objectos.http.HttpExchange;
+import objectos.http.Content;
+import objectos.http.MediaType;
+import objectos.http.Request;
 import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.BeforeClass;
@@ -84,9 +86,9 @@ public class LocalCreateTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final HttpExchange http1;
-      http1 = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request req1;
+      req1 = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.POST);
 
@@ -94,16 +96,9 @@ public class LocalCreateTest {
       });
 
       assertEquals(
-          Testing.handle0(http1),
+          Testing.handle(req1),
 
-          """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/plain; charset=utf-8\r
-          Content-Length: 3\r
-          \r
-          OK
-          """
+          Content.of(MediaType.TEXT_PLAIN, "OK\n")
       );
 
       final List<Show> result1;
@@ -122,9 +117,9 @@ public class LocalCreateTest {
       assertEquals(result1.get(7), new Show(43, "16:00:00"));
       assertEquals(result1.get(8), new Show(43, "19:00:00"));
 
-      final HttpExchange http2;
-      http2 = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request req2;
+      req2 = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.POST);
 
@@ -132,16 +127,9 @@ public class LocalCreateTest {
       });
 
       assertEquals(
-          Testing.handle0(http2),
+          Testing.handle(req2),
 
-          """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/plain; charset=utf-8\r
-          Content-Length: 26\r
-          \r
-          Skipped: already executed
-          """
+          Content.of(MediaType.TEXT_PLAIN, "Skipped: already executed\n")
       );
 
       final List<Show> result2;

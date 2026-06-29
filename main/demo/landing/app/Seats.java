@@ -15,13 +15,15 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.util.List;
+import java.util.Optional;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Sql;
 
 /// The `/seats/{id}` controller.
-final class Seats implements HttpHandler {
+final class Seats implements Handler {
 
   private final AppCtx ctx;
 
@@ -30,12 +32,12 @@ final class Seats implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final int id;
-    id = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    id = req.pathParamAsInt("id", Integer.MIN_VALUE);
 
     final int showId;
     showId = id & 0xFFFF;
@@ -44,11 +46,11 @@ final class Seats implements HttpHandler {
     maybeDetails = SeatsDetails.byId(trx, showId);
 
     if (maybeDetails.isEmpty()) {
-      return;
+      return req;
     }
 
     final AppReservation reservation;
-    reservation = AppReservation.parse(http, () -> generator(trx, showId));
+    reservation = AppReservation.parse(req, () -> generator(trx, showId));
 
     final int alertId;
     alertId = (id >>> 16);
@@ -65,8 +67,7 @@ final class Seats implements HttpHandler {
     final String formAction;
     formAction = ctx.href(AppView.SEATS, showId, reservation);
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.backAction = ctx.clickAction(AppView.MOVIE, details.movieId(), reservation);
 
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
@@ -83,8 +84,6 @@ final class Seats implements HttpHandler {
           Source.SeatsView
       );
     });
-
-    http.ok(shell);
   }
 
   private long generator(Sql.Transaction trx, int showId) {

@@ -17,7 +17,7 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import objectos.http.HttpExchange;
+import objectos.http.Request;
 import objectos.http.RequestMethod;
 import org.testng.annotations.Listeners;
 import org.testng.annotations.Test;
@@ -27,24 +27,17 @@ public class NotFoundTest {
 
   @Test
   public void testCase01() {
-    final HttpExchange http;
-    http = Testing.http(config -> {
+    final Request req;
+    req = Request.create(config -> {
       config.method(RequestMethod.GET);
 
       config.path("/demo.landing/not-found");
-
-      config.testable();
     });
 
     assertEquals(
-        Testing.handle0(http),
+        Testing.testable(req),
 
         """
-        HTTP/1.1 404 Not Found\r
-        Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-        Content-Type: text/html; charset=utf-8\r
-        Transfer-Encoding: chunked\r
-        \r
         # Something Went Wrong
 
         """

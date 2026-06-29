@@ -17,10 +17,12 @@ package demo.landing.app;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import objectos.way.Media;
+import objectos.http.Content;
+import objectos.http.ContentProvider;
+import objectos.http.MediaType;
 import objectos.way.Sql;
 
-record PosterModel(byte[] data) implements Media.Bytes {
+record PosterModel(byte[] data) implements ContentProvider {
 
   private PosterModel(ResultSet rs, int idx) throws SQLException {
     this(
@@ -44,13 +46,8 @@ record PosterModel(byte[] data) implements Media.Bytes {
   }
 
   @Override
-  public final String contentType() {
-    return "image/jpeg";
-  }
-
-  @Override
-  public final byte[] toByteArray() {
-    return data;
+  public final Content toContent() {
+    return Content.of(MediaType.IMAGE_JPEG, data);
   }
 
 }

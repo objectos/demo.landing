@@ -15,14 +15,16 @@
  */
 package demo.landing.app;
 
-import static objectos.way.Media.Bytes.textPlain;
+import java.time.LocalDateTime;
+import objectos.http.Content;
+import objectos.http.Handler;
+import objectos.http.MediaType;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Note;
+import objectos.way.Sql;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
-
-final class LocalClear implements HttpHandler {
+final class LocalClear implements Handler {
 
   private static final Note.Int1 CLEAR_RESERVATION = Note.Int1.create(LocalClear.class, "Clear Reservation", Note.INFO);
 
@@ -33,12 +35,12 @@ final class LocalClear implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final int localId;
     localId = 1;
 
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final LocalDateTime now;
     now = ctx.now();
@@ -59,9 +61,7 @@ final class LocalClear implements HttpHandler {
 
     log(trx, localId);
 
-    http.ok(
-        textPlain("OK\n")
-    );
+    return Content.of(MediaType.TEXT_PLAIN, "OK\n");
   }
 
   private void log(Sql.Transaction trx, int id) {

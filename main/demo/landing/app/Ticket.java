@@ -15,36 +15,38 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.util.List;
+import java.util.Optional;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.script.Js;
+import objectos.way.Sql;
 
 /// The `/ticket` controller.
-final class Ticket implements HttpHandler {
+final class Ticket implements Handler {
 
   Ticket() {}
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final Optional<TicketModel> maybe;
     maybe = TicketModel.queryOptional(trx, reservation.id());
 
     if (maybe.isEmpty()) {
-      return;
+      return req;
     }
 
     final TicketModel ticket;
     ticket = maybe.get();
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.homeAction = Js.byId(AppCtx.SHELL).render("/demo.landing/home", render -> {
         render.history("/index.html");
       });
@@ -57,8 +59,6 @@ final class Ticket implements HttpHandler {
           Source.TicketView
       );
     });
-
-    http.ok(shell);
   }
 
 }

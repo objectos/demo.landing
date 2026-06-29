@@ -15,12 +15,17 @@
  */
 package demo.landing.app;
 
-import static objectos.way.Media.Bytes.textPlain;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import objectos.http.Content;
+import objectos.http.Handler;
+import objectos.http.MediaType;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Note;
+import objectos.way.Sql;
 
-import module java.base;
-import module objectos.way;
-
-final class LocalCreate implements HttpHandler {
+final class LocalCreate implements Handler {
 
   private static final Note.Int1 CREATE_SHOW = Note.Int1.create(LocalCreate.class, "Create Show", Note.INFO);
 
@@ -31,12 +36,12 @@ final class LocalCreate implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final int localId;
     localId = 2;
 
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final LocalDate today;
     today = ctx.today();
@@ -61,42 +66,40 @@ final class LocalCreate implements HttpHandler {
     int executions;
     executions = _executions.intValue();
 
-    if (executions > 0) {
-      http.ok(
-          textPlain("Skipped: already executed\n")
-      );
+    final String text;
 
-      return;
+    if (executions > 0) {
+      text = "Skipped: already executed\n";
+    } else {
+      trx.sql("""
+      insert into
+        SHOW (SCREENING_ID, SHOWDATE, SHOWTIME, SEAT_PRICE)
+      select
+        SCREENING_ID,
+        dateadd (day, 2, '%1$s'),
+        SCREENING_TIME,
+        SEAT_PRICE
+      from
+        SCREENING_TIME
+      order by
+        1,
+        2,
+        3
+      """);
+
+      trx.format(today);
+
+      int count;
+      count = trx.update();
+
+      ctx.send(CREATE_SHOW, count);
+
+      log(trx, localId);
+
+      text = "OK\n";
     }
 
-    trx.sql("""
-    insert into
-      SHOW (SCREENING_ID, SHOWDATE, SHOWTIME, SEAT_PRICE)
-    select
-      SCREENING_ID,
-      dateadd (day, 2, '%1$s'),
-      SCREENING_TIME,
-      SEAT_PRICE
-    from
-      SCREENING_TIME
-    order by
-      1,
-      2,
-      3
-    """);
-
-    trx.format(today);
-
-    int count;
-    count = trx.update();
-
-    ctx.send(CREATE_SHOW, count);
-
-    log(trx, localId);
-
-    http.ok(
-        textPlain("OK\n")
-    );
+    return Content.of(MediaType.TEXT_PLAIN, text);
   }
 
   private void log(Sql.Transaction trx, int id) {

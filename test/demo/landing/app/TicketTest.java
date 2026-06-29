@@ -17,7 +17,7 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import objectos.http.HttpExchange;
+import objectos.http.Request;
 import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.Listeners;
@@ -71,28 +71,21 @@ public class TicketTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final HttpExchange http;
-      http = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request req;
+      req = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.GET);
 
         config.path("/demo.landing/ticket");
 
         config.queryParam("reservationId", 901);
-
-        config.testable();
       });
 
       assertEquals(
-          Testing.handle0(http),
+          Testing.testable(req),
 
           """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/html; charset=utf-8\r
-          Transfer-Encoding: chunked\r
-          \r
           # Ticket #901
 
           Ammount Paid: $19.98

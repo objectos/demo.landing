@@ -15,10 +15,13 @@
  */
 package demo.landing.app;
 
-import module objectos.way;
+import objectos.http.Handler;
+import objectos.http.Redirection;
+import objectos.http.Request;
+import objectos.http.Result;
 
 /// The `/home` controller.
-final class Boot implements HttpHandler {
+final class Boot implements Handler {
 
   private final AppCtx ctx;
 
@@ -27,14 +30,14 @@ final class Boot implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final String hashValue;
-    hashValue = http.header(AppCtx.DEMO_LOCATION_HASH);
+    hashValue = req.header(AppCtx.DEMO_LOCATION_HASH);
 
     final String hashRedirect;
     hashRedirect = ctx.decodeHash(hashValue);
 
-    http.found(hashRedirect);
+    return Redirection.found(hashRedirect);
   }
 
 }

@@ -15,13 +15,15 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.time.LocalDateTime;
+import objectos.http.Handler;
+import objectos.http.Redirection;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Sql;
 
 /// Processes the data submitted from the `/confirm` form.
-final class ConfirmForm implements HttpHandler {
+final class ConfirmForm implements Handler {
 
   private final AppCtx ctx;
 
@@ -30,12 +32,12 @@ final class ConfirmForm implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final ConfirmData data;
-    data = ConfirmData.parse(http);
+    data = ConfirmData.parse(req);
 
     final LocalDateTime now;
     now = ctx.now();
@@ -43,7 +45,7 @@ final class ConfirmForm implements HttpHandler {
     final Sql.Update ticketResult;
     ticketResult = data.persistTicket(trx, now);
 
-    switch (ticketResult) {
+    return switch (ticketResult) {
       case Sql.UpdateFailed _ -> {
 
         throw new UnsupportedOperationException("Implement me");
@@ -57,9 +59,9 @@ final class ConfirmForm implements HttpHandler {
         final String location;
         location = ctx.href(AppView.TICKET, reservation);
 
-        http.seeOther(location);
+        yield Redirection.seeOther(location);
       }
-    }
+    };
   }
 
 }

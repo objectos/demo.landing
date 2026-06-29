@@ -16,9 +16,29 @@
 package demo.landing.app;
 
 import demo.landing.LandingDemo;
-import module java.base;
+import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.Duration;
-import module objectos.way;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.HexFormat;
+import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.random.RandomGenerator;
+import objectos.css.CssLibrary;
+import objectos.http.Handler;
+import objectos.http.HeaderName;
+import objectos.http.PathParam;
+import objectos.http.RequestMethod;
+import objectos.http.Result;
+import objectos.http.Routing;
+import objectos.script.Js;
+import objectos.script.JsAction;
+import objectos.way.Html;
+import objectos.way.Note;
+import objectos.way.Sql;
 
 /// Application entry point and system-wide context.
 public final class AppCtx implements LandingDemo {
@@ -173,44 +193,50 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   @Override
-  public final void localRoutes(HttpRoutes local) {
-    local.at("/demo.landing/clear-reservation", Http.POST, trx(new LocalClear(this)));
+  public final void localRoutes(Routing local) {
+    local.at("/demo.landing/clear-reservation",
+        RequestMethod.POST, trx(new LocalClear(this)));
 
-    local.at("/demo.landing/create-show", Http.POST, trx(new LocalCreate(this)));
+    local.at("/demo.landing/create-show",
+        RequestMethod.POST, trx(new LocalCreate(this)));
   }
 
   @Override
-  public final void publicRoutes(HttpRoutes www) {
-    www.at("/demo.landing/boot", Http.GET, trx(new Boot(this)));
+  public final void publicRoutes(Routing www) {
+    www.at("/demo.landing/boot",
+        RequestMethod.GET, trx(new Boot(this)));
 
-    www.at("/demo.landing/home", Http.GET, trx(new Home(this)));
+    www.at("/demo.landing/home",
+        RequestMethod.GET, trx(new Home(this)));
 
     www.at("/demo.landing/movie/{id}",
-        Http.pathParam("id", PathParams.digits()),
-        Http.GET, trx(new Movie(this)));
+        PathParam.digits("id"),
+        RequestMethod.GET, trx(new Movie(this)));
 
     www.at("/demo.landing/seats/{id}",
-        Http.pathParam("id", PathParams.digits()),
-        Http.GET, trx(new Seats(this)),
-        Http.POST, trx(new SeatsForm(this)));
+        PathParam.digits("id"),
+        RequestMethod.GET, trx(new Seats(this)),
+        RequestMethod.POST, trx(new SeatsForm(this)));
 
     www.at("/demo.landing/confirm",
-        Http.GET, trx(new Confirm(this)),
-        Http.POST, trx(new ConfirmForm(this)));
+        RequestMethod.GET, trx(new Confirm(this)),
+        RequestMethod.POST, trx(new ConfirmForm(this)));
 
-    www.at("/demo.landing/ticket", Http.GET, trx(new Ticket()));
+    www.at("/demo.landing/ticket",
+        RequestMethod.GET, trx(new Ticket()));
 
     www.at("/demo.landing/poster-{id}.jpg",
-        Http.pathParam("id", PathParams.digits()),
-        Http.GET, trx(new Poster()));
+        PathParam.digits("id"),
+        RequestMethod.GET, trx(new Poster()));
 
-    www.at("/demo.landing/{}", new NotFound(this));
+    www.at("/demo.landing/{rest}",
+        new NotFound(this));
   }
 
-  private HttpHandler trx(HttpHandler handler) {
+  private Handler trx(Handler handler) {
     return testing
-        ? http -> handler.handle(http)
-        : http -> {
+        ? req -> handler.handle(req)
+        : req -> {
 
           final Sql.Transaction trx;
           trx = database.connect();
@@ -220,11 +246,14 @@ public final class AppCtx implements LandingDemo {
 
             trx.update();
 
-            http.req(Sql.Transaction.class, trx);
+            req.attr(Sql.Transaction.class, trx);
 
-            handler.handle(http);
+            final Result result;
+            result = handler.handle(req);
 
             trx.commit();
+
+            return result;
           } catch (Throwable t) {
             noteSink.send(TRANSACTIONAL, t);
 
@@ -459,7 +488,7 @@ public final class AppCtx implements LandingDemo {
 
   public static final Html.Id SHELL = Html.Id.of("demo.landing");
 
-  public static final HttpHeaderName DEMO_LOCATION_HASH = HttpHeaderName.of("Demo-Location-Hash");
+  public static final HeaderName DEMO_LOCATION_HASH = HeaderName.of("Demo-Location-Hash");
 
   public static final JsAction ONLOAD = Js.byId(SHELL).render("/demo.landing/boot", opts -> {
     opts.header(DEMO_LOCATION_HASH.headerCase(), Js.window().location().hash());

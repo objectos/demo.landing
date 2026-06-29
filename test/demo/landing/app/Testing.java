@@ -1,11 +1,11 @@
 package demo.landing.app;
 
 import demo.landing.StartTest;
-import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.function.Consumer;
-import objectos.http.HttpExchange;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.lang.Testable;
 import objectos.way.App;
 import objectos.way.Sql;
 import org.testng.ISuite;
@@ -15,7 +15,7 @@ public class Testing implements ISuiteListener {
 
   public static App.Injector INJECTOR;
 
-  public static objectos.http.HttpHandler HANDLER;
+  public static Handler HANDLER;
 
   @Override
   public final void onStart(ISuite suite) {
@@ -56,29 +56,25 @@ public class Testing implements ISuiteListener {
     }
   }
 
-  public static String handle0(HttpExchange http) {
-    HANDLER.handle(http);
-
-    return http.toString();
-  }
-
-  private static final Clock FIXED = Clock.fixed(
-      LocalDateTime.of(2025, 4, 28, 13, 1).atZone(ZoneOffset.UTC).toInstant(),
-      ZoneOffset.UTC
-  );
-
-  public static objectos.http.HttpExchange http(Consumer<? super HttpExchange.Options> more) {
-    return HttpExchange.create(options -> {
-      options.clock(FIXED);
-
-      more.accept(options);
-    });
+  public static Result handle(Request req) {
+    return HANDLER.handle(req);
   }
 
   public static void load(Sql.Transaction trx, String data) {
     trx.sql(Sql.SCRIPT, data);
 
     trx.batchUpdate();
+  }
+
+  public static String testable(Request req) {
+    final Result result;
+    result = HANDLER.handle(req);
+
+    if (!(result instanceof Testable testable)) {
+      throw new AssertionError("Not instanceof Testable: " + result);
+    }
+
+    return testable.toTestableText();
   }
 
   public static void rollback(Consumer<? super Sql.Transaction> test) {

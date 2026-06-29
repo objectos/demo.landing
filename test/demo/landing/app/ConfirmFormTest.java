@@ -17,7 +17,8 @@ package demo.landing.app;
 
 import static org.testng.Assert.assertEquals;
 
-import objectos.http.HttpExchange;
+import objectos.http.Redirection;
+import objectos.http.Request;
 import objectos.http.RequestMethod;
 import objectos.way.Sql;
 import org.testng.annotations.Listeners;
@@ -70,53 +71,38 @@ public class ConfirmFormTest {
     Testing.rollback(trx -> {
       Testing.load(trx, data);
 
-      final HttpExchange http0;
-      http0 = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request req0;
+      req0 = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.POST);
 
         config.path("/demo.landing/confirm");
 
         config.queryParam("reservationId", 901);
-
-        config.testable();
       });
 
       assertEquals(
-          Testing.handle0(http0),
+          Testing.handle(req0),
 
-          """
-          HTTP/1.1 303 See Other\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Length: 0\r
-          Location: /demo.landing/ticket?reservationId=901\r
-          \r
-          """
+          Redirection.seeOther("/demo.landing/ticket?reservationId=901")
       );
 
-      final HttpExchange http1;
-      http1 = Testing.http(config -> {
-        config.req(Sql.Transaction.class, trx);
+      final Request req1;
+      req1 = Request.create(config -> {
+        config.attr(Sql.Transaction.class, trx);
 
         config.method(RequestMethod.GET);
 
         config.path("/demo.landing/ticket");
 
         config.queryParam("reservationId", 901);
-
-        config.testable();
       });
 
       assertEquals(
-          Testing.handle0(http1),
+          Testing.testable(req1),
 
           """
-          HTTP/1.1 200 OK\r
-          Date: Mon, 28 Apr 2025 13:01:00 GMT\r
-          Content-Type: text/html; charset=utf-8\r
-          Transfer-Encoding: chunked\r
-          \r
           # Ticket #901
 
           Ammount Paid: $19.98

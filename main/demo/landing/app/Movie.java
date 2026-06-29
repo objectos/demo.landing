@@ -15,13 +15,17 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.script.JsAction;
+import objectos.way.Sql;
 
 /// The `/movie/{id}` controller.
-final class Movie implements HttpHandler {
+final class Movie implements Handler {
 
   private final AppCtx ctx;
 
@@ -30,22 +34,22 @@ final class Movie implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final int movieId;
-    movieId = http.pathParamAsInt("id", Integer.MIN_VALUE);
+    movieId = req.pathParamAsInt("id", Integer.MIN_VALUE);
 
     final Optional<MovieDetails> maybeDetails;
     maybeDetails = MovieDetails.queryOptional(trx, movieId);
 
     if (maybeDetails.isEmpty()) {
-      return;
+      return req;
     }
 
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final MovieDetails details;
     details = maybeDetails.get();
@@ -59,8 +63,7 @@ final class Movie implements HttpHandler {
     final List<MovieView.Screening> screenings;
     screenings = rows.stream().map(row -> toUi(reservation, row)).toList();
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.backAction = opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
       opts.main = new MovieView(details, screenings);
@@ -73,8 +76,6 @@ final class Movie implements HttpHandler {
           Source.MovieView
       );
     });
-
-    http.ok(shell);
   }
 
   private MovieView.Screening toUi(AppReservation reservation, MovieScreening original) {

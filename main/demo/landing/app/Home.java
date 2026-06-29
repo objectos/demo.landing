@@ -15,13 +15,15 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.http.HttpExchange;
-import objectos.http.HttpHandler;
+import java.util.List;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.script.JsAction;
+import objectos.way.Sql;
 
 /// The `/home` controller.
-final class Home implements HttpHandler {
+final class Home implements Handler {
 
   private final AppCtx ctx;
 
@@ -30,12 +32,12 @@ final class Home implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final List<HomeModel> rows;
     rows = HomeModel.query(trx);
@@ -43,8 +45,7 @@ final class Home implements HttpHandler {
     final List<HomeView.Movie> movies;
     movies = rows.stream().map(row -> toUi(reservation, row)).toList();
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
       opts.main = new HomeView(movies);
@@ -55,8 +56,6 @@ final class Home implements HttpHandler {
           Source.HomeView
       );
     });
-
-    http.ok(shell);
   }
 
   private HomeView.Movie toUi(AppReservation reservation, HomeModel original) {

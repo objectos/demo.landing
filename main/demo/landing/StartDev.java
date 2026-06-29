@@ -17,6 +17,7 @@ package demo.landing;
 
 import module java.base;
 import module objectos.way;
+import objectos.http.Handler;
 
 /**
  * Starts the application in development mode.
@@ -57,10 +58,10 @@ public final class StartDev extends Start {
     });
   }
 
-  private record Reloader(App.Injector injector) implements App.Reloader.HandlerFactory {
+  private record Reloader(App.Injector injector) implements ReloadingFunction {
     @SuppressWarnings("unchecked")
     @Override
-    public final objectos.http.HttpHandler reload(ClassLoader loader) throws Exception {
+    public final Handler reload(ClassLoader loader) throws Exception {
       final Class<?> bootClass;
       bootClass = loader.loadClass("demo.landing.BootModule");
 
@@ -76,28 +77,28 @@ public final class StartDev extends Start {
       final Object instance;
       instance = constructor.newInstance(injector, original);
 
-      final Consumer<HttpRoutes> module;
-      module = (Consumer<HttpRoutes>) instance;
+      final Consumer<Routing> module;
+      module = (Consumer<Routing>) instance;
 
-      return HttpHandler.create(module);
+      return Handler.create(module);
     }
   }
 
   @Override
-  final objectos.http.HttpHandler serverHandler(App.Injector injector) {
+  final Handler serverHandler(App.Injector injector) {
     try {
-      return App.Reloader.create(opts -> {
-        opts.handlerFactory(new Reloader(injector));
-
+      return ReloadingHandler.create(opts -> {
         opts.moduleOf(StartDev.class);
 
         final Note.Sink noteSink;
         noteSink = injector.getInstance(Note.Sink.class);
 
         opts.noteSink(noteSink);
+
+        opts.reloadingFunction(new Reloader(injector));
       });
     } catch (IOException e) {
-      throw App.serviceFailed("App.Reloader", e);
+      throw App.serviceFailed("ReloadingHandler", e);
     }
   }
 

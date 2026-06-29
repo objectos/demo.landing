@@ -15,11 +15,15 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
+import java.util.List;
+import java.util.Optional;
+import objectos.http.Handler;
+import objectos.http.Request;
+import objectos.http.Result;
+import objectos.way.Sql;
 
 /// The `/confirm` controller
-final class Confirm implements HttpHandler {
+final class Confirm implements Handler {
 
   private final AppCtx ctx;
 
@@ -28,18 +32,18 @@ final class Confirm implements HttpHandler {
   }
 
   @Override
-  public final void handle(HttpExchange http) {
+  public final Result handle(Request req) {
     final Sql.Transaction trx;
-    trx = http.req(Sql.Transaction.class);
+    trx = req.attr(Sql.Transaction.class);
 
     final AppReservation reservation;
-    reservation = AppReservation.parse(http);
+    reservation = AppReservation.parse(req);
 
     final Optional<ConfirmDetails> maybe;
     maybe = ConfirmDetails.queryOptional(trx, reservation.id());
 
     if (maybe.isEmpty()) {
-      return;
+      return req;
     }
 
     final ConfirmDetails details;
@@ -48,8 +52,7 @@ final class Confirm implements HttpHandler {
     final String formAction;
     formAction = ctx.href(AppView.CONFIRM, reservation);
 
-    final UiShell shell;
-    shell = UiShell.of(opts -> {
+    return UiShell.of(opts -> {
       opts.homeAction = ctx.clickAction(AppView.HOME, reservation);
 
       opts.backAction = ctx.clickAction(AppView.SEATS, details.showId(), reservation);
@@ -64,8 +67,6 @@ final class Confirm implements HttpHandler {
           Source.ConfirmView
       );
     });
-
-    http.ok(shell);
   }
 
 }
