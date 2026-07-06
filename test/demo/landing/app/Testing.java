@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 import objectos.http.Handler;
 import objectos.http.Request;
 import objectos.http.Result;
-import objectos.lang.Testable;
 import objectos.way.App;
 import objectos.way.Sql;
 import org.testng.ISuite;
@@ -70,11 +69,7 @@ public class Testing implements ISuiteListener {
     final Result result;
     result = HANDLER.handle(req);
 
-    if (!(result instanceof Testable testable)) {
-      throw new AssertionError("Not instanceof Testable: " + result);
-    }
-
-    return testable.toTestableText();
+    return result.toTestableText();
   }
 
   public static void rollback(Consumer<? super Sql.Transaction> test) {

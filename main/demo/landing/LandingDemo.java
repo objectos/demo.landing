@@ -20,7 +20,7 @@ import module java.base;
 import module objectos.way;
 
 /// Exposes the demo application to the host application.
-@App.DoNotReload
+@DoNotReload
 public interface LandingDemo {
 
   /// Configures the creation of a demo application.

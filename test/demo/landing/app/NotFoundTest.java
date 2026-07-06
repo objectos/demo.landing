@@ -38,6 +38,8 @@ public class NotFoundTest {
         Testing.testable(req),
 
         """
+        404 Not Found
+        text/html; charset=utf-8
         # Something Went Wrong
 
         """
