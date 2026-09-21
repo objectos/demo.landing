@@ -19,11 +19,11 @@ import demo.landing.app.AppCtx;
 import module objectos.way;
 
 @CssSource
-final class DevView extends Html.Template {
+final class DevView extends Template {
 
-  private final Html.Component head;
+  private final Component head;
 
-  public DevView(Html.Component head) {
+  public DevView(Component head) {
     this.head = head;
   }
 
@@ -55,7 +55,7 @@ final class DevView extends Html.Template {
     );
   }
 
-  private Html.Instruction.OfElement renderBody() {
+  private ElementMarkup renderBody() {
     return body(
         css("""
         background-color:var(--color-body)
@@ -71,11 +71,11 @@ final class DevView extends Html.Template {
     );
   }
 
-  private static final Html.ClassName SECTION = Html.ClassName.ofText("""
+  private static final ClassName SECTION = ClassName.ofText("""
   border-bottom:1px_solid_var(--color-border)
   """);
 
-  private static final Html.ClassName CONTAINER = Html.ClassName.ofText("""
+  private static final ClassName CONTAINER = ClassName.ofText("""
   max-width:calc(var(--breakpoint-x2)_-_66rx)
 
   sm/border-left:1px_solid_var(--color-border)
@@ -85,7 +85,7 @@ final class DevView extends Html.Template {
   x2/margin:0_auto
   """);
 
-  private Html.Instruction hero() {
+  private Instruction hero() {
     return section(
         SECTION,
 
@@ -126,7 +126,7 @@ final class DevView extends Html.Template {
     );
   }
 
-  private Html.Instruction demo() {
+  private Instruction demo() {
     return section(
         SECTION,
 

@@ -23,7 +23,7 @@ import module objectos.way;
 /// - a top header with the "Now Showing" title. 
 /// - a list of the movies that are
 /// currently playing.
-final class HomeView extends Html.Template {
+final class HomeView extends Template {
 
   /// A movie to be displayed in this view
   record Movie(String title, JsAction onclick, String imgsrc) {}

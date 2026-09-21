@@ -59,7 +59,7 @@ public interface LandingDemo {
 
   void publicRoutes(Routing r);
 
-  Html.Id shell();
+  Id shell();
 
   JsAction loadAction();
 

@@ -100,10 +100,10 @@ abstract class Start extends App.Bootstrap {
     ctx.putInstance(LandingDemo.class, demo);
 
     // Head component
-    final Html.Component headComponent;
+    final Component headComponent;
     headComponent = headComponent(ctx);
 
-    ctx.putInstance(Html.Component.class, headComponent);
+    ctx.putInstance(Component.class, headComponent);
   }
 
   private Sql.Database db(App.Injector injector) {
@@ -156,7 +156,7 @@ abstract class Start extends App.Bootstrap {
 
   abstract LandingDemo demo(App.Injector injector);
 
-  Html.Component headComponent(App.Injector injector) {
+  Component headComponent(App.Injector injector) {
     return html -> {
       html.link(html.rel("stylesheet"), html.type("text/css"), html.href("/ui/styles.css"));
 

@@ -18,7 +18,7 @@ package demo.landing.app;
 import module objectos.way;
 
 /// Renders the seat selection view.
-final class SeatsView extends Html.Template {
+final class SeatsView extends Template {
 
   private static final String FORM_ID = "seats-form";
 
@@ -119,7 +119,7 @@ final class SeatsView extends Html.Template {
     );
   }
 
-  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
+  private ElementMarkup renderDetailsItem(UiIcon icon, String name, String value) {
     return div(
         css("""
         align-items:center

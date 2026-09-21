@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.random.RandomGenerator;
 import objectos.css.CssLibrary;
+import objectos.html.Id;
 import objectos.http.Handler;
 import objectos.http.HeaderName;
 import objectos.http.PathParam;
@@ -36,7 +37,6 @@ import objectos.http.Result;
 import objectos.http.Routing;
 import objectos.script.Js;
 import objectos.script.JsAction;
-import objectos.way.Html;
 import objectos.way.Note;
 import objectos.way.Sql;
 
@@ -271,17 +271,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {
@@ -486,7 +486,7 @@ public final class AppCtx implements LandingDemo {
   // # BEGIN: UI
   // ##################################################################
 
-  public static final Html.Id SHELL = Html.Id.of("demo.landing");
+  public static final Id SHELL = Id.of("demo.landing");
 
   public static final HeaderName DEMO_LOCATION_HASH = HeaderName.of("Demo-Location-Hash");
 
@@ -507,7 +507,7 @@ public final class AppCtx implements LandingDemo {
   });
 
   @Override
-  public final Html.Id shell() {
+  public final objectos.html.Id shell() {
     return SHELL;
   }
 

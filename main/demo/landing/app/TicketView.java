@@ -19,7 +19,7 @@ import module java.base;
 import module objectos.way;
 
 /// Renders the tickets bought by the user.
-final class TicketView extends Html.Template {
+final class TicketView extends Template {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 

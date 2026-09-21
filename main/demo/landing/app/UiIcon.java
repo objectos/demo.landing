@@ -57,7 +57,7 @@ enum UiIcon {
     this.contents = contents;
   }
 
-  public final Html.Component css(String css) {
+  public final Component css(String css) {
     return m -> m.svg(
         m.xmlns("http://www.w3.org/2000/svg"),
         m.width("24"),

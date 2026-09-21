@@ -19,7 +19,7 @@ import module java.base;
 import module objectos.way;
 
 /// Renders the details of a movie and lists its available screenings.
-final class MovieView extends Html.Template {
+final class MovieView extends Template {
 
   /// A screening of the movie to be displayed in this view
   record Screening(

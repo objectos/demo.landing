@@ -19,7 +19,7 @@ import module java.base;
 import module objectos.way;
 
 /// Renders the current order details and a confirmation button.
-final class ConfirmView extends Html.Template {
+final class ConfirmView extends Template {
 
   private final ConfirmDetails details;
 
@@ -35,12 +35,16 @@ final class ConfirmView extends Html.Template {
 
   @Override
   protected final void render() {
-    h2("Your Order");
+    h2(
+        text("Your Order")
+    );
 
     // testable node only
     testableH1(details.orderNumber());
 
-    p("Please review and confirm your order");
+    p(
+        text("Please review and confirm your order")
+    );
 
     div(
         css("""
@@ -81,7 +85,9 @@ final class ConfirmView extends Html.Template {
   }
 
   private void renderLeft() {
-    h3("Movie");
+    h3(
+        text("Movie")
+    );
 
     renderDetailsItem(UiIcon.FILM, "title", details.title());
 
@@ -92,7 +98,7 @@ final class ConfirmView extends Html.Template {
     renderDetailsItem(UiIcon.PROJECTOR, "screen", details.screen());
   }
 
-  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
+  private Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
     return div(
         css("""
         display:flex
@@ -119,7 +125,7 @@ final class ConfirmView extends Html.Template {
 
   private void renderRight() {
     h3(
-        testableH2("Order Details")
+        text(testableH2("Order Details"))
     );
 
     for (var item : details.items()) {
@@ -137,7 +143,7 @@ final class ConfirmView extends Html.Template {
           ),
 
           div(
-              testableCell(format(item.price()), 6)
+              text(testableCell(format(item.price()), 6))
           )
       );
 

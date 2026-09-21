@@ -19,27 +19,27 @@ import demo.landing.LandingDemo;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import objectos.css.StyleSheet;
+import objectos.html.Component;
 import objectos.http.Redirection;
 import objectos.http.RequestMethod;
 import objectos.http.Routing;
 import objectos.http.StaticFile;
 import objectos.script.JsLibrary;
 import objectos.way.App;
-import objectos.way.Html;
 import objectos.way.Note;
 
 public final class DevModule implements Consumer<Routing> {
 
   private final LandingDemo ctx;
 
-  private final Html.Component head;
+  private final objectos.html.Component head;
 
   private final Note.Sink noteSink;
 
   public DevModule(App.Injector injector) {
     ctx = injector.getInstance(LandingDemo.class);
 
-    head = injector.getInstance(Html.Component.class);
+    head = injector.getInstance(Component.class);
 
     noteSink = injector.getInstance(Note.Sink.class);
   }

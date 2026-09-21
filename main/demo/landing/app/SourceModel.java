@@ -18,7 +18,7 @@ package demo.landing.app;
 import module objectos.way;
 
 /// The filename and the contents of a Java source file.
-record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
+record SourceModel(String name, String value, Id button, Id panel) {
 
   private static int INDEX = 0;
 
@@ -31,9 +31,9 @@ record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 
         value,
 
-        Html.Id.of("src-btn-" + index),
+        Id.of("src-btn-" + index),
 
-        Html.Id.of("src-panel-" + index)
+        Id.of("src-panel-" + index)
     );
   }
 

@@ -15,15 +15,25 @@
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.way.Html.Component;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import objectos.html.AttributeName;
+import objectos.html.ClassName;
+import objectos.html.Component;
+import objectos.html.Id;
+import objectos.html.Template;
+import objectos.html.markup.ElementMarkup;
+import objectos.script.Js;
+import objectos.script.JsAction;
+import objectos.script.JsElement;
+import objectos.way.Syntax;
 
 /// The demo UI shell responsible for displaying the application on the
 /// top/right and the source code on the bottom/left.
-final class UiShell extends Html.Template {
+final class UiShell extends Template {
 
-  static final Html.ClassName PRIMARY = Html.ClassName.ofText("""
+  static final ClassName PRIMARY = ClassName.ofText("""
     appearance:none
     background-color:var(--color-btn-primary)
     color:var(--color-btn-primary-text)
@@ -43,7 +53,7 @@ final class UiShell extends Html.Template {
 
     JsAction homeAction;
 
-    Html.Component main;
+    Component main;
 
     List<SourceModel> sources;
 
@@ -53,7 +63,7 @@ final class UiShell extends Html.Template {
 
   private final JsAction homeAction;
 
-  private final Html.Component main;
+  private final Component main;
 
   private final List<SourceModel> sources;
 
@@ -273,7 +283,7 @@ final class UiShell extends Html.Template {
   // # BEGIN: Source code panel
   // ##################################################################
 
-  private static final Html.AttributeName SEL = Html.AttributeName.of("data-selected");
+  private static final AttributeName SEL = AttributeName.of("data-selected");
 
   private void renderSourceCode(List<SourceModel> sources) {
     div(
@@ -348,11 +358,11 @@ final class UiShell extends Html.Template {
   // # BEGIN: Source file selector
   // ##################################################################
 
-  private static final Html.Id SRC = Html.Id.of("source-frame");
+  private static final Id SRC = Id.of("source-frame");
 
-  private static final Html.AttributeName BTN = Html.AttributeName.of("data-button");
+  private static final AttributeName BTN = AttributeName.of("data-button");
 
-  private static final Html.AttributeName PNL = Html.AttributeName.of("data-panel");
+  private static final AttributeName PNL = AttributeName.of("data-panel");
 
   private void renderSourceFileSelector(List<SourceModel> sources) {
     final SourceModel first;
@@ -436,7 +446,7 @@ final class UiShell extends Html.Template {
   // # BEGIN: Logos
   // ##################################################################
 
-  private Html.Instruction objectosLogo() {
+  private ElementMarkup objectosLogo() {
     return svg(
         css("""
         fill:var(--color-logo)
@@ -454,7 +464,7 @@ final class UiShell extends Html.Template {
     );
   }
 
-  private Html.Instruction gitHubLogo() {
+  private ElementMarkup gitHubLogo() {
     return svg(
         css("""
         fill:var(--color-logo)

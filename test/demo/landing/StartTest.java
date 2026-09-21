@@ -26,7 +26,6 @@ import objectos.css.StyleSheet;
 import objectos.http.Handler;
 import objectos.script.JsLibrary;
 import objectos.way.App;
-import objectos.way.Html;
 import objectos.way.Note;
 import objectos.way.Sql;
 import org.h2.jdbcx.JdbcConnectionPool;
@@ -123,7 +122,7 @@ public final class StartTest extends Start {
   }
 
   @Override
-  final Html.Component headComponent(App.Injector injector) {
+  final objectos.html.Component headComponent(App.Injector injector) {
     final StyleSheet styleSheet;
     styleSheet = StyleSheet.create(opts -> {
       final Note.Sink noteSink;
@@ -144,9 +143,9 @@ public final class StartTest extends Start {
     script = library.toString();
 
     return html -> {
-      html.style(css);
+      markup.style(css);
 
-      html.script(script);
+      markup.script(script);
     };
   }
 
