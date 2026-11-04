@@ -88,40 +88,37 @@ public class MovieTest {
           Testing.testable(req),
 
           """
-          back-link: /demo.landing/home
+          - back-link: /demo.landing/home
 
           # Title 1
 
-          synopsys: Synopsys 1
-          runtime: 2h 11m
-          release-date: Jan 10, 2025
-          genres: Adventure, Drama
+          - synopsys: Synopsys 1
+          - runtime: 2h 11m
+          - release-date: Jan 10, 2025
+          - genres: Adventure, Drama
 
           # Showtimes
 
           ## Sat 25/Jan
 
-          screen: Screen 1
-          features: Feature B, Feature A
-
-          61 | 13:00
-          62 | 17:00
-          63 | 21:00
+          - screen: Screen 1
+          - features: Feature B, Feature A
+          | 61 | 13:00 |
+          | 62 | 17:00 |
+          | 63 | 21:00 |
 
           ## Sat 25/Jan
 
-          screen: Screen 2
-          features: Feature A
-
-          64 | 14:00
-          65 | 18:00
+          - screen: Screen 2
+          - features: Feature A
+          | 64 | 14:00 |
+          | 65 | 18:00 |
 
           ## Sun 26/Jan
 
-          screen: Screen 1
-          features: Feature B, Feature A
-
-          66 | 13:00
+          - screen: Screen 1
+          - features: Feature B, Feature A
+          | 66 | 13:00 |
           """
       );
     });
@@ -148,7 +145,6 @@ public class MovieTest {
           404 Not Found
           text/html; charset=utf-8
           # Something Went Wrong
-
           """
       );
     });

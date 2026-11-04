@@ -50,8 +50,8 @@ public class HomeTest {
           Testing.testable(req),
 
           """
-          movie.title: Title 1
-          movie.title: Title 2
+          - movie.title: Title 1
+          - movie.title: Title 2
           """
       );
     });

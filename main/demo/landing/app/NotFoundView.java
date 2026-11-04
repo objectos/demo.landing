@@ -28,9 +28,11 @@ final class NotFoundView extends Template {
 
   @Override
   protected final void render() {
-    h2(testableH1("Something Went Wrong"));
+    h2(t.h1("Something Went Wrong"));
 
-    p("Sorry, we could not find the page you're looking for.");
+    p(
+        text("Sorry, we could not find the page you're looking for.")
+    );
 
     div(
         css("""
@@ -39,13 +41,11 @@ final class NotFoundView extends Template {
         padding:48rx_0
         """),
 
-        c(
-            UiIcon.FROWN.css("""
-            height:auto
-            stroke-width:0.5rx
-            width:120rx
-            """)
-        )
+        UiIcon.FROWN.css("""
+        height:auto
+        stroke-width:0.5rx
+        width:120rx
+        """)
     );
 
     div(

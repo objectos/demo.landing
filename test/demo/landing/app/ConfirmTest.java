@@ -85,20 +85,20 @@ public class ConfirmTest {
           Testing.testable(req),
 
           """
-          back-link: /demo.landing/seats/61?reservationId=901
+          - back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           ## Order Details
 
-          B1    | $9.99
-          B2    | $9.99
-          Total | $19.98
+          | B1    | $9.99  |
+          | B2    | $9.99  |
+          | Total | $19.98 |
           """
       );
     });

@@ -107,19 +107,19 @@ public class SeatsFormTest {
           Testing.testable(req1),
 
           """
-          back-link: /demo.landing/seats/61?reservationId=901
+          - back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           ## Order Details
 
-          B1    | $9.99
-          Total | $9.99
+          | B1    | $9.99  |
+          | Total | $9.99  |
           """
       );
     });
@@ -178,21 +178,21 @@ public class SeatsFormTest {
           Testing.testable(req1),
 
           """
-          back-link: /demo.landing/seats/61?reservationId=901
+          - back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           ## Order Details
 
-          B1    | $9.99
-          B2    | $9.99
-          B3    | $9.99
-          Total | $29.97
+          | B1    | $9.99  |
+          | B2    | $9.99  |
+          | B3    | $9.99  |
+          | Total | $29.97 |
           """
       );
     });
@@ -251,20 +251,20 @@ public class SeatsFormTest {
           Testing.testable(req1),
 
           """
-          back-link: /demo.landing/seats/61?reservationId=901
+          - back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           ## Order Details
 
-          B1    | $9.99
-          B2    | $9.99
-          Total | $19.98
+          | B1    | $9.99  |
+          | B2    | $9.99  |
+          | Total | $19.98 |
           """
       );
     });
@@ -322,20 +322,20 @@ public class SeatsFormTest {
           Testing.testable(req1),
 
           """
-          back-link: /demo.landing/seats/61?reservationId=901
+          - back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           ## Order Details
 
-          B1    | $9.99
-          B2    | $9.99
-          Total | $19.98
+          | B1    | $9.99  |
+          | B2    | $9.99  |
+          | Total | $19.98 |
           """
       );
     });
@@ -497,24 +497,24 @@ public class SeatsFormTest {
           Testing.testable(req1),
 
           """
-          back-link: /demo.landing/seats/61?reservationId=901
+          - back-link: /demo.landing/seats/61?reservationId=901
 
           # Order #901
 
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           ## Order Details
 
-          A1    | $9.99
-          A2    | $9.99
-          B1    | $9.99
-          B2    | $9.99
-          B3    | $9.99
-          B4    | $9.99
-          Total | $59.94
+          | A1    | $9.99  |
+          | A2    | $9.99  |
+          | B1    | $9.99  |
+          | B2    | $9.99  |
+          | B3    | $9.99  |
+          | B4    | $9.99  |
+          | Total | $59.94 |
           """
       );
     });
@@ -573,19 +573,19 @@ public class SeatsFormTest {
           Testing.testable(req1),
 
           """
-          back-link: /demo.landing/movie/11?reservationId=901
+          - back-link: /demo.landing/movie/11?reservationId=901
 
           # Show details
 
-          title: Title 1
-          alert: LIMIT
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - alert: LIMIT
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           # Seats
 
-          screenId: 31
+          - screenId: 31
           """
       );
     });
@@ -638,19 +638,19 @@ public class SeatsFormTest {
           Testing.testable(req1),
 
           """
-          back-link: /demo.landing/movie/11?reservationId=901
+          - back-link: /demo.landing/movie/11?reservationId=901
 
           # Show details
 
-          title: Title 1
-          alert: EMPTY
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - alert: EMPTY
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           # Seats
 
-          screenId: 31
+          - screenId: 31
           """
       );
     });

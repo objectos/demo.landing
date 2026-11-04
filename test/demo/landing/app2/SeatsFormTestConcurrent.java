@@ -122,19 +122,19 @@ public class SeatsFormTestConcurrent {
           Testing.testable(http1),
 
           """
-          back-link: /demo.landing/movie/1011?reservationId=10902
+          - back-link: /demo.landing/movie/1011?reservationId=10902
 
           # Show details
 
-          title: Title 1
-          alert: BOOKED
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - alert: BOOKED
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           # Seats
 
-          screenId: 1031
+          - screenId: 1031
           """
       );
     });

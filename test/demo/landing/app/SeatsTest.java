@@ -77,18 +77,18 @@ public class SeatsTest {
           Testing.testable(req),
 
           """
-          back-link: /demo.landing/movie/11?reservationId=1
+          - back-link: /demo.landing/movie/11?reservationId=1
 
           # Show details
 
-          title: Title 1
-          date: Sat 25/Jan
-          time: 13:00
-          screen: Screen 1
+          - title: Title 1
+          - date: Sat 25/Jan
+          - time: 13:00
+          - screen: Screen 1
 
           # Seats
 
-          screenId: 31
+          - screenId: 31
           """
       );
     });
@@ -115,7 +115,6 @@ public class SeatsTest {
           404 Not Found
           text/html; charset=utf-8
           # Something Went Wrong
-
           """
       );
     });

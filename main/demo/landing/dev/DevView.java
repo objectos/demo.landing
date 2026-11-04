@@ -48,7 +48,7 @@ final class DevView extends Template {
             link(rel("shortcut icon"), type("image/vnd.microsoft.icon"), href("/images/favicon.ico")),
             link(rel("preload"), href("/ui/fonts.css"), as("style")),
             link(rel("stylesheet"), type("text/css"), href("/ui/fonts.css")),
-            c(head)
+            head
         ),
 
         renderBody()
@@ -85,7 +85,7 @@ final class DevView extends Template {
   x2/margin:0_auto
   """);
 
-  private Instruction hero() {
+  private ElementMarkup hero() {
     return section(
         SECTION,
 
@@ -126,7 +126,7 @@ final class DevView extends Template {
     );
   }
 
-  private Instruction demo() {
+  private ElementMarkup demo() {
     return section(
         SECTION,
 

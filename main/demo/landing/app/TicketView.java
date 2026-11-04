@@ -31,29 +31,27 @@ final class TicketView extends Template {
 
   @Override
   protected final void render() {
-    testableH1("Ticket #" + ticket.id());
+    t.h1("Ticket #" + ticket.id());
 
-    h2("Thank You");
+    h2(text("Thank You"));
 
-    p("Here's your receipt");
+    p(text("Here's your receipt"));
 
     div(
         css("""
         position:relative
         """),
 
-        c(
-            UiIcon.RECEIPT.css("""
-            border:1px_solid_var(--color-border)
-            border-radius:9999px
-            height:auto
-            inset:-80rx_0_auto_auto
-            padding:16rx
-            position:absolute
-            stroke-width:1rx
-            width:80rx
-            """)
-        )
+        UiIcon.RECEIPT.css("""
+        border:1px_solid_var(--color-border)
+        border-radius:9999px
+        height:auto
+        inset:-80rx_0_auto_auto
+        padding:16rx
+        position:absolute
+        stroke-width:1rx
+        width:80rx
+        """)
     );
 
     dl(
@@ -72,19 +70,19 @@ final class TicketView extends Template {
         """),
 
         div(
-            dt(testableFieldName("Ammount Paid")),
-            dd(testableFieldValue(format(ticket.ammountPaid())))
+            dt(text("Ammount Paid")),
+            dd(t.prop("Ammount Paid", format(ticket.ammountPaid())))
         ),
 
         div(
-            dt(testableFieldName("Purchase Time")),
-            dd(testableFieldValue(ticket.purchaseTime()))
+            dt(text("Purchase Time")),
+            dd(t.prop("Purchase Time", ticket.purchaseTime()))
         )
     );
 
-    h2(testableH2("Tickets"));
+    h2(t.h2("Tickets"));
 
-    p(ticket.singular() ? "Here's your ticket" : "Here are your tickets");
+    p(text(ticket.singular() ? "Here's your ticket" : "Here are your tickets"));
 
     div(
         css("""
@@ -108,15 +106,13 @@ final class TicketView extends Template {
           padding:16rx
           """),
 
-          c(
-              UiIcon.TICKET.css("""
-              height:auto
-              margin-right:16rx
-              padding:16rx
-              stroke-width:1rx
-              width:80rx
-              """)
-          ),
+          UiIcon.TICKET.css("""
+          height:auto
+          margin-right:16rx
+          padding:16rx
+          stroke-width:1rx
+          width:80rx
+          """),
 
           ul(
               css("""
@@ -124,10 +120,10 @@ final class TicketView extends Template {
               flex:1
               """),
 
-              li(testableCell(ticket.title(), 8)),
-              li(testableCell(ticket.date(), 10)),
-              li(testableCell(ticket.time(), 6)),
-              li(testableCell(ticket.screen(), 8))
+              li(text(testableCell(ticket.title(), 8))),
+              li(text(testableCell(ticket.date(), 10))),
+              li(text(testableCell(ticket.time(), 6))),
+              li(text(testableCell(ticket.screen(), 8)))
           ),
 
           div(
@@ -165,6 +161,16 @@ final class TicketView extends Template {
 
   private String format(double price) {
     return formatter.format(price);
+  }
+
+  private String testableCell(String value, int width) {
+    t.cell(width, value);
+
+    return value;
+  }
+
+  private void testableNewLine() {
+    t.row();
   }
 
 }

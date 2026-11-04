@@ -18,7 +18,6 @@ package demo.landing.app;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
-import objectos.html.AttributeName;
 import objectos.html.ClassName;
 import objectos.html.Component;
 import objectos.html.Id;
@@ -215,7 +214,7 @@ final class UiShell extends Template {
 
             f(this::renderBackLink),
 
-            c(main)
+            main
         )
     );
   }
@@ -249,7 +248,7 @@ final class UiShell extends Template {
         }
       }
 
-      testableField("back-link", backLink);
+      t.prop("back-link", backLink);
 
       div(
           css("""
@@ -265,12 +264,10 @@ final class UiShell extends Template {
 
           onclick(backAction),
 
-          c(
-              UiIcon.ARROW_LEFT.css("""
-              height:20rx
-              width:20rx
-              """)
-          )
+          UiIcon.ARROW_LEFT.css("""
+          height:20rx
+          width:20rx
+          """)
       );
     }
   }
@@ -283,7 +280,7 @@ final class UiShell extends Template {
   // # BEGIN: Source code panel
   // ##################################################################
 
-  private static final AttributeName SEL = AttributeName.of("data-selected");
+  private static final String SEL = "data-selected";
 
   private void renderSourceCode(List<SourceModel> sources) {
     div(
@@ -342,9 +339,7 @@ final class UiShell extends Template {
               flex-grow:1
               """),
 
-              c(
-                  Syntax.highlight(Syntax.JAVA, source)
-              )
+              Syntax.highlight(Syntax.JAVA, source)
           )
       );
     }
@@ -360,9 +355,9 @@ final class UiShell extends Template {
 
   private static final Id SRC = Id.of("source-frame");
 
-  private static final AttributeName BTN = AttributeName.of("data-button");
+  private static final String BTN = "data-button";
 
-  private static final AttributeName PNL = AttributeName.of("data-panel");
+  private static final String PNL = "data-panel";
 
   private void renderSourceFileSelector(List<SourceModel> sources) {
     final SourceModel first;
@@ -390,10 +385,10 @@ final class UiShell extends Template {
         """),
 
         // stores the current selected button in the data-button attribute
-        attr(BTN, first.button().attrValue()),
+        attr(BTN, first.button().value()),
 
         // stores the current selected panel in the data-panel attribute
-        attr(PNL, first.panel().attrValue()),
+        attr(PNL, first.panel().value()),
 
         f(this::renderSourceMenuItems, sources)
     );
@@ -429,8 +424,8 @@ final class UiShell extends Template {
               Js.byId(item.button()).attr(SEL, "true"),
               Js.byId(item.panel()).attr(SEL, "true"),
               // stores selected,
-              Js.var("frame").as(JsElement.type).attr(BTN, item.button().attrValue()),
-              Js.var("frame").as(JsElement.type).attr(PNL, item.panel().attrValue())
+              Js.var("frame").as(JsElement.type).attr(BTN, item.button().value()),
+              Js.var("frame").as(JsElement.type).attr(PNL, item.panel().value())
           )),
 
           text(item.name())

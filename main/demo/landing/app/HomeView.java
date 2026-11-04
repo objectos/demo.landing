@@ -20,9 +20,9 @@ import module objectos.way;
 
 /// Renders the home page view. More specifically, it renders:
 ///
-/// - a top header with the "Now Showing" title. 
+/// - a top header with the "Now Showing" title.
 /// - a list of the movies that are
-/// currently playing.
+///   currently playing.
 final class HomeView extends Template {
 
   /// A movie to be displayed in this view
@@ -41,9 +41,13 @@ final class HomeView extends Template {
         margin-bottom:32rx
         """),
 
-        h2("Now Showing"),
+        h2(
+            text("Now Showing")
+        ),
 
-        p("Please choose a movie")
+        p(
+            text("Please choose a movie")
+        )
     );
 
     ul(
@@ -100,9 +104,7 @@ final class HomeView extends Template {
                 &:is(:where(.group):hover_*)/text-decoration:underline
                 """),
 
-                text(
-                    testableField("movie.title", movie.title())
-                )
+                t.prop("movie.title", movie.title())
             )
         )
     );

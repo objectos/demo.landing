@@ -105,13 +105,13 @@ public class ConfirmFormTest {
           """
           # Ticket #901
 
-          Ammount Paid: $19.98
-          Purchase Time: Sat 25/Jan 10:00
+          - Ammount Paid: $19.98
+          - Purchase Time: Sat 25/Jan 10:00
 
           ## Tickets
 
-          Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B1    | $9.99
-          Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B2    | $9.99
+          | Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B1    | $9.99  |
+          | Title 1  | Sat 25/Jan | 13:00  | Screen 1 | B2    | $9.99  |
           """
       );
     });

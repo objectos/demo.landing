@@ -73,7 +73,7 @@ final class MovieView extends Template {
             line-height:1
             """),
 
-            text(testableH1("Showtimes"))
+            t.h1("Showtimes")
         ),
 
         f(this::renderMovieScreenings)
@@ -86,9 +86,9 @@ final class MovieView extends Template {
 
   private void renderMovieDetails() {
     div(
-        h2(testableH1(details.title())),
+        h2(t.h1(details.title())),
 
-        p(testableField("synopsys", details.synopsys())),
+        p(t.prop("synopsys", details.synopsys())),
 
         dl(
             css("""
@@ -101,23 +101,23 @@ final class MovieView extends Template {
             """),
 
             div(
-                dt("Rating"),
-                dd("N/A")
+                dt(text("Rating")),
+                dd(text("N/A"))
             ),
 
             div(
-                dt("Runtime"),
-                dd(testableField("runtime", details.runtime()))
+                dt(text("Runtime")),
+                dd(t.prop("runtime", details.runtime()))
             ),
 
             div(
-                dt("Release date"),
-                dd(testableField("release-date", details.releaseDate()))
+                dt(text("Release date")),
+                dd(t.prop("release-date", details.releaseDate()))
             ),
 
             div(
-                dt("Genres"),
-                dd(testableField("genres", details.genres()))
+                dt(text("Genres")),
+                dd(t.prop("genres", details.genres()))
             )
         )
     );
@@ -173,11 +173,9 @@ final class MovieView extends Template {
             justify-content:center
             """),
 
-            c(
-                UiIcon.CALENDAR_CHECK.css("""
-                stroke:icon
-                """)
-            ),
+            UiIcon.CALENDAR_CHECK.css("""
+            stroke:icon
+            """),
 
             span(
                 css("""
@@ -185,7 +183,7 @@ final class MovieView extends Template {
                 width:6rch
                 """),
 
-                text(testableH2(screening.date()))
+                t.h2(screening.date())
             )
         ),
 
@@ -197,7 +195,7 @@ final class MovieView extends Template {
                 padding-top:8rx
                 """),
 
-                text(testableField("screen", screening.screenName()))
+                t.prop("screen", screening.screenName())
             ),
 
             div(
@@ -207,7 +205,7 @@ final class MovieView extends Template {
                 padding:8rx_0
                 """),
 
-                text(testableField("features", screening.features()))
+                t.prop("features", screening.features())
             ),
 
             ul(
@@ -216,8 +214,6 @@ final class MovieView extends Template {
                 flex-wrap:wrap
                 gap:12rx
                 """),
-
-                testableNewLine(),
 
                 f(this::renderMovieShowtimes, screening.showtimes())
             )
@@ -238,7 +234,8 @@ final class MovieView extends Template {
       final int showId;
       showId = showtime.id();
 
-      testableCell(Integer.toString(showId), 2);
+      t.row();
+      t.cell(2, Integer.toString(showId));
 
       li(
           div(
@@ -255,10 +252,8 @@ final class MovieView extends Template {
 
               onclick(showtime.onclick),
 
-              span(testableCell(showtime.time, 5))
-          ),
-
-          testableNewLine()
+              span(t.cell(5, showtime.time))
+          )
       );
     }
   }

@@ -43,14 +43,14 @@ final class SeatsView extends Template {
   @Override
   protected final void render() {
     // this node is for testing only, it is not rendered in the final HTML
-    testableH1("Show details");
+    t.h1("Show details");
 
-    h2(testableField("title", details.title()));
+    h2(t.prop("title", details.title()));
 
-    p("Please choose your seats");
+    p(text("Please choose your seats"));
 
     if (alert != null) {
-      testableField("alert", alert.name());
+      t.prop("alert", alert.name());
 
       renderAlert(alert.msg);
     }
@@ -84,13 +84,11 @@ final class SeatsView extends Template {
         padding:16rx
         """),
 
-        c(
-            UiIcon.INFO.css("""
-            height:20rx
-            width:auto
-            padding-right:16rx
-            """)
-        ),
+        UiIcon.INFO.css("""
+        height:20rx
+        width:auto
+        padding-right:16rx
+        """),
 
         div(
             css("""
@@ -128,13 +126,11 @@ final class SeatsView extends Template {
         gap:4rx
         """),
 
-        c(
-            icon.css("""
-            height:auto
-            stroke:icon
-            width:20rx
-            """)
-        ),
+        icon.css("""
+        height:auto
+        stroke:icon
+        width:20rx
+        """),
 
         span(
             css("""
@@ -142,14 +138,14 @@ final class SeatsView extends Template {
             width:6rch
             """),
 
-            text(testableField(name, value))
+            t.prop(name, value)
         )
     );
   }
 
   private void renderSeats() {
     // this node is for testing only, it is not rendered in the final HTML
-    testableH1("Seats");
+    t.h1("Seats");
 
     div(
         css("""
@@ -197,6 +193,11 @@ final class SeatsView extends Template {
   }
 
   private void renderSeatsForm() {
+    final String screenIdValue;
+    screenIdValue = Integer.toString(details.screenId());
+
+    t.prop("screenId", screenIdValue);
+
     form(
         id(FORM_ID),
 
@@ -221,7 +222,7 @@ final class SeatsView extends Template {
         input(
             type("hidden"),
             name("screenId"),
-            value(testableField("screenId", Integer.toString(details.screenId())))),
+            value(screenIdValue)),
 
         f(this::renderSeatsFormGrid)
     );
@@ -257,7 +258,7 @@ final class SeatsView extends Template {
         );
 
         if (seat.checked()) {
-          testableField("checked", seatIdValue);
+          t.prop("checked", seatIdValue);
         }
       }
     }

@@ -42,7 +42,7 @@ import module java.base;
 import module objectos.way;
 
 /// Renders the current order details and a confirmation button.
-final class ConfirmView extends Html.Template {
+final class ConfirmView extends Template {
 
   private final ConfirmDetails details;
 
@@ -58,12 +58,16 @@ final class ConfirmView extends Html.Template {
 
   @Override
   protected final void render() {
-    h2("Your Order");
+    h2(
+        text("Your Order")
+    );
 
     // testable node only
-    testableH1(details.orderNumber());
+    t.h1(details.orderNumber());
 
-    p("Please review and confirm your order");
+    p(
+        text("Please review and confirm your order")
+    );
 
     div(
         css(\"""
@@ -104,7 +108,9 @@ final class ConfirmView extends Html.Template {
   }
 
   private void renderLeft() {
-    h3("Movie");
+    h3(
+        text("Movie")
+    );
 
     renderDetailsItem(UiIcon.FILM, "title", details.title());
 
@@ -115,19 +121,17 @@ final class ConfirmView extends Html.Template {
     renderDetailsItem(UiIcon.PROJECTOR, "screen", details.screen());
   }
 
-  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
+  private ElementMarkup renderDetailsItem(UiIcon icon, String name, String value) {
     return div(
         css(\"""
         display:flex
         gap:12rx
         \"""),
 
-        c(
-            icon.css(\"""
-            height:auto
-            width:16rx
-            \""")
-        ),
+        icon.css(\"""
+        height:auto
+        width:16rx
+        \"""),
 
         span(
             css(\"""
@@ -135,14 +139,14 @@ final class ConfirmView extends Html.Template {
             line-height:16rx
             \"""),
 
-            text(testableField(name, value))
+            t.prop(name, value)
         )
     );
   }
 
   private void renderRight() {
     h3(
-        testableH2("Order Details")
+        t.h2("Order Details")
     );
 
     for (var item : details.items()) {
@@ -154,17 +158,17 @@ final class ConfirmView extends Html.Template {
           line-height:16rx
           \"""),
 
+          t.row(),
+
           div(
               text("Seat "),
-              text(testableCell(item.seat(), 5))
+              t.cell(5, item.seat())
           ),
 
           div(
-              testableCell(format(item.price()), 6)
+              t.cell(6, format(item.price()))
           )
       );
-
-      testableNewLine();
     }
 
     div(
@@ -177,14 +181,18 @@ final class ConfirmView extends Html.Template {
         padding-top:12rx
         \"""),
 
-        div(testableCell("Total", 5)),
+        t.row(),
+
+        div(
+            t.cell(5, "Total")
+        ),
 
         div(
             css(\"""
             font-weight:600
             \"""),
 
-            text(testableCell(format(details.totalPrice()), 6))
+            t.cell(6, format(details.totalPrice()))
         )
     );
 
@@ -197,7 +205,9 @@ final class ConfirmView extends Html.Template {
         margin-top:24rx
         \"""),
 
-        div("Payment Method"),
+        div(
+            text("Payment Method")
+        ),
 
         div(
             css(\"""
@@ -205,18 +215,16 @@ final class ConfirmView extends Html.Template {
             gap:8rx
             \"""),
 
-            c(
-                UiIcon.CREDIT_CARD.css(\"""
-                height:auto
-                width:16rx
-                \""")
-            ),
+            UiIcon.CREDIT_CARD.css(\"""
+            height:auto
+            width:16rx
+            \"""),
 
-            span("4321")
+            span(
+                text("4321")
+            )
         )
     );
-
-    testableNewLine();
 
     form(
         css(\"""
@@ -376,10 +384,10 @@ import module objectos.way;
 
 /// Renders the home page view. More specifically, it renders:
 ///
-/// - a top header with the "Now Showing" title. 
+/// - a top header with the "Now Showing" title.
 /// - a list of the movies that are
-/// currently playing.
-final class HomeView extends Html.Template {
+///   currently playing.
+final class HomeView extends Template {
 
   /// A movie to be displayed in this view
   record Movie(String title, JsAction onclick, String imgsrc) {}
@@ -397,9 +405,13 @@ final class HomeView extends Html.Template {
         margin-bottom:32rx
         \"""),
 
-        h2("Now Showing"),
+        h2(
+            text("Now Showing")
+        ),
 
-        p("Please choose a movie")
+        p(
+            text("Please choose a movie")
+        )
     );
 
     ul(
@@ -456,9 +468,7 @@ final class HomeView extends Html.Template {
                 &:is(:where(.group):hover_*)/text-decoration:underline
                 \"""),
 
-                text(
-                    testableField("movie.title", movie.title())
-                )
+                t.prop("movie.title", movie.title())
             )
         )
     );
@@ -1630,7 +1640,7 @@ enum UiIcon {
     this.contents = contents;
   }
 
-  public final Html.Component css(String css) {
+  public final Component css(String css) {
     return m -> m.svg(
         m.xmlns("http://www.w3.org/2000/svg"),
         m.width("24"),
@@ -1731,7 +1741,7 @@ package demo.landing.app;
 import module objectos.way;
 
 /// Renders the error view
-final class NotFoundView extends Html.Template {
+final class NotFoundView extends Template {
 
   private final JsAction onclick;
 
@@ -1741,9 +1751,11 @@ final class NotFoundView extends Html.Template {
 
   @Override
   protected final void render() {
-    h2(testableH1("Something Went Wrong"));
+    h2(t.h1("Something Went Wrong"));
 
-    p("Sorry, we could not find the page you're looking for.");
+    p(
+        text("Sorry, we could not find the page you're looking for.")
+    );
 
     div(
         css(\"""
@@ -1752,13 +1764,11 @@ final class NotFoundView extends Html.Template {
         padding:48rx_0
         \"""),
 
-        c(
-            UiIcon.FROWN.css(\"""
-            height:auto
-            stroke-width:0.5rx
-            width:120rx
-            \""")
-        )
+        UiIcon.FROWN.css(\"""
+        height:auto
+        stroke-width:0.5rx
+        width:120rx
+        \""")
     );
 
     div(
@@ -1956,6 +1966,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.random.RandomGenerator;
 import objectos.css.CssLibrary;
+import objectos.html.Id;
 import objectos.http.Handler;
 import objectos.http.HeaderName;
 import objectos.http.PathParam;
@@ -1964,7 +1975,6 @@ import objectos.http.Result;
 import objectos.http.Routing;
 import objectos.script.Js;
 import objectos.script.JsAction;
-import objectos.way.Html;
 import objectos.way.Note;
 import objectos.way.Sql;
 
@@ -2199,17 +2209,17 @@ public final class AppCtx implements LandingDemo {
   // ##################################################################
 
   /*
-  
+
   random = 4 bytes
-  
+
   view = 1 byte
-  
+
   id = 4 byte
-  
+
   rid = 8 bytes
   ------------------
   total = 17 bytes
-  
+
   */
 
   public final String decodeHash(String hash) {
@@ -2414,7 +2424,7 @@ public final class AppCtx implements LandingDemo {
   // # BEGIN: UI
   // ##################################################################
 
-  public static final Html.Id SHELL = Html.Id.of("demo.landing");
+  public static final Id SHELL = Id.of("demo.landing");
 
   public static final HeaderName DEMO_LOCATION_HASH = HeaderName.of("Demo-Location-Hash");
 
@@ -2435,7 +2445,7 @@ public final class AppCtx implements LandingDemo {
   });
 
   @Override
-  public final Html.Id shell() {
+  public final objectos.html.Id shell() {
     return SHELL;
   }
 
@@ -2789,7 +2799,7 @@ import module java.base;
 import module objectos.way;
 
 /// Renders the tickets bought by the user.
-final class TicketView extends Html.Template {
+final class TicketView extends Template {
 
   private final NumberFormat formatter = DecimalFormat.getCurrencyInstance();
 
@@ -2801,29 +2811,27 @@ final class TicketView extends Html.Template {
 
   @Override
   protected final void render() {
-    testableH1("Ticket #" + ticket.id());
+    t.h1("Ticket #" + ticket.id());
 
-    h2("Thank You");
+    h2(text("Thank You"));
 
-    p("Here's your receipt");
+    p(text("Here's your receipt"));
 
     div(
         css(\"""
         position:relative
         \"""),
 
-        c(
-            UiIcon.RECEIPT.css(\"""
-            border:1px_solid_var(--color-border)
-            border-radius:9999px
-            height:auto
-            inset:-80rx_0_auto_auto
-            padding:16rx
-            position:absolute
-            stroke-width:1rx
-            width:80rx
-            \""")
-        )
+        UiIcon.RECEIPT.css(\"""
+        border:1px_solid_var(--color-border)
+        border-radius:9999px
+        height:auto
+        inset:-80rx_0_auto_auto
+        padding:16rx
+        position:absolute
+        stroke-width:1rx
+        width:80rx
+        \""")
     );
 
     dl(
@@ -2842,19 +2850,19 @@ final class TicketView extends Html.Template {
         \"""),
 
         div(
-            dt(testableFieldName("Ammount Paid")),
-            dd(testableFieldValue(format(ticket.ammountPaid())))
+            dt(text("Ammount Paid")),
+            dd(t.prop("Ammount Paid", format(ticket.ammountPaid())))
         ),
 
         div(
-            dt(testableFieldName("Purchase Time")),
-            dd(testableFieldValue(ticket.purchaseTime()))
+            dt(text("Purchase Time")),
+            dd(t.prop("Purchase Time", ticket.purchaseTime()))
         )
     );
 
-    h2(testableH2("Tickets"));
+    h2(t.h2("Tickets"));
 
-    p(ticket.singular() ? "Here's your ticket" : "Here are your tickets");
+    p(text(ticket.singular() ? "Here's your ticket" : "Here are your tickets"));
 
     div(
         css(\"""
@@ -2878,15 +2886,13 @@ final class TicketView extends Html.Template {
           padding:16rx
           \"""),
 
-          c(
-              UiIcon.TICKET.css(\"""
-              height:auto
-              margin-right:16rx
-              padding:16rx
-              stroke-width:1rx
-              width:80rx
-              \""")
-          ),
+          UiIcon.TICKET.css(\"""
+          height:auto
+          margin-right:16rx
+          padding:16rx
+          stroke-width:1rx
+          width:80rx
+          \"""),
 
           ul(
               css(\"""
@@ -2894,10 +2900,10 @@ final class TicketView extends Html.Template {
               flex:1
               \"""),
 
-              li(testableCell(ticket.title(), 8)),
-              li(testableCell(ticket.date(), 10)),
-              li(testableCell(ticket.time(), 6)),
-              li(testableCell(ticket.screen(), 8))
+              li(text(testableCell(ticket.title(), 8))),
+              li(text(testableCell(ticket.date(), 10))),
+              li(text(testableCell(ticket.time(), 6))),
+              li(text(testableCell(ticket.screen(), 8)))
           ),
 
           div(
@@ -2935,6 +2941,16 @@ final class TicketView extends Html.Template {
 
   private String format(double price) {
     return formatter.format(price);
+  }
+
+  private String testableCell(String value, int width) {
+    t.cell(width, value);
+
+    return value;
+  }
+
+  private void testableNewLine() {
+    t.row();
   }
 
 }
@@ -3046,7 +3062,7 @@ package demo.landing.app;
 import module objectos.way;
 
 /// The filename and the contents of a Java source file.
-record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
+record SourceModel(String name, String value, Id button, Id panel) {
 
   private static int INDEX = 0;
 
@@ -3059,9 +3075,9 @@ record SourceModel(String name, String value, Html.Id button, Html.Id panel) {
 
         value,
 
-        Html.Id.of("src-btn-" + index),
+        Id.of("src-btn-" + index),
 
-        Html.Id.of("src-panel-" + index)
+        Id.of("src-panel-" + index)
     );
   }
 
@@ -3210,7 +3226,7 @@ package demo.landing.app;
 import module objectos.way;
 
 /// Renders the seat selection view.
-final class SeatsView extends Html.Template {
+final class SeatsView extends Template {
 
   private static final String FORM_ID = "seats-form";
 
@@ -3235,14 +3251,14 @@ final class SeatsView extends Html.Template {
   @Override
   protected final void render() {
     // this node is for testing only, it is not rendered in the final HTML
-    testableH1("Show details");
+    t.h1("Show details");
 
-    h2(testableField("title", details.title()));
+    h2(t.prop("title", details.title()));
 
-    p("Please choose your seats");
+    p(text("Please choose your seats"));
 
     if (alert != null) {
-      testableField("alert", alert.name());
+      t.prop("alert", alert.name());
 
       renderAlert(alert.msg);
     }
@@ -3276,13 +3292,11 @@ final class SeatsView extends Html.Template {
         padding:16rx
         \"""),
 
-        c(
-            UiIcon.INFO.css(\"""
-            height:20rx
-            width:auto
-            padding-right:16rx
-            \""")
-        ),
+        UiIcon.INFO.css(\"""
+        height:20rx
+        width:auto
+        padding-right:16rx
+        \"""),
 
         div(
             css(\"""
@@ -3311,7 +3325,7 @@ final class SeatsView extends Html.Template {
     );
   }
 
-  private Html.Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
+  private ElementMarkup renderDetailsItem(UiIcon icon, String name, String value) {
     return div(
         css(\"""
         align-items:center
@@ -3320,13 +3334,11 @@ final class SeatsView extends Html.Template {
         gap:4rx
         \"""),
 
-        c(
-            icon.css(\"""
-            height:auto
-            stroke:icon
-            width:20rx
-            \""")
-        ),
+        icon.css(\"""
+        height:auto
+        stroke:icon
+        width:20rx
+        \"""),
 
         span(
             css(\"""
@@ -3334,14 +3346,14 @@ final class SeatsView extends Html.Template {
             width:6rch
             \"""),
 
-            text(testableField(name, value))
+            t.prop(name, value)
         )
     );
   }
 
   private void renderSeats() {
     // this node is for testing only, it is not rendered in the final HTML
-    testableH1("Seats");
+    t.h1("Seats");
 
     div(
         css(\"""
@@ -3389,6 +3401,11 @@ final class SeatsView extends Html.Template {
   }
 
   private void renderSeatsForm() {
+    final String screenIdValue;
+    screenIdValue = Integer.toString(details.screenId());
+
+    t.prop("screenId", screenIdValue);
+
     form(
         id(FORM_ID),
 
@@ -3413,7 +3430,7 @@ final class SeatsView extends Html.Template {
         input(
             type("hidden"),
             name("screenId"),
-            value(testableField("screenId", Integer.toString(details.screenId())))),
+            value(screenIdValue)),
 
         f(this::renderSeatsFormGrid)
     );
@@ -3449,7 +3466,7 @@ final class SeatsView extends Html.Template {
         );
 
         if (seat.checked()) {
-          testableField("checked", seatIdValue);
+          t.prop("checked", seatIdValue);
         }
       }
     }
@@ -3998,7 +4015,7 @@ import module java.base;
 import module objectos.way;
 
 /// Renders the details of a movie and lists its available screenings.
-final class MovieView extends Html.Template {
+final class MovieView extends Template {
 
   /// A screening of the movie to be displayed in this view
   record Screening(
@@ -4052,7 +4069,7 @@ final class MovieView extends Html.Template {
             line-height:1
             \"""),
 
-            text(testableH1("Showtimes"))
+            t.h1("Showtimes")
         ),
 
         f(this::renderMovieScreenings)
@@ -4065,9 +4082,9 @@ final class MovieView extends Html.Template {
 
   private void renderMovieDetails() {
     div(
-        h2(testableH1(details.title())),
+        h2(t.h1(details.title())),
 
-        p(testableField("synopsys", details.synopsys())),
+        p(t.prop("synopsys", details.synopsys())),
 
         dl(
             css(\"""
@@ -4080,23 +4097,23 @@ final class MovieView extends Html.Template {
             \"""),
 
             div(
-                dt("Rating"),
-                dd("N/A")
+                dt(text("Rating")),
+                dd(text("N/A"))
             ),
 
             div(
-                dt("Runtime"),
-                dd(testableField("runtime", details.runtime()))
+                dt(text("Runtime")),
+                dd(t.prop("runtime", details.runtime()))
             ),
 
             div(
-                dt("Release date"),
-                dd(testableField("release-date", details.releaseDate()))
+                dt(text("Release date")),
+                dd(t.prop("release-date", details.releaseDate()))
             ),
 
             div(
-                dt("Genres"),
-                dd(testableField("genres", details.genres()))
+                dt(text("Genres")),
+                dd(t.prop("genres", details.genres()))
             )
         )
     );
@@ -4152,11 +4169,9 @@ final class MovieView extends Html.Template {
             justify-content:center
             \"""),
 
-            c(
-                UiIcon.CALENDAR_CHECK.css(\"""
-                stroke:icon
-                \""")
-            ),
+            UiIcon.CALENDAR_CHECK.css(\"""
+            stroke:icon
+            \"""),
 
             span(
                 css(\"""
@@ -4164,7 +4179,7 @@ final class MovieView extends Html.Template {
                 width:6rch
                 \"""),
 
-                text(testableH2(screening.date()))
+                t.h2(screening.date())
             )
         ),
 
@@ -4176,7 +4191,7 @@ final class MovieView extends Html.Template {
                 padding-top:8rx
                 \"""),
 
-                text(testableField("screen", screening.screenName()))
+                t.prop("screen", screening.screenName())
             ),
 
             div(
@@ -4186,7 +4201,7 @@ final class MovieView extends Html.Template {
                 padding:8rx_0
                 \"""),
 
-                text(testableField("features", screening.features()))
+                t.prop("features", screening.features())
             ),
 
             ul(
@@ -4195,8 +4210,6 @@ final class MovieView extends Html.Template {
                 flex-wrap:wrap
                 gap:12rx
                 \"""),
-
-                testableNewLine(),
 
                 f(this::renderMovieShowtimes, screening.showtimes())
             )
@@ -4217,7 +4230,8 @@ final class MovieView extends Html.Template {
       final int showId;
       showId = showtime.id();
 
-      testableCell(Integer.toString(showId), 2);
+      t.row();
+      t.cell(2, Integer.toString(showId));
 
       li(
           div(
@@ -4234,10 +4248,8 @@ final class MovieView extends Html.Template {
 
               onclick(showtime.onclick),
 
-              span(testableCell(showtime.time, 5))
-          ),
-
-          testableNewLine()
+              span(t.cell(5, showtime.time))
+          )
       );
     }
   }
@@ -4267,15 +4279,24 @@ final class MovieView extends Html.Template {
  */
 package demo.landing.app;
 
-import module java.base;
-import module objectos.way;
-import objectos.way.Html.Component;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+import objectos.html.ClassName;
+import objectos.html.Component;
+import objectos.html.Id;
+import objectos.html.Template;
+import objectos.html.markup.ElementMarkup;
+import objectos.script.Js;
+import objectos.script.JsAction;
+import objectos.script.JsElement;
+import objectos.way.Syntax;
 
 /// The demo UI shell responsible for displaying the application on the
 /// top/right and the source code on the bottom/left.
-final class UiShell extends Html.Template {
+final class UiShell extends Template {
 
-  static final Html.ClassName PRIMARY = Html.ClassName.ofText(\"""
+  static final ClassName PRIMARY = ClassName.ofText(\"""
     appearance:none
     background-color:var(--color-btn-primary)
     color:var(--color-btn-primary-text)
@@ -4295,7 +4316,7 @@ final class UiShell extends Html.Template {
 
     JsAction homeAction;
 
-    Html.Component main;
+    Component main;
 
     List<SourceModel> sources;
 
@@ -4305,7 +4326,7 @@ final class UiShell extends Html.Template {
 
   private final JsAction homeAction;
 
-  private final Html.Component main;
+  private final Component main;
 
   private final List<SourceModel> sources;
 
@@ -4457,7 +4478,7 @@ final class UiShell extends Html.Template {
 
             f(this::renderBackLink),
 
-            c(main)
+            main
         )
     );
   }
@@ -4491,7 +4512,7 @@ final class UiShell extends Html.Template {
         }
       }
 
-      testableField("back-link", backLink);
+      t.prop("back-link", backLink);
 
       div(
           css(\"""
@@ -4507,12 +4528,10 @@ final class UiShell extends Html.Template {
 
           onclick(backAction),
 
-          c(
-              UiIcon.ARROW_LEFT.css(\"""
-              height:20rx
-              width:20rx
-              \""")
-          )
+          UiIcon.ARROW_LEFT.css(\"""
+          height:20rx
+          width:20rx
+          \""")
       );
     }
   }
@@ -4525,7 +4544,7 @@ final class UiShell extends Html.Template {
   // # BEGIN: Source code panel
   // ##################################################################
 
-  private static final Html.AttributeName SEL = Html.AttributeName.of("data-selected");
+  private static final String SEL = "data-selected";
 
   private void renderSourceCode(List<SourceModel> sources) {
     div(
@@ -4584,9 +4603,7 @@ final class UiShell extends Html.Template {
               flex-grow:1
               \"""),
 
-              c(
-                  Syntax.highlight(Syntax.JAVA, source)
-              )
+              Syntax.highlight(Syntax.JAVA, source)
           )
       );
     }
@@ -4600,11 +4617,11 @@ final class UiShell extends Html.Template {
   // # BEGIN: Source file selector
   // ##################################################################
 
-  private static final Html.Id SRC = Html.Id.of("source-frame");
+  private static final Id SRC = Id.of("source-frame");
 
-  private static final Html.AttributeName BTN = Html.AttributeName.of("data-button");
+  private static final String BTN = "data-button";
 
-  private static final Html.AttributeName PNL = Html.AttributeName.of("data-panel");
+  private static final String PNL = "data-panel";
 
   private void renderSourceFileSelector(List<SourceModel> sources) {
     final SourceModel first;
@@ -4632,10 +4649,10 @@ final class UiShell extends Html.Template {
         \"""),
 
         // stores the current selected button in the data-button attribute
-        attr(BTN, first.button().attrValue()),
+        attr(BTN, first.button().value()),
 
         // stores the current selected panel in the data-panel attribute
-        attr(PNL, first.panel().attrValue()),
+        attr(PNL, first.panel().value()),
 
         f(this::renderSourceMenuItems, sources)
     );
@@ -4671,8 +4688,8 @@ final class UiShell extends Html.Template {
               Js.byId(item.button()).attr(SEL, "true"),
               Js.byId(item.panel()).attr(SEL, "true"),
               // stores selected,
-              Js.var("frame").as(JsElement.type).attr(BTN, item.button().attrValue()),
-              Js.var("frame").as(JsElement.type).attr(PNL, item.panel().attrValue())
+              Js.var("frame").as(JsElement.type).attr(BTN, item.button().value()),
+              Js.var("frame").as(JsElement.type).attr(PNL, item.panel().value())
           )),
 
           text(item.name())
@@ -4688,7 +4705,7 @@ final class UiShell extends Html.Template {
   // # BEGIN: Logos
   // ##################################################################
 
-  private Html.Instruction objectosLogo() {
+  private ElementMarkup objectosLogo() {
     return svg(
         css(\"""
         fill:var(--color-logo)
@@ -4706,7 +4723,7 @@ final class UiShell extends Html.Template {
     );
   }
 
-  private Html.Instruction gitHubLogo() {
+  private ElementMarkup gitHubLogo() {
     return svg(
         css(\"""
         fill:var(--color-logo)

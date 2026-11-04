@@ -40,7 +40,7 @@ final class ConfirmView extends Template {
     );
 
     // testable node only
-    testableH1(details.orderNumber());
+    t.h1(details.orderNumber());
 
     p(
         text("Please review and confirm your order")
@@ -98,19 +98,17 @@ final class ConfirmView extends Template {
     renderDetailsItem(UiIcon.PROJECTOR, "screen", details.screen());
   }
 
-  private Instruction.OfElement renderDetailsItem(UiIcon icon, String name, String value) {
+  private ElementMarkup renderDetailsItem(UiIcon icon, String name, String value) {
     return div(
         css("""
         display:flex
         gap:12rx
         """),
 
-        c(
-            icon.css("""
-            height:auto
-            width:16rx
-            """)
-        ),
+        icon.css("""
+        height:auto
+        width:16rx
+        """),
 
         span(
             css("""
@@ -118,14 +116,14 @@ final class ConfirmView extends Template {
             line-height:16rx
             """),
 
-            text(testableField(name, value))
+            t.prop(name, value)
         )
     );
   }
 
   private void renderRight() {
     h3(
-        text(testableH2("Order Details"))
+        t.h2("Order Details")
     );
 
     for (var item : details.items()) {
@@ -137,17 +135,17 @@ final class ConfirmView extends Template {
           line-height:16rx
           """),
 
+          t.row(),
+
           div(
               text("Seat "),
-              text(testableCell(item.seat(), 5))
+              t.cell(5, item.seat())
           ),
 
           div(
-              text(testableCell(format(item.price()), 6))
+              t.cell(6, format(item.price()))
           )
       );
-
-      testableNewLine();
     }
 
     div(
@@ -160,14 +158,18 @@ final class ConfirmView extends Template {
         padding-top:12rx
         """),
 
-        div(testableCell("Total", 5)),
+        t.row(),
+
+        div(
+            t.cell(5, "Total")
+        ),
 
         div(
             css("""
             font-weight:600
             """),
 
-            text(testableCell(format(details.totalPrice()), 6))
+            t.cell(6, format(details.totalPrice()))
         )
     );
 
@@ -180,7 +182,9 @@ final class ConfirmView extends Template {
         margin-top:24rx
         """),
 
-        div("Payment Method"),
+        div(
+            text("Payment Method")
+        ),
 
         div(
             css("""
@@ -188,18 +192,16 @@ final class ConfirmView extends Template {
             gap:8rx
             """),
 
-            c(
-                UiIcon.CREDIT_CARD.css("""
-                height:auto
-                width:16rx
-                """)
-            ),
+            UiIcon.CREDIT_CARD.css("""
+            height:auto
+            width:16rx
+            """),
 
-            span("4321")
+            span(
+                text("4321")
+            )
         )
     );
-
-    testableNewLine();
 
     form(
         css("""

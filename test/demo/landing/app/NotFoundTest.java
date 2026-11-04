@@ -41,7 +41,6 @@ public class NotFoundTest {
         404 Not Found
         text/html; charset=utf-8
         # Something Went Wrong
-
         """
     );
   }

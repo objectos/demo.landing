@@ -23,6 +23,7 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.HexFormat;
 import objectos.css.StyleSheet;
+import objectos.html.markup.TextMarkup;
 import objectos.http.Handler;
 import objectos.script.JsLibrary;
 import objectos.way.App;
@@ -142,10 +143,16 @@ public final class StartTest extends Start {
     final String script;
     script = library.toString();
 
-    return html -> {
-      markup.style(css);
+    return markup -> {
+      final TextMarkup cssText;
+      cssText = markup.text(css);
 
-      markup.script(script);
+      markup.style(cssText);
+
+      final TextMarkup scriptText;
+      scriptText = markup.text(script);
+
+      markup.script(scriptText);
     };
   }
 
