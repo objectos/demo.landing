@@ -103,6 +103,7 @@ public class MovieTest {
 
           - screen: Screen 1
           - features: Feature B, Feature A
+
           | 61 | 13:00 |
           | 62 | 17:00 |
           | 63 | 21:00 |
@@ -111,6 +112,7 @@ public class MovieTest {
 
           - screen: Screen 2
           - features: Feature A
+
           | 64 | 14:00 |
           | 65 | 18:00 |
 
@@ -118,6 +120,7 @@ public class MovieTest {
 
           - screen: Screen 1
           - features: Feature B, Feature A
+
           | 66 | 13:00 |
           """
       );
